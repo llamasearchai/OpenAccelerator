@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class OpenAcceleratorValidator:
@@ -42,7 +42,7 @@ class OpenAcceleratorValidator:
         }
         print(f"[STARTING] {test_name}: {description}")
 
-    def log_test_result(self, test_name: str, passed: bool, error: str = None):
+    def log_test_result(self, test_name: str, passed: bool, error: Optional[str] = None):
         """Log the result of a test."""
         if passed:
             self.results["passed_tests"] += 1
@@ -87,16 +87,20 @@ class OpenAcceleratorValidator:
 
         try:
             # Test basic configuration creation
-            from open_accelerator.utils.config import AcceleratorConfig
+            from open_accelerator.utils.config import AcceleratorConfig, ArrayConfig
 
-            # Create basic configuration
+            # Create basic configuration with correct parameters
             config = AcceleratorConfig(
-                name="test_accelerator", array_size=(4, 4), pe_mac_latency=1
+                name="test_accelerator", 
+                array=ArrayConfig(rows=4, cols=4),
+                debug_mode=True
             )
 
             # Test that configuration was created
             assert config is not None, "Configuration should be created"
             assert config.name == "test_accelerator", "Configuration name should be set"
+            assert config.array.rows == 4, "Array rows should be set"
+            assert config.array.cols == 4, "Array cols should be set"
 
             self.log_test_result(test_name, True)
             return True
@@ -136,14 +140,18 @@ class OpenAcceleratorValidator:
             from open_accelerator.medical.compliance import (
                 FDACompliance,
                 HIPAACompliance,
+                HIPAAConfig,
+                FDAConfig,
             )
 
-            # Test HIPAA compliance
-            hipaa = HIPAACompliance()
+            # Test HIPAA compliance with proper config
+            hipaa_config = HIPAAConfig()
+            hipaa = HIPAACompliance(config=hipaa_config)
             assert hipaa is not None, "HIPAA compliance should be created"
 
-            # Test FDA compliance
-            fda = FDACompliance()
+            # Test FDA compliance with proper config
+            fda_config = FDAConfig()
+            fda = FDACompliance(config=fda_config)
             assert fda is not None, "FDA compliance should be created"
 
             self.log_test_result(test_name, True)
@@ -206,10 +214,11 @@ class OpenAcceleratorValidator:
         self.log_test_start(test_name, description)
 
         try:
-            from open_accelerator.core.security import SecurityManager
+            from open_accelerator.core.security import SecurityManager, SecurityConfig
 
-            # Test security manager
-            security = SecurityManager()
+            # Test security manager with proper config
+            security_config = SecurityConfig()
+            security = SecurityManager(config=security_config)
             assert security is not None, "Security manager should be created"
 
             self.log_test_result(test_name, True)
