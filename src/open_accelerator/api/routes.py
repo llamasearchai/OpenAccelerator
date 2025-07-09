@@ -150,7 +150,7 @@ async def run_simulation(
         # Instantiate simulation engine (patched in tests)
         engine = SimulationEngine()
         sim_result = engine.run_simulation(
-            request.dict() if hasattr(request, "dict") else {}
+            request.model_dump() if hasattr(request, "model_dump") else {}
         )
 
         # Store basic state
@@ -241,7 +241,7 @@ async def list_simulations(
         engine = SimulationEngine()
         return await engine.list_simulations()
 
-    return [r.dict() if hasattr(r, "dict") else r for r in paginated_results]
+    return [r.model_dump() if hasattr(r, "model_dump") else r for r in paginated_results]
 
 
 @simulation_router.delete("/cancel/{simulation_id}")
