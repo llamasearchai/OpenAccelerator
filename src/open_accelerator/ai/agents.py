@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class AgentType(Enum):
     """Agent type enumeration."""
+
     OPTIMIZATION = "optimization"
     ANALYSIS = "analysis"
     MEDICAL_COMPLIANCE = "medical_compliance"
@@ -38,6 +39,7 @@ class AgentType(Enum):
 
 class AgentStatus(Enum):
     """Agent status enumeration."""
+
     IDLE = "idle"
     BUSY = "busy"
     ERROR = "error"
@@ -48,6 +50,7 @@ class AgentStatus(Enum):
 @dataclass
 class AgentMetrics:
     """Agent performance and usage metrics."""
+
     messages_processed: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -99,7 +102,12 @@ class AgentMessage:
 class BaseAgent:
     """Base class for all AI agents."""
 
-    def __init__(self, agent_id: str, config: AgentConfig, agent_type: AgentType = AgentType.OPTIMIZATION):
+    def __init__(
+        self,
+        agent_id: str,
+        config: AgentConfig,
+        agent_type: AgentType = AgentType.OPTIMIZATION,
+    ):
         """Initialize base agent."""
         self.agent_id = agent_id
         self.config = config
@@ -122,7 +130,7 @@ class BaseAgent:
                 role="system", content=self.system_prompt, agent_id=self.agent_id
             )
         )
-        
+
         self.status = AgentStatus.READY if self.is_initialized else AgentStatus.ERROR
 
     def _initialize_openai_client(self):
@@ -167,7 +175,9 @@ Always consider trade-offs between performance, power, and area.
 For medical applications, prioritize safety and regulatory compliance.
 """
 
-    def register_function(self, name: str, func: Callable, description: Optional[str] = None):
+    def register_function(
+        self, name: str, func: Callable, description: Optional[str] = None
+    ):
         """Register a function for the agent to call."""
         self.function_registry[name] = func
         # Store metadata separately to avoid type issues
@@ -487,21 +497,23 @@ class OptimizationAgent(BaseAgent):
 
         return impact
 
-    def optimize_configuration(self, config: dict[str, Any], performance_data: dict[str, Any]) -> dict[str, Any]:
+    def optimize_configuration(
+        self, config: dict[str, Any], performance_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Optimize configuration based on performance data."""
         # Analyze current performance
         bottlenecks = self._analyze_performance_bottlenecks(performance_data)
-        
+
         # Get optimization suggestions
         suggestions = self._suggest_configuration_changes(config, performance_data)
-        
+
         # Create optimized configuration
         optimized_config = config.copy()
         optimization_applied = []
-        
+
         for suggestion in suggestions:
             param = suggestion.get("parameter", "")
-            
+
             if param == "array_size":
                 # Parse suggested array size
                 suggested_value = suggestion.get("suggested_value", "")
@@ -510,7 +522,7 @@ class OptimizationAgent(BaseAgent):
                     optimized_config["array_rows"] = int(rows)
                     optimized_config["array_cols"] = int(cols)
                     optimization_applied.append(suggestion)
-            
+
             elif param == "frequency":
                 # Parse suggested frequency
                 suggested_value = suggestion.get("suggested_value", "")
@@ -518,16 +530,16 @@ class OptimizationAgent(BaseAgent):
                     freq_ghz = float(suggested_value.replace(" GHz", ""))
                     optimized_config["frequency"] = freq_ghz * 1e9
                     optimization_applied.append(suggestion)
-            
+
             elif param == "buffer_sizes":
                 # Increase buffer sizes
                 current_input_size = optimized_config.get("input_buffer_size", 1024)
                 current_output_size = optimized_config.get("output_buffer_size", 1024)
-                
+
                 optimized_config["input_buffer_size"] = int(current_input_size * 1.5)
                 optimized_config["output_buffer_size"] = int(current_output_size * 1.5)
                 optimization_applied.append(suggestion)
-        
+
         # Calculate expected improvement
         expected_improvement = 0.0
         if optimization_applied:
@@ -539,13 +551,13 @@ class OptimizationAgent(BaseAgent):
                 else:
                     numeric_impacts.append(0.1)  # Default improvement estimate
             expected_improvement = sum(numeric_impacts) / len(numeric_impacts)
-        
+
         return {
             "optimized_config": optimized_config,
             "bottlenecks_identified": bottlenecks,
             "optimizations_applied": optimization_applied,
             "expected_improvement": expected_improvement,
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
     def optimize_workload(self, workload_config: dict[str, Any]) -> dict[str, Any]:
@@ -554,28 +566,31 @@ class OptimizationAgent(BaseAgent):
         result = {
             "optimization_applied": True,
             "performance_improvement": 0.2,  # 20% improvement
-            "optimized_config": workload_config.copy()
+            "optimized_config": workload_config.copy(),
         }
-        
+
         # Apply basic optimizations
         if workload_config.get("workload_type") == "gemm":
             result["optimized_config"]["batch_size"] = 64
             result["optimized_config"]["data_layout"] = "optimized"
-            
+
         return result
 
     def analyze_performance(self, performance_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze performance data."""
         result = {
             "bottlenecks_identified": True,
-            "recommendations": ["Optimize memory access patterns", "Increase parallelism"],
-            "optimization_potential": 0.3  # 30% potential improvement
+            "recommendations": [
+                "Optimize memory access patterns",
+                "Increase parallelism",
+            ],
+            "optimization_potential": 0.3,  # 30% potential improvement
         }
-        
+
         # Add bottleneck analysis
         if performance_data.get("utilization", 0) < 0.5:
             result["recommendations"].append("Consider workload optimization")
-            
+
         return result
 
     def optimize_memory(self, memory_data: dict[str, Any]) -> dict[str, Any]:
@@ -583,13 +598,13 @@ class OptimizationAgent(BaseAgent):
         result = {
             "memory_efficiency_improved": True,
             "cache_optimization_applied": True,
-            "memory_usage_reduced": 0.15  # 15% reduction
+            "memory_usage_reduced": 0.15,  # 15% reduction
         }
-        
+
         # Add memory-specific optimizations
         if memory_data.get("memory_efficiency", 0) < 0.8:
             result["memory_usage_reduced"] = 0.25
-            
+
         return result
 
     def optimize_power(self, power_data: dict[str, Any]) -> dict[str, Any]:
@@ -597,20 +612,20 @@ class OptimizationAgent(BaseAgent):
         result = {
             "power_reduced": True,
             "thermal_optimization_applied": True,
-            "energy_efficiency_improved": 0.18  # 18% improvement
+            "energy_efficiency_improved": 0.18,  # 18% improvement
         }
-        
+
         # Add power-specific optimizations
         if power_data.get("power_efficiency", 0) < 0.7:
             result["energy_efficiency_improved"] = 0.25
-            
+
         return result
 
     def learn_from_history(self, historical_data: list[dict[str, Any]]) -> None:
         """Learn from historical optimization data."""
         # Store learned optimizations
         self.learned_optimizations = {}
-        
+
         # Find best performing configurations
         if historical_data:
             best_config = max(historical_data, key=lambda x: x.get("performance", 0))
@@ -625,7 +640,7 @@ class OptimizationAgent(BaseAgent):
         return {
             "message": f"Optimization advice: {user_message}",
             "suggestions": ["Consider increasing batch size", "Optimize data layout"],
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
 
@@ -817,18 +832,23 @@ class AnalysisAgent(BaseAgent):
 
         return comparison
 
-    def analyze_performance(self, performance_metrics: dict[str, Any]) -> dict[str, Any]:
+    def analyze_performance(
+        self, performance_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze performance metrics."""
         result = {
             "performance_score": 0.85,
             "bottlenecks_identified": ["memory_bandwidth", "compute_utilization"],
-            "improvement_suggestions": ["Increase buffer sizes", "Optimize data layout"]
+            "improvement_suggestions": [
+                "Increase buffer sizes",
+                "Optimize data layout",
+            ],
         }
-        
+
         # Calculate performance score
         if performance_metrics.get("throughput", 0) > 1000:
             result["performance_score"] = 0.9
-            
+
         return result
 
     def analyze_workload(self, workload_data: dict[str, Any]) -> dict[str, Any]:
@@ -837,12 +857,12 @@ class AnalysisAgent(BaseAgent):
             "workload_characteristics": {
                 "type": workload_data.get("workload_type", "unknown"),
                 "complexity": "medium",
-                "memory_intensity": "medium"
+                "memory_intensity": "medium",
             },
             "optimization_opportunities": ["Vectorization", "Parallelization"],
-            "hardware_recommendations": ["Increase array size", "Add more memory"]
+            "hardware_recommendations": ["Increase array size", "Add more memory"],
         }
-        
+
         return result
 
     def analyze_trends(self, time_series_data: list[dict[str, Any]]) -> dict[str, Any]:
@@ -851,9 +871,9 @@ class AnalysisAgent(BaseAgent):
             "trend_direction": "improving",
             "trend_strength": 0.7,
             "forecast": [{"timestamp": "2024-01-06", "performance": 0.89}],
-            "recommendations": ["Continue current optimization approach"]
+            "recommendations": ["Continue current optimization approach"],
         }
-        
+
         # Calculate trend
         if len(time_series_data) > 1:
             first_perf = time_series_data[0].get("performance", 0)
@@ -862,7 +882,7 @@ class AnalysisAgent(BaseAgent):
                 result["trend_direction"] = "improving"
             else:
                 result["trend_direction"] = "declining"
-                
+
         return result
 
 
@@ -875,7 +895,9 @@ class MedicalComplianceAgent(BaseAgent):
             config = AgentConfig()
         config.medical_compliance = True
         config.safety_mode = True
-        super().__init__("medical_compliance_agent", config, AgentType.MEDICAL_COMPLIANCE)
+        super().__init__(
+            "medical_compliance_agent", config, AgentType.MEDICAL_COMPLIANCE
+        )
 
         # Register medical compliance functions
         self.register_function(
@@ -1234,7 +1256,9 @@ async def quick_optimization_advice(
 
 
 # Create functions for individual agents
-def create_optimization_agent(config: Optional[AgentConfig] = None) -> OptimizationAgent:
+def create_optimization_agent(
+    config: Optional[AgentConfig] = None,
+) -> OptimizationAgent:
     """Create optimization agent with default configuration."""
     return OptimizationAgent(config)
 
@@ -1244,6 +1268,8 @@ def create_analysis_agent(config: Optional[AgentConfig] = None) -> AnalysisAgent
     return AnalysisAgent(config)
 
 
-def create_medical_compliance_agent(config: Optional[AgentConfig] = None) -> MedicalComplianceAgent:
+def create_medical_compliance_agent(
+    config: Optional[AgentConfig] = None,
+) -> MedicalComplianceAgent:
     """Create medical compliance agent with default configuration."""
     return MedicalComplianceAgent(config)

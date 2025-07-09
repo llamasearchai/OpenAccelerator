@@ -5,9 +5,7 @@ Implements comprehensive security features including encryption, secure boot,
 attestation, and privacy-preserving computation for medical AI applications.
 """
 
-import base64
 import hashlib
-import hmac
 import logging
 import secrets
 import time
@@ -24,29 +22,37 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 logger = logging.getLogger(__name__)
 
+
 class SecurityLevel(Enum):
     """Security levels for different operations."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class EncryptionAlgorithm(Enum):
     """Supported encryption algorithms."""
+
     AES_256_GCM = "aes_256_gcm"
     AES_128_CBC = "aes_128_cbc"
     RSA_2048 = "rsa_2048"
     RSA_4096 = "rsa_4096"
 
+
 class AttestationLevel(Enum):
     """Levels of hardware attestation."""
-    BASIC = "basic"          # Simple checksum verification
-    SECURE = "secure"        # Cryptographic attestation
-    TRUSTED = "trusted"      # Hardware-based trusted execution
+
+    BASIC = "basic"  # Simple checksum verification
+    SECURE = "secure"  # Cryptographic attestation
+    TRUSTED = "trusted"  # Hardware-based trusted execution
+
 
 @dataclass
 class SecurityConfig:
     """Security configuration parameters."""
+
     enable_encryption: bool = True
     enable_secure_boot: bool = True
     enable_attestation: bool = True
@@ -80,9 +86,11 @@ class SecurityConfig:
     enable_audit_logging: bool = True
     audit_log_retention_days: int = 2555  # 7 years for medical records
 
+
 @dataclass
 class SecurityMetrics:
     """Security metrics and monitoring."""
+
     encryption_operations: int = 0
     decryption_operations: int = 0
     key_rotations: int = 0
@@ -99,9 +107,11 @@ class SecurityMetrics:
     privacy_budget_consumed: float = 0.0
     differential_privacy_queries: int = 0
 
+
 @dataclass
 class AuditLogEntry:
     """Audit log entry for security events."""
+
     timestamp: float
     event_type: str
     component: str
@@ -111,6 +121,7 @@ class AuditLogEntry:
     result: str
     details: Dict[str, Any] = field(default_factory=dict)
     security_level: SecurityLevel = SecurityLevel.MEDIUM
+
 
 class CryptographicProvider(ABC):
     """Abstract base class for cryptographic operations."""
@@ -135,6 +146,7 @@ class CryptographicProvider(ABC):
         """Generate cryptographic hash of data."""
         pass
 
+
 class AESGCMProvider(CryptographicProvider):
     """AES-GCM encryption provider."""
 
@@ -151,7 +163,9 @@ class AESGCMProvider(CryptographicProvider):
     def encrypt(self, plaintext: bytes, key: bytes) -> bytes:
         """Encrypt using AES-GCM."""
         if len(key) != self.key_bytes:
-            raise ValueError(f"Key must be {self.key_bytes} bytes for AES-{self.key_size}")
+            raise ValueError(
+                f"Key must be {self.key_bytes} bytes for AES-{self.key_size}"
+            )
 
         # Generate random nonce
         nonce = secrets.token_bytes(12)  # 96-bit nonce for GCM
@@ -169,7 +183,9 @@ class AESGCMProvider(CryptographicProvider):
     def decrypt(self, ciphertext: bytes, key: bytes) -> bytes:
         """Decrypt using AES-GCM."""
         if len(key) != self.key_bytes:
-            raise ValueError(f"Key must be {self.key_bytes} bytes for AES-{self.key_size}")
+            raise ValueError(
+                f"Key must be {self.key_bytes} bytes for AES-{self.key_size}"
+            )
 
         # Extract components
         nonce = ciphertext[:12]
@@ -195,6 +211,7 @@ class AESGCMProvider(CryptographicProvider):
         digest.update(data)
         return digest.finalize()
 
+
 class RSAProvider(CryptographicProvider):
     """RSA encryption provider."""
 
@@ -213,8 +230,7 @@ class RSAProvider(CryptographicProvider):
     def _generate_key_pair(self):
         """Generate RSA key pair."""
         self.private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=self.key_size
+            public_exponent=65537, key_size=self.key_size
         )
         self.public_key = self.private_key.public_key()
 
@@ -241,12 +257,12 @@ class RSAProvider(CryptographicProvider):
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
-                    label=None
-                )
+                    label=None,
+                ),
             )
 
             # Return encrypted_key_length + encrypted_key + encrypted_data
-            key_length = len(encrypted_key).to_bytes(4, 'big')
+            key_length = len(encrypted_key).to_bytes(4, "big")
             return key_length + encrypted_key + encrypted_data
         else:
             # Direct RSA encryption for small data
@@ -255,8 +271,8 @@ class RSAProvider(CryptographicProvider):
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
-                    label=None
-                )
+                    label=None,
+                ),
             )
 
     def decrypt(self, ciphertext: bytes, key: Optional[bytes] = None) -> bytes:
@@ -267,9 +283,9 @@ class RSAProvider(CryptographicProvider):
         # Check if this is hybrid encryption
         if len(ciphertext) > (self.key_size // 8):
             # Hybrid decryption
-            key_length = int.from_bytes(ciphertext[:4], 'big')
-            encrypted_key = ciphertext[4:4+key_length]
-            encrypted_data = ciphertext[4+key_length:]
+            key_length = int.from_bytes(ciphertext[:4], "big")
+            encrypted_key = ciphertext[4 : 4 + key_length]
+            encrypted_data = ciphertext[4 + key_length :]
 
             # Decrypt AES key with RSA
             aes_key = self.private_key.decrypt(
@@ -277,8 +293,8 @@ class RSAProvider(CryptographicProvider):
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
-                    label=None
-                )
+                    label=None,
+                ),
             )
 
             # Decrypt data with AES
@@ -291,8 +307,8 @@ class RSAProvider(CryptographicProvider):
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
-                    label=None
-                )
+                    label=None,
+                ),
             )
 
     def generate_key(self) -> bytes:
@@ -301,7 +317,7 @@ class RSAProvider(CryptographicProvider):
             raise ValueError("Public key not available")
         return self.public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
 
     def hash_data(self, data: bytes) -> bytes:
@@ -315,19 +331,20 @@ class RSAProvider(CryptographicProvider):
         try:
             if self.public_key is None:
                 return False
-            
+
             self.public_key.verify(
                 signature,
                 data,
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
+                    salt_length=padding.PSS.MAX_LENGTH,
                 ),
-                hashes.SHA256()
+                hashes.SHA256(),
             )
             return True
         except Exception:
             return False
+
 
 class KeyManager:
     """Cryptographic key management system."""
@@ -388,16 +405,16 @@ class KeyManager:
         encrypted_key = self._encrypt_with_master_key(key)
 
         self.keys[key_id] = {
-            'encrypted_key': encrypted_key,
-            'algorithm': algorithm,
-            'provider': provider
+            "encrypted_key": encrypted_key,
+            "algorithm": algorithm,
+            "provider": provider,
         }
 
         self.key_metadata[key_id] = {
-            'created_timestamp': self._get_timestamp(),
-            'last_used': self._get_timestamp(),
-            'rotation_count': 0,
-            'usage_count': 0
+            "created_timestamp": self._get_timestamp(),
+            "last_used": self._get_timestamp(),
+            "rotation_count": 0,
+            "usage_count": 0,
         }
 
         logger.debug(f"Generated key {key_id} with algorithm {algorithm.value}")
@@ -418,12 +435,12 @@ class KeyManager:
             return None
 
         try:
-            encrypted_key = self.keys[key_id]['encrypted_key']
+            encrypted_key = self.keys[key_id]["encrypted_key"]
             key = self._decrypt_with_master_key(encrypted_key)
 
             # Update usage metadata
-            self.key_metadata[key_id]['last_used'] = self._get_timestamp()
-            self.key_metadata[key_id]['usage_count'] += 1
+            self.key_metadata[key_id]["last_used"] = self._get_timestamp()
+            self.key_metadata[key_id]["usage_count"] += 1
 
             return key
         except Exception as e:
@@ -445,7 +462,7 @@ class KeyManager:
             return False
 
         try:
-            algorithm = self.keys[key_id]['algorithm']
+            algorithm = self.keys[key_id]["algorithm"]
             new_key = self.generate_key(f"{key_id}_new", algorithm)
 
             # Replace old key
@@ -453,8 +470,8 @@ class KeyManager:
             self.keys[key_id] = self.keys.pop(f"{key_id}_new")
 
             # Update metadata
-            self.key_metadata[key_id]['rotation_count'] += 1
-            self.key_metadata[key_id]['last_rotated'] = self._get_timestamp()
+            self.key_metadata[key_id]["rotation_count"] += 1
+            self.key_metadata[key_id]["last_rotated"] = self._get_timestamp()
 
             logger.info(f"Successfully rotated key {key_id}")
             return True
@@ -499,6 +516,7 @@ class KeyManager:
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
         import time
+
         return time.time()
 
     def get_key_metadata(self, key_id: str) -> Optional[Dict[str, Any]]:
@@ -508,6 +526,7 @@ class KeyManager:
     def list_keys(self) -> List[str]:
         """List all stored key IDs."""
         return list(self.keys.keys())
+
 
 class SecureMemoryManager:
     """Secure memory management with encryption and access control."""
@@ -527,12 +546,15 @@ class SecureMemoryManager:
 
         # Generate default memory encryption key
         self.memory_key_id = "memory_encryption_key"
-        self.key_manager.generate_key(self.memory_key_id, EncryptionAlgorithm.AES_256_GCM)
+        self.key_manager.generate_key(
+            self.memory_key_id, EncryptionAlgorithm.AES_256_GCM
+        )
 
         logger.info("Secure memory manager initialized")
 
-    def allocate_secure_region(self, region_id: str, size: int,
-                              security_level: SecurityLevel) -> bool:
+    def allocate_secure_region(
+        self, region_id: str, size: int, security_level: SecurityLevel
+    ) -> bool:
         """
         Allocate a secure memory region.
 
@@ -553,16 +575,19 @@ class SecureMemoryManager:
             storage = np.zeros(size, dtype=np.uint8)
 
             self.memory_regions[region_id] = {
-                'storage': storage,
-                'size': size,
-                'security_level': security_level,
-                'access_count': 0,
-                'created_timestamp': self._get_timestamp(),
-                'encrypted': security_level in [SecurityLevel.HIGH, SecurityLevel.CRITICAL]
+                "storage": storage,
+                "size": size,
+                "security_level": security_level,
+                "access_count": 0,
+                "created_timestamp": self._get_timestamp(),
+                "encrypted": security_level
+                in [SecurityLevel.HIGH, SecurityLevel.CRITICAL],
             }
 
             self._log_access(region_id, "allocate", "success")
-            logger.debug(f"Allocated secure region {region_id} ({size} bytes, {security_level.value})")
+            logger.debug(
+                f"Allocated secure region {region_id} ({size} bytes, {security_level.value})"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to allocate region {region_id}: {e}")
@@ -588,13 +613,13 @@ class SecureMemoryManager:
 
         region = self.memory_regions[region_id]
 
-        if offset + len(data) > region['size']:
+        if offset + len(data) > region["size"]:
             logger.error(f"Write would exceed region {region_id} bounds")
             self._log_access(region_id, "write", "bounds_exceeded")
             return False
 
         try:
-            if region['encrypted']:
+            if region["encrypted"]:
                 # Encrypt data before storing
                 encryption_key = self.key_manager.get_key(self.memory_key_id)
                 if encryption_key is None:
@@ -604,18 +629,22 @@ class SecureMemoryManager:
                 encrypted_data = provider.encrypt(data, encryption_key)
 
                 # Store encrypted data length and encrypted data
-                length_bytes = len(encrypted_data).to_bytes(4, 'big')
+                length_bytes = len(encrypted_data).to_bytes(4, "big")
                 full_data = length_bytes + encrypted_data
 
-                if len(full_data) > region['size'] - offset:
+                if len(full_data) > region["size"] - offset:
                     raise ValueError("Encrypted data too large for region")
 
-                region['storage'][offset:offset+len(full_data)] = np.frombuffer(full_data, dtype=np.uint8)
+                region["storage"][offset : offset + len(full_data)] = np.frombuffer(
+                    full_data, dtype=np.uint8
+                )
             else:
                 # Store plaintext
-                region['storage'][offset:offset+len(data)] = np.frombuffer(data, dtype=np.uint8)
+                region["storage"][offset : offset + len(data)] = np.frombuffer(
+                    data, dtype=np.uint8
+                )
 
-            region['access_count'] += 1
+            region["access_count"] += 1
             self._log_access(region_id, "write", "success")
             return True
         except Exception as e:
@@ -623,7 +652,9 @@ class SecureMemoryManager:
             self._log_access(region_id, "write", "failed")
             return False
 
-    def read_secure_data(self, region_id: str, length: int, offset: int = 0) -> Optional[bytes]:
+    def read_secure_data(
+        self, region_id: str, length: int, offset: int = 0
+    ) -> Optional[bytes]:
         """
         Read data from secure memory region.
 
@@ -642,22 +673,24 @@ class SecureMemoryManager:
 
         region = self.memory_regions[region_id]
 
-        if offset + length > region['size']:
+        if offset + length > region["size"]:
             logger.error(f"Read would exceed region {region_id} bounds")
             self._log_access(region_id, "read", "bounds_exceeded")
             return None
 
         try:
-            if region['encrypted']:
+            if region["encrypted"]:
                 # Read encrypted data length
-                length_bytes = region['storage'][offset:offset+4].tobytes()
-                encrypted_length = int.from_bytes(length_bytes, 'big')
+                length_bytes = region["storage"][offset : offset + 4].tobytes()
+                encrypted_length = int.from_bytes(length_bytes, "big")
 
-                if offset + 4 + encrypted_length > region['size']:
+                if offset + 4 + encrypted_length > region["size"]:
                     raise ValueError("Encrypted data extends beyond region")
 
                 # Read encrypted data
-                encrypted_data = region['storage'][offset+4:offset+4+encrypted_length].tobytes()
+                encrypted_data = region["storage"][
+                    offset + 4 : offset + 4 + encrypted_length
+                ].tobytes()
 
                 # Decrypt
                 encryption_key = self.key_manager.get_key(self.memory_key_id)
@@ -671,8 +704,8 @@ class SecureMemoryManager:
                 return decrypted_data[:length]
             else:
                 # Return plaintext
-                data = region['storage'][offset:offset+length].tobytes()
-                region['access_count'] += 1
+                data = region["storage"][offset : offset + length].tobytes()
+                region["access_count"] += 1
                 self._log_access(region_id, "read", "success")
                 return data
         except Exception as e:
@@ -696,7 +729,7 @@ class SecureMemoryManager:
         try:
             # Securely wipe memory
             region = self.memory_regions[region_id]
-            region['storage'].fill(0)  # Zero out memory
+            region["storage"].fill(0)  # Zero out memory
 
             # Remove from tracking
             self.memory_regions.pop(region_id)
@@ -720,14 +753,16 @@ class SecureMemoryManager:
                 action=action,
                 resource=region_id,
                 result=result,
-                details={'component': 'secure_memory_manager'}
+                details={"component": "secure_memory_manager"},
             )
             self.access_log.append(entry)
 
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
         import time
+
         return time.time()
+
 
 class HardwareAttestationManager:
     """Hardware attestation and secure boot verification."""
@@ -754,10 +789,10 @@ class HardwareAttestationManager:
         # In production, these would be loaded from secure storage
         # and verified against manufacturer signatures
         self.component_hashes = {
-            'systolic_array': 'sha256:' + 'a' * 64,  # Example hash for demo
-            'memory_controller': 'sha256:' + 'b' * 64,
-            'control_unit': 'sha256:' + 'c' * 64,
-            'power_management': 'sha256:' + 'd' * 64
+            "systolic_array": "sha256:" + "a" * 64,  # Example hash for demo
+            "memory_controller": "sha256:" + "b" * 64,
+            "control_unit": "sha256:" + "c" * 64,
+            "power_management": "sha256:" + "d" * 64,
         }
 
     def attest_component(self, component_name: str, component_data: bytes) -> bool:
@@ -792,7 +827,9 @@ class HardwareAttestationManager:
                 logger.error(f"Component {component_name} attestation failed")
                 logger.error(f"Expected: {reference_hash}")
                 logger.error(f"Got: {full_hash}")
-                self._log_attestation(component_name, "failed", full_hash, reference_hash)
+                self._log_attestation(
+                    component_name, "failed", full_hash, reference_hash
+                )
                 return False
         except Exception as e:
             logger.error(f"Attestation error for {component_name}: {e}")
@@ -821,10 +858,12 @@ class HardwareAttestationManager:
                 all_passed = False
 
         # Check for missing critical components
-        critical_components = ['systolic_array', 'memory_controller', 'control_unit']
+        critical_components = ["systolic_array", "memory_controller", "control_unit"]
         for critical_comp in critical_components:
             if critical_comp not in system_components:
-                logger.error(f"Critical component {critical_comp} missing from attestation")
+                logger.error(
+                    f"Critical component {critical_comp} missing from attestation"
+                )
                 all_passed = False
                 attestation_results[critical_comp] = False
 
@@ -836,33 +875,43 @@ class HardwareAttestationManager:
             logger.error("System attestation failed - security violation detected")
 
         # Log system-level attestation result
-        self._log_attestation("system", "success" if all_passed else "failed",
-                            str(attestation_results))
+        self._log_attestation(
+            "system", "success" if all_passed else "failed", str(attestation_results)
+        )
 
         return all_passed
 
     def is_attestation_current(self) -> bool:
         """Check if system attestation is current."""
         current_time = self._get_timestamp()
-        return (current_time - self.last_attestation_time) < self.config.attestation_interval
+        return (
+            current_time - self.last_attestation_time
+        ) < self.config.attestation_interval
 
-    def _log_attestation(self, component: str, result: str,
-                        calculated_hash: str, reference_hash: Optional[str] = None):
+    def _log_attestation(
+        self,
+        component: str,
+        result: str,
+        calculated_hash: str,
+        reference_hash: Optional[str] = None,
+    ):
         """Log attestation event."""
         log_entry = {
-            'timestamp': self._get_timestamp(),
-            'component': component,
-            'result': result,
-            'calculated_hash': calculated_hash,
-            'reference_hash': reference_hash,
-            'attestation_level': self.config.attestation_level.value
+            "timestamp": self._get_timestamp(),
+            "component": component,
+            "result": result,
+            "calculated_hash": calculated_hash,
+            "reference_hash": reference_hash,
+            "attestation_level": self.config.attestation_level.value,
         }
         self.attestation_log.append(log_entry)
 
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
         import time
+
         return time.time()
+
 
 class DifferentialPrivacyManager:
     """Differential privacy for medical AI data protection."""
@@ -880,10 +929,13 @@ class DifferentialPrivacyManager:
         self.query_count = 0
         self.privacy_log: List[Dict[str, Any]] = []
 
-        logger.info(f"Differential privacy manager initialized with budget {self.privacy_budget}")
+        logger.info(
+            f"Differential privacy manager initialized with budget {self.privacy_budget}"
+        )
 
-    def add_laplace_noise(self, data: np.ndarray, sensitivity: float,
-                         epsilon: float) -> Tuple[np.ndarray, bool]:
+    def add_laplace_noise(
+        self, data: np.ndarray, sensitivity: float, epsilon: float
+    ) -> Tuple[np.ndarray, bool]:
         """
         Add Laplace noise for differential privacy.
 
@@ -899,7 +951,9 @@ class DifferentialPrivacyManager:
             return data, True
 
         if epsilon > self.remaining_budget:
-            logger.warning(f"Insufficient privacy budget: need {epsilon}, have {self.remaining_budget}")
+            logger.warning(
+                f"Insufficient privacy budget: need {epsilon}, have {self.remaining_budget}"
+            )
             return data, False
 
         try:
@@ -919,15 +973,18 @@ class DifferentialPrivacyManager:
             # Log privacy operation
             self._log_privacy_operation("laplace_noise", epsilon, sensitivity)
 
-            logger.debug(f"Added Laplace noise with ε={epsilon}, remaining budget={self.remaining_budget}")
+            logger.debug(
+                f"Added Laplace noise with ε={epsilon}, remaining budget={self.remaining_budget}"
+            )
             return noisy_data, True
 
         except Exception as e:
             logger.error(f"Failed to add Laplace noise: {e}")
             return data, False
 
-    def add_gaussian_noise(self, data: np.ndarray, sensitivity: float,
-                          epsilon: float, delta: float = 1e-5) -> Tuple[np.ndarray, bool]:
+    def add_gaussian_noise(
+        self, data: np.ndarray, sensitivity: float, epsilon: float, delta: float = 1e-5
+    ) -> Tuple[np.ndarray, bool]:
         """
         Add Gaussian noise for (ε,δ)-differential privacy.
 
@@ -944,7 +1001,9 @@ class DifferentialPrivacyManager:
             return data, True
 
         if epsilon > self.remaining_budget:
-            logger.warning(f"Insufficient privacy budget: need {epsilon}, have {self.remaining_budget}")
+            logger.warning(
+                f"Insufficient privacy budget: need {epsilon}, have {self.remaining_budget}"
+            )
             return data, False
 
         try:
@@ -965,7 +1024,9 @@ class DifferentialPrivacyManager:
             # Log privacy operation
             self._log_privacy_operation("gaussian_noise", epsilon, sensitivity, delta)
 
-            logger.debug(f"Added Gaussian noise with ε={epsilon}, δ={delta}, remaining budget={self.remaining_budget}")
+            logger.debug(
+                f"Added Gaussian noise with ε={epsilon}, δ={delta}, remaining budget={self.remaining_budget}"
+            )
             return noisy_data, True
 
         except Exception as e:
@@ -1038,35 +1099,43 @@ class DifferentialPrivacyManager:
 
         logger.info(f"Privacy budget reset to {self.privacy_budget}")
 
-    def _log_privacy_operation(self, operation: str, epsilon: float,
-                              sensitivity: float, delta: Optional[float] = None):
+    def _log_privacy_operation(
+        self,
+        operation: str,
+        epsilon: float,
+        sensitivity: float,
+        delta: Optional[float] = None,
+    ):
         """Log privacy-preserving operation."""
         log_entry = {
-            'timestamp': self._get_timestamp(),
-            'operation': operation,
-            'epsilon': epsilon,
-            'sensitivity': sensitivity,
-            'delta': delta,
-            'remaining_budget': self.remaining_budget,
-            'query_count': self.query_count
+            "timestamp": self._get_timestamp(),
+            "operation": operation,
+            "epsilon": epsilon,
+            "sensitivity": sensitivity,
+            "delta": delta,
+            "remaining_budget": self.remaining_budget,
+            "query_count": self.query_count,
         }
         self.privacy_log.append(log_entry)
 
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
         import time
+
         return time.time()
 
     def get_privacy_report(self) -> Dict[str, Any]:
         """Get privacy budget and usage report."""
         return {
-            'total_budget': self.privacy_budget,
-            'remaining_budget': self.remaining_budget,
-            'consumed_budget': self.privacy_budget - self.remaining_budget,
-            'query_count': self.query_count,
-            'budget_utilization': (self.privacy_budget - self.remaining_budget) / self.privacy_budget,
-            'recent_operations': self.privacy_log[-10:] if self.privacy_log else []
+            "total_budget": self.privacy_budget,
+            "remaining_budget": self.remaining_budget,
+            "consumed_budget": self.privacy_budget - self.remaining_budget,
+            "query_count": self.query_count,
+            "budget_utilization": (self.privacy_budget - self.remaining_budget)
+            / self.privacy_budget,
+            "recent_operations": self.privacy_log[-10:] if self.privacy_log else [],
         }
+
 
 class AuditLogger:
     """Comprehensive audit logging for security events."""
@@ -1093,7 +1162,7 @@ class AuditLogger:
         import logging
 
         # Create audit-specific logger
-        audit_logger = logging.getLogger('security_audit')
+        audit_logger = logging.getLogger("security_audit")
         audit_logger.setLevel(logging.INFO)
 
         # Create file handler
@@ -1102,17 +1171,23 @@ class AuditLogger:
 
         # Create formatter
         formatter = logging.Formatter(
-            '%(asctime)s - AUDIT - %(levelname)s - %(message)s'
+            "%(asctime)s - AUDIT - %(levelname)s - %(message)s"
         )
         file_handler.setFormatter(formatter)
 
         audit_logger.addHandler(file_handler)
         self.file_logger = audit_logger
 
-    def log_security_event(self, event_type: str, component: str,
-                          action: str, result: str, user_id: Optional[str] = None,
-                          security_level: SecurityLevel = SecurityLevel.MEDIUM,
-                          details: Optional[Dict[str, Any]] = None):
+    def log_security_event(
+        self,
+        event_type: str,
+        component: str,
+        action: str,
+        result: str,
+        user_id: Optional[str] = None,
+        security_level: SecurityLevel = SecurityLevel.MEDIUM,
+        details: Optional[Dict[str, Any]] = None,
+    ):
         """
         Log a security event.
 
@@ -1137,13 +1212,13 @@ class AuditLogger:
             resource="",  # Can be populated based on context
             result=result,
             details=details or {},
-            security_level=security_level
+            security_level=security_level,
         )
 
         self.audit_log.append(entry)
 
         # Log to file if enabled
-        if hasattr(self, 'file_logger'):
+        if hasattr(self, "file_logger"):
             log_message = (
                 f"Event: {event_type} | Component: {component} | "
                 f"Action: {action} | Result: {result} | "
@@ -1159,8 +1234,13 @@ class AuditLogger:
         if security_level == SecurityLevel.CRITICAL:
             logger.critical(f"CRITICAL SECURITY EVENT: {event_type} in {component}")
 
-    def log_authentication_event(self, user_id: str, action: str,
-                                result: str, details: Optional[Dict[str, Any]] = None):
+    def log_authentication_event(
+        self,
+        user_id: str,
+        action: str,
+        result: str,
+        details: Optional[Dict[str, Any]] = None,
+    ):
         """Log authentication-related events."""
         self.log_security_event(
             event_type="authentication",
@@ -1169,11 +1249,16 @@ class AuditLogger:
             result=result,
             user_id=user_id,
             security_level=SecurityLevel.HIGH,
-            details=details
+            details=details,
         )
 
-    def log_encryption_event(self, operation: str, algorithm: str,
-                           result: str, component: str = "crypto_system"):
+    def log_encryption_event(
+        self,
+        operation: str,
+        algorithm: str,
+        result: str,
+        component: str = "crypto_system",
+    ):
         """Log encryption-related events."""
         self.log_security_event(
             event_type="encryption",
@@ -1181,11 +1266,16 @@ class AuditLogger:
             action=operation,
             result=result,
             security_level=SecurityLevel.MEDIUM,
-            details={'algorithm': algorithm}
+            details={"algorithm": algorithm},
         )
 
-    def log_access_violation(self, component: str, attempted_action: str,
-                           user_id: Optional[str] = None, details: Optional[Dict[str, Any]] = None):
+    def log_access_violation(
+        self,
+        component: str,
+        attempted_action: str,
+        user_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ):
         """Log security access violations."""
         self.log_security_event(
             event_type="access_violation",
@@ -1194,7 +1284,7 @@ class AuditLogger:
             result="denied",
             user_id=user_id,
             security_level=SecurityLevel.HIGH,
-            details=details
+            details=details,
         )
 
     def get_audit_summary(self, hours: int = 24) -> Dict[str, Any]:
@@ -1211,13 +1301,12 @@ class AuditLogger:
         cutoff_time = current_time - (hours * 3600)
 
         recent_entries = [
-            entry for entry in self.audit_log
-            if entry.timestamp >= cutoff_time
+            entry for entry in self.audit_log if entry.timestamp >= cutoff_time
         ]
 
         # Summarize by event type
         event_counts = {}
-        result_counts = {'success': 0, 'failed': 0, 'denied': 0}
+        result_counts = {"success": 0, "failed": 0, "denied": 0}
         security_level_counts = {level.value: 0 for level in SecurityLevel}
 
         for entry in recent_entries:
@@ -1226,25 +1315,29 @@ class AuditLogger:
             security_level_counts[entry.security_level.value] += 1
 
         return {
-            'time_period_hours': hours,
-            'total_events': len(recent_entries),
-            'events_by_type': event_counts,
-            'results_summary': result_counts,
-            'security_levels': security_level_counts,
-            'critical_events': [
-                entry.__dict__ for entry in recent_entries
+            "time_period_hours": hours,
+            "total_events": len(recent_entries),
+            "events_by_type": event_counts,
+            "results_summary": result_counts,
+            "security_levels": security_level_counts,
+            "critical_events": [
+                entry.__dict__
+                for entry in recent_entries
                 if entry.security_level == SecurityLevel.CRITICAL
             ],
-            'failed_events': [
-                entry.__dict__ for entry in recent_entries
-                if entry.result in ['failed', 'denied']
-            ]
+            "failed_events": [
+                entry.__dict__
+                for entry in recent_entries
+                if entry.result in ["failed", "denied"]
+            ],
         }
 
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
         import time
+
         return time.time()
+
 
 class SecurityManager:
     """Main security management system coordinating all security components."""
@@ -1260,11 +1353,11 @@ class SecurityManager:
 
         # Initialize security components (simplified for type safety)
         self.security_state = {
-            'system_secure': True,
-            'attestation_valid': False,
-            'encryption_enabled': config.enable_encryption,
-            'audit_enabled': config.enable_audit_logging,
-            'last_security_check': 0.0
+            "system_secure": True,
+            "attestation_valid": False,
+            "encryption_enabled": config.enable_encryption,
+            "audit_enabled": config.enable_audit_logging,
+            "last_security_check": 0.0,
         }
 
         # Security metrics and state
@@ -1272,7 +1365,9 @@ class SecurityManager:
 
         # Initialize security component managers
         self.key_manager = KeyManager(config) if config.enable_key_management else None
-        self.attestation_manager = HardwareAttestationManager(config) if config.enable_attestation else None
+        self.attestation_manager = (
+            HardwareAttestationManager(config) if config.enable_attestation else None
+        )
         self.audit_logger = AuditLogger(config) if config.enable_audit_logging else None
 
         # Cryptographic providers
@@ -1280,7 +1375,7 @@ class SecurityManager:
             EncryptionAlgorithm.AES_256_GCM: AESGCMProvider(256),
             EncryptionAlgorithm.AES_128_CBC: AESGCMProvider(128),
             EncryptionAlgorithm.RSA_2048: RSAProvider(2048),
-            EncryptionAlgorithm.RSA_4096: RSAProvider(4096)
+            EncryptionAlgorithm.RSA_4096: RSAProvider(4096),
         }
 
         # Generate system keys (simplified)
@@ -1288,9 +1383,12 @@ class SecurityManager:
 
         logger.info("Security manager initialized")
 
-    def encrypt_data(self, data: Union[bytes, np.ndarray],
-                    key_id: str = "system_data_key",
-                    algorithm: Optional[EncryptionAlgorithm] = None) -> bytes:
+    def encrypt_data(
+        self,
+        data: Union[bytes, np.ndarray],
+        key_id: str = "system_data_key",
+        algorithm: Optional[EncryptionAlgorithm] = None,
+    ) -> bytes:
         """
         Encrypt data using specified key and algorithm.
 
@@ -1312,7 +1410,9 @@ class SecurityManager:
             if isinstance(data, np.ndarray):
                 data_bytes = data.tobytes()
                 # Prepend shape and dtype info for reconstruction
-                shape_info = str(data.shape).encode() + b'\n' + str(data.dtype).encode() + b'\n'
+                shape_info = (
+                    str(data.shape).encode() + b"\n" + str(data.dtype).encode() + b"\n"
+                )
                 data_bytes = shape_info + data_bytes
             else:
                 data_bytes = data if isinstance(data, bytes) else str(data).encode()
@@ -1337,10 +1437,13 @@ class SecurityManager:
                 return data.tobytes()
             return data if isinstance(data, bytes) else str(data).encode()
 
-    def decrypt_data(self, encrypted_data: bytes,
-                    key_id: str = "system_data_key",
-                    algorithm: Optional[EncryptionAlgorithm] = None,
-                    return_as_array: bool = False) -> Union[bytes, np.ndarray]:
+    def decrypt_data(
+        self,
+        encrypted_data: bytes,
+        key_id: str = "system_data_key",
+        algorithm: Optional[EncryptionAlgorithm] = None,
+        return_as_array: bool = False,
+    ) -> Union[bytes, np.ndarray]:
         """
         Decrypt data using specified key and algorithm.
 
@@ -1368,9 +1471,9 @@ class SecurityManager:
             decrypted_data = provider.decrypt(encrypted_data, self.system_key)
 
             # If this was a numpy array, reconstruct it
-            if return_as_array and b'\n' in decrypted_data[:200]:  # Shape info present
+            if return_as_array and b"\n" in decrypted_data[:200]:  # Shape info present
                 try:
-                    lines = decrypted_data.split(b'\n', 2)
+                    lines = decrypted_data.split(b"\n", 2)
                     if len(lines) >= 3:
                         shape_str = lines[0].decode()
                         dtype_str = lines[1].decode()
@@ -1399,9 +1502,12 @@ class SecurityManager:
                 return np.frombuffer(encrypted_data, dtype=np.uint8)
             return encrypted_data
 
-    def secure_compute(self, data: np.ndarray,
-                      operation: Callable[[np.ndarray], np.ndarray],
-                      privacy_epsilon: float = 0.1) -> Tuple[np.ndarray, bool]:
+    def secure_compute(
+        self,
+        data: np.ndarray,
+        operation: Callable[[np.ndarray], np.ndarray],
+        privacy_epsilon: float = 0.1,
+    ) -> Tuple[np.ndarray, bool]:
         """
         Perform secure computation with privacy preservation.
 
@@ -1419,10 +1525,12 @@ class SecurityManager:
 
             # Step 2: Decrypt for computation (in secure environment)
             decrypted_input = self.decrypt_data(encrypted_input, return_as_array=True)
-            
+
             # Ensure we have a numpy array
             if not isinstance(decrypted_input, np.ndarray):
-                decrypted_input = np.frombuffer(decrypted_input, dtype=data.dtype).reshape(data.shape)
+                decrypted_input = np.frombuffer(
+                    decrypted_input, dtype=data.dtype
+                ).reshape(data.shape)
 
             # Step 3: Perform computation
             result = operation(decrypted_input)
@@ -1430,7 +1538,7 @@ class SecurityManager:
             # Step 4: Apply differential privacy if enabled
             if self.config.enable_differential_privacy:
                 # Simple Laplace noise addition
-                noise = np.random.laplace(0, 1.0/privacy_epsilon, result.shape)
+                noise = np.random.laplace(0, 1.0 / privacy_epsilon, result.shape)
                 private_result = result + noise
             else:
                 private_result = result
@@ -1438,10 +1546,12 @@ class SecurityManager:
             # Step 5: Encrypt result
             encrypted_result = self.encrypt_data(private_result)
             final_result = self.decrypt_data(encrypted_result, return_as_array=True)
-            
+
             # Ensure return type is numpy array
             if not isinstance(final_result, np.ndarray):
-                final_result = np.frombuffer(final_result, dtype=result.dtype).reshape(result.shape)
+                final_result = np.frombuffer(final_result, dtype=result.dtype).reshape(
+                    result.shape
+                )
 
             return final_result, True
 
@@ -1462,30 +1572,38 @@ class SecurityManager:
         try:
             # Perform hardware attestation
             if self.attestation_manager:
-                attestation_result = self.attestation_manager.perform_system_attestation(
-                    system_components
+                attestation_result = (
+                    self.attestation_manager.perform_system_attestation(
+                        system_components
+                    )
                 )
             else:
-                logger.warning("Attestation manager not available, skipping integrity verification")
+                logger.warning(
+                    "Attestation manager not available, skipping integrity verification"
+                )
                 attestation_result = True
 
             # Update security state
-            self.security_state['attestation_valid'] = attestation_result
-            self.security_state['last_security_check'] = time.time()
+            self.security_state["attestation_valid"] = attestation_result
+            self.security_state["last_security_check"] = time.time()
 
             if attestation_result:
                 if self.audit_logger:
                     self.audit_logger.log_security_event(
-                        "system_integrity", "attestation_manager",
-                        "verify_integrity", "success"
+                        "system_integrity",
+                        "attestation_manager",
+                        "verify_integrity",
+                        "success",
                     )
                 logger.info("System integrity verification passed")
             else:
                 if self.audit_logger:
                     self.audit_logger.log_security_event(
-                        "system_integrity", "attestation_manager",
-                        "verify_integrity", "failed",
-                        security_level=SecurityLevel.CRITICAL
+                        "system_integrity",
+                        "attestation_manager",
+                        "verify_integrity",
+                        "failed",
+                        security_level=SecurityLevel.CRITICAL,
                     )
                 logger.error("System integrity verification failed")
 
@@ -1496,10 +1614,12 @@ class SecurityManager:
 
             if self.audit_logger:
                 self.audit_logger.log_security_event(
-                    "system_integrity", "attestation_manager",
-                    "verify_integrity", "error",
+                    "system_integrity",
+                    "attestation_manager",
+                    "verify_integrity",
+                    "error",
                     security_level=SecurityLevel.CRITICAL,
-                    details={'error': str(e)}
+                    details={"error": str(e)},
                 )
 
             return False
@@ -1525,9 +1645,11 @@ class SecurityManager:
 
             if self.audit_logger:
                 self.audit_logger.log_security_event(
-                    "key_management", "key_manager",
-                    "rotate_keys", "success" if all_success else "partial_failure",
-                    details=rotation_results
+                    "key_management",
+                    "key_manager",
+                    "rotate_keys",
+                    "success" if all_success else "partial_failure",
+                    details=rotation_results,
                 )
 
             return all_success
@@ -1537,9 +1659,11 @@ class SecurityManager:
 
             if self.audit_logger:
                 self.audit_logger.log_security_event(
-                    "key_management", "key_manager",
-                    "rotate_keys", "failed",
-                    details={'error': str(e)}
+                    "key_management",
+                    "key_manager",
+                    "rotate_keys",
+                    "failed",
+                    details={"error": str(e)},
                 )
 
             return False
@@ -1547,25 +1671,25 @@ class SecurityManager:
     def get_security_status(self) -> Dict[str, Any]:
         """Get comprehensive security status report."""
         return {
-            'security_state': self.security_state,
-            'security_config': {
-                'encryption_enabled': self.config.enable_encryption,
-                'secure_boot_enabled': self.config.enable_secure_boot,
-                'attestation_enabled': self.config.enable_attestation,
-                'audit_logging_enabled': self.config.enable_audit_logging,
-                'differential_privacy_enabled': self.config.enable_differential_privacy,
+            "security_state": self.security_state,
+            "security_config": {
+                "encryption_enabled": self.config.enable_encryption,
+                "secure_boot_enabled": self.config.enable_secure_boot,
+                "attestation_enabled": self.config.enable_attestation,
+                "audit_logging_enabled": self.config.enable_audit_logging,
+                "differential_privacy_enabled": self.config.enable_differential_privacy,
             },
-            'metrics': {
-                'encryption_operations': self.metrics.encryption_operations,
-                'decryption_operations': self.metrics.decryption_operations,
-                'security_violations': self.metrics.security_violations,
-                'failed_authentications': self.metrics.failed_authentications,
+            "metrics": {
+                "encryption_operations": self.metrics.encryption_operations,
+                "decryption_operations": self.metrics.decryption_operations,
+                "security_violations": self.metrics.security_violations,
+                "failed_authentications": self.metrics.failed_authentications,
             },
-            'compliance_status': {
-                'hipaa_compliant': self.config.hipaa_compliant,
-                'fda_compliant': self.config.fda_compliant,
-                'gdpr_compliant': self.config.gdpr_compliant
-            }
+            "compliance_status": {
+                "hipaa_compliant": self.config.hipaa_compliant,
+                "fda_compliant": self.config.fda_compliant,
+                "gdpr_compliant": self.config.gdpr_compliant,
+            },
         }
 
     def emergency_shutdown(self, reason: str) -> bool:
@@ -1582,12 +1706,12 @@ class SecurityManager:
             logger.critical(f"EMERGENCY SECURITY SHUTDOWN: {reason}")
 
             # Disable all cryptographic operations
-            self.security_state['system_locked'] = True
-            self.security_state['emergency_shutdown'] = True
-            
+            self.security_state["system_locked"] = True
+            self.security_state["emergency_shutdown"] = True
+
             # Record metrics
             self.metrics.security_violations += 1
-            
+
             return True
 
         except Exception as e:
@@ -1599,29 +1723,37 @@ class SecurityManager:
         try:
             for key, array in data.items():
                 if not isinstance(array, np.ndarray):
-                    logger.warning(f"Data integrity check failed: {key} is not an ndarray")
+                    logger.warning(
+                        f"Data integrity check failed: {key} is not an ndarray"
+                    )
                     return False
-                
+
                 # Check for NaN or infinite values
                 if np.any(np.isnan(array)) or np.any(np.isinf(array)):
-                    logger.warning(f"Data integrity check failed: {key} contains NaN or infinite values")
+                    logger.warning(
+                        f"Data integrity check failed: {key} contains NaN or infinite values"
+                    )
                     return False
-                
+
                 # Check for reasonable data ranges
                 if array.size > 0:
                     data_range = np.max(array) - np.min(array)
                     if data_range > 1e6:  # Arbitrary large range threshold
-                        logger.warning(f"Data integrity check failed: {key} has suspicious data range")
+                        logger.warning(
+                            f"Data integrity check failed: {key} has suspicious data range"
+                        )
                         return False
-            
+
             logger.info("Data integrity verification passed")
             return True
-            
+
         except Exception as e:
             logger.error(f"Data integrity verification failed: {e}")
             return False
 
-    def verify_signature(self, data: np.ndarray, signature: bytes, public_key: Optional[bytes] = None) -> bool:
+    def verify_signature(
+        self, data: np.ndarray, signature: bytes, public_key: Optional[bytes] = None
+    ) -> bool:
         """
         Verify a cryptographic signature.
 

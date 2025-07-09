@@ -11,22 +11,23 @@ without having to know the internal file structure (``.config``).
 from __future__ import annotations
 
 from typing import Optional
+
+import numpy as _np
+
+from .config import AcceleratorConfig as _RichAcceleratorConfig
 from .config import (
-    AcceleratorConfig as _RichAcceleratorConfig,
-    WorkloadConfig,
+    AcceleratorType,
     ArrayConfig,
     BufferConfig,
+    DataflowType,
+    DataType,
+    MedicalConfig,
     MemoryConfig,
     MemoryHierarchyConfig,
     PowerConfig,
-    MedicalConfig,
-    DataType,
-    DataflowType,
+    WorkloadConfig,
     WorkloadType,
-    AcceleratorType,
 )
-
-import numpy as _np
 
 
 class AcceleratorConfig(_RichAcceleratorConfig):  # type: ignore[misc]
@@ -53,7 +54,6 @@ class AcceleratorConfig(_RichAcceleratorConfig):  # type: ignore[misc]
         data_type: Optional[type] = None,
         **kwargs,
     ) -> None:
-
         # Start with defaults from parent class
         array_config = ArrayConfig()
         input_buffer_config = BufferConfig()
@@ -103,4 +103,4 @@ __all__: list[str] = [
     "DataflowType",
     "WorkloadType",
     "AcceleratorType",
-] 
+]

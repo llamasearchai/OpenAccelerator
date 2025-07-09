@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class DataType(Enum):
     """Supported data types for accelerator operations."""
+
     INT8 = "int8"
     INT16 = "int16"
     INT32 = "int32"
@@ -31,6 +32,7 @@ class DataType(Enum):
 # Array dataflow enumeration – used by advanced core models
 # ---------------------------------------------------------------------------
 
+
 class DataflowType(Enum):
     """Supported dataflow patterns for the systolic array."""
 
@@ -41,6 +43,7 @@ class DataflowType(Enum):
 
 class AcceleratorType(Enum):
     """Types of accelerator configurations."""
+
     MEDICAL = "medical"
     EDGE = "edge"
     DATACENTER = "datacenter"
@@ -49,6 +52,7 @@ class AcceleratorType(Enum):
 
 class WorkloadType(Enum):
     """Supported workload types."""
+
     GEMM = "gemm"
     CONVOLUTION = "convolution"
     MEDICAL_IMAGING = "medical_imaging"
@@ -57,6 +61,7 @@ class WorkloadType(Enum):
 
 class MemoryType(Enum):
     """Memory types supported by the accelerator."""
+
     SRAM = "sram"
     DRAM = "dram"
     HBM = "hbm"
@@ -66,6 +71,7 @@ class MemoryType(Enum):
 @dataclass
 class ArrayConfig:
     """Configuration for the systolic array."""
+
     rows: int = 16
     cols: int = 16
     frequency: float = 1e9  # 1 GHz
@@ -73,7 +79,7 @@ class ArrayConfig:
 
     # Advanced parameters
     dataflow: DataflowType = DataflowType.OUTPUT_STATIONARY
-    pe_config: 'PEConfig' = field(default_factory=lambda: PEConfig())
+    pe_config: "PEConfig" = field(default_factory=lambda: PEConfig())
 
     def __post_init__(self):
         if self.rows <= 0 or self.cols <= 0:
@@ -99,6 +105,7 @@ class ArrayConfig:
 @dataclass
 class BufferConfig:
     """Configuration for memory buffers."""
+
     buffer_size: int = 1024  # Elements
     bandwidth: int = 16  # Elements per cycle
     latency: int = 1  # Cycles
@@ -115,6 +122,7 @@ class BufferConfig:
 @dataclass
 class PowerConfig:
     """Configuration for power management."""
+
     enable_power_gating: bool = True
     enable_dvfs: bool = True
     thermal_design_power: float = 100.0  # Watts
@@ -130,6 +138,7 @@ class PowerConfig:
 @dataclass
 class MedicalConfig:
     """Configuration for medical AI features."""
+
     enable_medical_mode: bool = False
     dicom_support: bool = True
     nifti_support: bool = True
@@ -139,18 +148,21 @@ class MedicalConfig:
     # Medical imaging parameters
     default_modality: str = "CT"
     max_image_size: tuple[int, int] = (512, 512)
-    supported_modalities: List[str] = field(default_factory=lambda: ["CT", "MRI", "X-Ray", "Ultrasound"])
+    supported_modalities: List[str] = field(
+        default_factory=lambda: ["CT", "MRI", "X-Ray", "Ultrasound"]
+    )
 
 
 @dataclass
 class MemoryConfig:
     """Configuration for memory buffers."""
+
     buffer_size: int = 1024
     bandwidth: int = 16
     latency: int = 1
     memory_type: MemoryType = MemoryType.SRAM
     energy_per_access: float = 0.1  # pJ per bit
-    
+
     def __post_init__(self):
         if self.buffer_size <= 0:
             raise ValueError("Buffer size must be positive")
@@ -163,34 +175,39 @@ class MemoryConfig:
 @dataclass
 class MemoryHierarchyConfig:
     """Configuration for memory hierarchy including caches and main memory."""
+
     # L1 Cache configuration
     l1_size: int = 8192  # 8KB
     l1_bandwidth: int = 32  # Elements per cycle
     l1_latency: int = 1  # Cycles
     l1_associativity: int = 4
-    
-    # L2 Cache configuration  
+
+    # L2 Cache configuration
     l2_size: int = 65536  # 64KB
     l2_bandwidth: int = 16  # Elements per cycle
     l2_latency: int = 8  # Cycles
     l2_associativity: int = 8
-    
+
     # Main memory configuration
     main_memory_size: int = 134217728  # 128MB
     main_memory_bandwidth: int = 8  # Elements per cycle
     main_memory_latency: int = 100  # Cycles
     enable_hbm: bool = False  # Use HBM instead of DRAM
-    
+
     # Memory management
     enable_prefetching: bool = True
     prefetch_distance: int = 4
     write_policy: str = "write_through"  # "write_through" or "write_back"
     replacement_policy: str = "LRU"  # "LRU", "FIFO", "RANDOM"
-    
+
     def __post_init__(self):
         if self.l1_size <= 0 or self.l2_size <= 0 or self.main_memory_size <= 0:
             raise ValueError("Memory sizes must be positive")
-        if self.l1_bandwidth <= 0 or self.l2_bandwidth <= 0 or self.main_memory_bandwidth <= 0:
+        if (
+            self.l1_bandwidth <= 0
+            or self.l2_bandwidth <= 0
+            or self.main_memory_bandwidth <= 0
+        ):
             raise ValueError("Memory bandwidths must be positive")
         if self.l1_latency < 0 or self.l2_latency < 0 or self.main_memory_latency < 0:
             raise ValueError("Memory latencies must be non-negative")
@@ -203,9 +220,12 @@ class MemoryHierarchyConfig:
 @dataclass
 class PEConfig:
     """Configuration parameters specific to a Processing Element (PE)."""
+
     # Sparsity support
     enable_sparsity: bool = False
-    sparsity_threshold: float = 1e-6  # Values with magnitude below this are treated as zero
+    sparsity_threshold: float = (
+        1e-6  # Values with magnitude below this are treated as zero
+    )
 
     # Power management
     power_gating: bool = False  # Enable power gating when PE is idle
@@ -221,6 +241,7 @@ class PEConfig:
 @dataclass
 class WorkloadConfig:
     """Configuration for workloads."""
+
     workload_type: WorkloadType = WorkloadType.GEMM
     name: str = "default_workload"
 
@@ -257,17 +278,25 @@ class WorkloadConfig:
         if self.workload_type == WorkloadType.GEMM:
             if not all([self.gemm_M, self.gemm_K, self.gemm_P]):
                 raise ValueError("GEMM workload requires M, K, P dimensions")
-            if any(dim <= 0 for dim in [self.gemm_M, self.gemm_K, self.gemm_P] if dim is not None):
+            if any(
+                dim <= 0
+                for dim in [self.gemm_M, self.gemm_K, self.gemm_P]
+                if dim is not None
+            ):
                 raise ValueError("GEMM dimensions must be positive")
 
         elif self.workload_type == WorkloadType.CONVOLUTION:
             required_params = [
-                self.conv_input_height, self.conv_input_width,
-                self.conv_input_channels, self.conv_output_channels,
-                self.conv_kernel_size
+                self.conv_input_height,
+                self.conv_input_width,
+                self.conv_input_channels,
+                self.conv_output_channels,
+                self.conv_kernel_size,
             ]
             if not all(param is not None for param in required_params):
-                raise ValueError("Convolution workload requires all input/output dimensions")
+                raise ValueError(
+                    "Convolution workload requires all input/output dimensions"
+                )
             if any(param <= 0 for param in required_params if param is not None):
                 raise ValueError("Convolution dimensions must be positive")
 
@@ -281,6 +310,7 @@ class WorkloadConfig:
 @dataclass
 class AcceleratorConfig:
     """Complete accelerator configuration."""
+
     name: str = "OpenAccelerator"
     accelerator_type: AcceleratorType = AcceleratorType.BALANCED
     data_type: DataType = DataType.FLOAT32
@@ -302,7 +332,7 @@ class AcceleratorConfig:
     max_cycles: int = 1_000_000
     debug_mode: bool = False
     enable_logging: bool = True
-    
+
     # Advanced modeling features
     enable_thermal_modeling: bool = False
     enable_power_modeling: bool = False
@@ -321,58 +351,62 @@ class AcceleratorConfig:
             # Reduce memory sizes for edge devices
             self.memory.l1_size = min(self.memory.l1_size, 4096)  # 4KB max
             self.memory.l2_size = min(self.memory.l2_size, 32768)  # 32KB max
-            self.memory.main_memory_size = min(self.memory.main_memory_size, 16777216)  # 16MB max
+            self.memory.main_memory_size = min(
+                self.memory.main_memory_size, 16777216
+            )  # 16MB max
         elif self.accelerator_type == AcceleratorType.DATACENTER:
             # Increase memory sizes for datacenter
             self.memory.enable_hbm = True
-            self.memory.main_memory_size = max(self.memory.main_memory_size, 1073741824)  # 1GB min
+            self.memory.main_memory_size = max(
+                self.memory.main_memory_size, 1073741824
+            )  # 1GB min
 
     @property
     def medical_mode(self) -> bool:
         """Convenience property for medical mode status."""
         return self.medical.enable_medical_mode
-    
+
     # Backward compatibility properties
     @property
     def array_rows(self) -> int:
         """Convenience property for array rows."""
         return self.array.rows
-    
+
     @array_rows.setter
     def array_rows(self, value: int):
         """Setter for array rows."""
         if value <= 0:
             raise ValueError("Array rows must be positive")
         self.array.rows = value
-    
+
     @property
     def array_cols(self) -> int:
         """Convenience property for array columns."""
         return self.array.cols
-    
+
     @array_cols.setter
     def array_cols(self, value: int):
         """Setter for array columns."""
         if value <= 0:
             raise ValueError("Array columns must be positive")
         self.array.cols = value
-    
+
     @property
     def frequency_mhz(self) -> float:
         """Convenience property for frequency in MHz."""
         return self.array.frequency / 1e6
-    
+
     @frequency_mhz.setter
     def frequency_mhz(self, value: float):
         """Setter for frequency in MHz."""
         self.array.frequency = value * 1e6
-    
+
     @property
     def memory_hierarchy(self) -> Optional[MemoryHierarchyConfig]:
         """Convenience property for memory hierarchy."""
         return self.memory
-    
-    @memory_hierarchy.setter  
+
+    @memory_hierarchy.setter
     def memory_hierarchy(self, value: Optional[MemoryHierarchyConfig]):
         """Setter for memory hierarchy."""
         if value is not None:
@@ -382,16 +416,19 @@ class AcceleratorConfig:
 # Configuration exceptions
 class ConfigurationError(Exception):
     """Base exception for configuration errors."""
+
     pass
 
 
 class InvalidConfigurationError(ConfigurationError):
     """Raised when configuration validation fails."""
+
     pass
 
 
 class ConfigurationFileError(ConfigurationError):
     """Raised when configuration file operations fail."""
+
     pass
 
 
@@ -505,7 +542,7 @@ def load_config(config_path: Union[str, Path]) -> AcceleratorConfig:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config_data = yaml.safe_load(f)
 
         # Convert nested dictionaries to dataclass instances
@@ -528,7 +565,7 @@ def save_config(config: AcceleratorConfig, config_path: Union[str, Path]) -> Non
         # Convert dataclass to dictionary
         config_dict = _config_to_dict(config)
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             yaml.safe_dump(config_dict, f, indent=2, default_flow_style=False)
 
         logger.info(f"Configuration saved to {config_path}")
@@ -542,30 +579,32 @@ def _dict_to_config(config_dict: Dict[str, Any]) -> AcceleratorConfig:
     """Convert dictionary to AcceleratorConfig."""
 
     # Handle enums
-    if 'accelerator_type' in config_dict:
-        config_dict['accelerator_type'] = AcceleratorType(config_dict['accelerator_type'])
+    if "accelerator_type" in config_dict:
+        config_dict["accelerator_type"] = AcceleratorType(
+            config_dict["accelerator_type"]
+        )
 
-    if 'data_type' in config_dict:
-        config_dict['data_type'] = DataType(config_dict['data_type'])
+    if "data_type" in config_dict:
+        config_dict["data_type"] = DataType(config_dict["data_type"])
 
     # Handle nested configurations
-    if 'array' in config_dict:
-        config_dict['array'] = ArrayConfig(**config_dict['array'])
+    if "array" in config_dict:
+        config_dict["array"] = ArrayConfig(**config_dict["array"])
 
-    if 'input_buffer' in config_dict:
-        config_dict['input_buffer'] = BufferConfig(**config_dict['input_buffer'])
+    if "input_buffer" in config_dict:
+        config_dict["input_buffer"] = BufferConfig(**config_dict["input_buffer"])
 
-    if 'weight_buffer' in config_dict:
-        config_dict['weight_buffer'] = BufferConfig(**config_dict['weight_buffer'])
+    if "weight_buffer" in config_dict:
+        config_dict["weight_buffer"] = BufferConfig(**config_dict["weight_buffer"])
 
-    if 'output_buffer' in config_dict:
-        config_dict['output_buffer'] = BufferConfig(**config_dict['output_buffer'])
+    if "output_buffer" in config_dict:
+        config_dict["output_buffer"] = BufferConfig(**config_dict["output_buffer"])
 
-    if 'power' in config_dict:
-        config_dict['power'] = PowerConfig(**config_dict['power'])
+    if "power" in config_dict:
+        config_dict["power"] = PowerConfig(**config_dict["power"])
 
-    if 'medical' in config_dict:
-        config_dict['medical'] = MedicalConfig(**config_dict['medical'])
+    if "medical" in config_dict:
+        config_dict["medical"] = MedicalConfig(**config_dict["medical"])
 
     return AcceleratorConfig(**config_dict)
 
@@ -575,12 +614,12 @@ def _config_to_dict(config: AcceleratorConfig) -> Dict[str, Any]:
 
     def _dataclass_to_dict(obj):
         """Recursively convert dataclass to dictionary."""
-        if hasattr(obj, '__dataclass_fields__'):
+        if hasattr(obj, "__dataclass_fields__"):
             result = {}
             for field_name, field_value in obj.__dict__.items():
                 if isinstance(field_value, Enum):
                     result[field_name] = field_value.value
-                elif hasattr(field_value, '__dataclass_fields__'):
+                elif hasattr(field_value, "__dataclass_fields__"):
                     result[field_name] = _dataclass_to_dict(field_value)
                 else:
                     result[field_name] = field_value
@@ -665,7 +704,9 @@ def validate_config(config: AcceleratorConfig) -> List[str]:
     # Check buffer sizes
     min_buffer_size = config.array.rows * config.array.cols
     if config.input_buffer.buffer_size < min_buffer_size:
-        warnings.append(f"Input buffer size ({config.input_buffer.buffer_size}) may be too small for array size ({min_buffer_size})")
+        warnings.append(
+            f"Input buffer size ({config.input_buffer.buffer_size}) may be too small for array size ({min_buffer_size})"
+        )
 
     # Check power settings
     if config.power.thermal_design_power < 1.0:
@@ -708,7 +749,11 @@ def apply_env_overrides(config: AcceleratorConfig) -> AcceleratorConfig:
     # Medical mode
     medical_mode = os.getenv("OPENACCEL_MEDICAL_MODE")
     if medical_mode:
-        config.medical.enable_medical_mode = medical_mode.lower() in ("true", "1", "yes")
+        config.medical.enable_medical_mode = medical_mode.lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
     logger.info("Applied environment variable overrides")
     return config

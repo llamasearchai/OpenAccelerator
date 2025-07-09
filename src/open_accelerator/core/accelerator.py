@@ -181,27 +181,27 @@ class AcceleratorController:
                 required_rows > self.config.array.rows
                 or required_cols > self.config.array.cols
             ):
-                logger.error(f"Required array size {required_rows}x{required_cols} exceeds available {self.config.array.rows}x{self.config.array.cols}")
+                logger.error(
+                    f"Required array size {required_rows}x{required_cols} exceeds available {self.config.array.rows}x{self.config.array.cols}"
+                )
                 return False
-        
+
         # Check if workload fits within max array size constraints
         if hasattr(workload_requirements, "max_array_size"):
             max_rows, max_cols = workload_requirements.max_array_size
             # Workload should be able to run if accelerator array is within max size
-            if (
-                self.config.array.rows > max_rows
-                or self.config.array.cols > max_cols
-            ):
-                logger.warning(f"Accelerator array {self.config.array.rows}x{self.config.array.cols} exceeds workload max {max_rows}x{max_cols}, but proceeding")
-        
+            if self.config.array.rows > max_rows or self.config.array.cols > max_cols:
+                logger.warning(
+                    f"Accelerator array {self.config.array.rows}x{self.config.array.cols} exceeds workload max {max_rows}x{max_cols}, but proceeding"
+                )
+
         # Check minimum array size requirements
         if hasattr(workload_requirements, "min_array_size"):
             min_rows, min_cols = workload_requirements.min_array_size
-            if (
-                self.config.array.rows < min_rows
-                or self.config.array.cols < min_cols
-            ):
-                logger.error(f"Accelerator array {self.config.array.rows}x{self.config.array.cols} is smaller than minimum required {min_rows}x{min_cols}")
+            if self.config.array.rows < min_rows or self.config.array.cols < min_cols:
+                logger.error(
+                    f"Accelerator array {self.config.array.rows}x{self.config.array.cols} is smaller than minimum required {min_rows}x{min_cols}"
+                )
                 return False
 
         # Check memory requirements
@@ -215,13 +215,20 @@ class AcceleratorController:
                 + self.config.output_buffer.buffer_size
             )
             if total_memory_needed > available_memory:
-                logger.error(f"Memory requirements {total_memory_needed} MB exceed available {available_memory} MB")
+                logger.error(
+                    f"Memory requirements {total_memory_needed} MB exceed available {available_memory} MB"
+                )
                 return False
 
         # Check data type compatibility
         if hasattr(workload_requirements, "supported_data_types"):
-            if self.config.data_type.value not in workload_requirements.supported_data_types:
-                logger.error(f"Data type {self.config.data_type.value} not supported by workload")
+            if (
+                self.config.data_type.value
+                not in workload_requirements.supported_data_types
+            ):
+                logger.error(
+                    f"Data type {self.config.data_type.value} not supported by workload"
+                )
                 return False
 
         return True
@@ -323,7 +330,7 @@ class AcceleratorController:
 
         # Finalize results
         array_results = self.systolic_array.get_results()
-        if hasattr(array_results, 'tolist'):
+        if hasattr(array_results, "tolist"):
             results["final_output"] = array_results.tolist()
         else:
             results["final_output"] = list(array_results)
@@ -348,13 +355,11 @@ class AcceleratorController:
 
         try:
             # Security processing (if enabled)
-            if hasattr(self.config, 'medical_mode') and self.config.medical_mode:
+            if hasattr(self.config, "medical_mode") and self.config.medical_mode:
                 operation_data = operation.get("data", np.array([]))
                 if operation_data.size > 0:
                     encrypted_data = self.security_manager.encrypt_data(operation_data)
-                    decrypted_data = self.security_manager.decrypt_data(
-                        encrypted_data
-                    )
+                    decrypted_data = self.security_manager.decrypt_data(encrypted_data)
                     if isinstance(decrypted_data, tuple):
                         operation["data"] = decrypted_data[0]
                     else:
@@ -465,7 +470,7 @@ class AcceleratorController:
         if "power_results" in cycle_results:
             power_data = cycle_results["power_results"]
             current_power = power_data.get("current_power", 0.0)
-            
+
             # Avoid division by zero
             if self.current_cycle > 0:
                 self.metrics.average_power_watts = (
@@ -474,7 +479,7 @@ class AcceleratorController:
                 ) / self.current_cycle
             else:
                 self.metrics.average_power_watts = current_power
-                
+
             self.metrics.peak_power_watts = max(
                 self.metrics.peak_power_watts, current_power
             )
@@ -521,7 +526,9 @@ class AcceleratorController:
         # Compile comprehensive results
         final_results = {
             "execution_summary": {
-                "workload_name": self.current_workload.get_name() if self.current_workload else "unknown",
+                "workload_name": self.current_workload.get_name()
+                if self.current_workload
+                else "unknown",
                 "total_cycles": self.metrics.total_cycles,
                 "total_operations": self.metrics.total_operations,
                 "execution_time_seconds": execution_time,

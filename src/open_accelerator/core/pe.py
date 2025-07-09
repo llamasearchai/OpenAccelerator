@@ -146,7 +146,7 @@ class ProcessingElement:
                 self.metrics.errors_detected += 1
                 self.state = PEState.ERROR
                 return None
-            
+
             # Convert to target type
             converted = self.numpy_type(value)
 
@@ -209,7 +209,9 @@ class ProcessingElement:
             True if MAC was performed successfully
         """
         # Static type guard – ensures inputs are not None for the remainder of the method
-        assert self.in_reg_a is not None and self.in_reg_b is not None, "Inputs must be present to perform MAC"
+        assert (
+            self.in_reg_a is not None and self.in_reg_b is not None
+        ), "Inputs must be present to perform MAC"
 
         try:
             # Check for sparsity

@@ -14,38 +14,46 @@ from typing import Any, Optional
 # import dspy
 # from dspy import InputField, OutputField, Predict, Signature
 
+
 # Simple replacements for dspy components
 class InputField:
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
 
+
 class OutputField:
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
+
 
 class Signature:
     def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
 
+
 class Predict:
     def __init__(self, signature):
         self.signature = signature
-    
+
     def __call__(self, **kwargs):
         # Simple mock implementation for non-DSPy mode
         from types import SimpleNamespace
-        return SimpleNamespace(**{
-            'analysis': "Mock analysis result",
-            'response': "Mock response",
-            'description': "Mock description",
-            'insights': "Mock insights",
-            'recommendations': "Mock recommendations",
-            'summary': "Mock summary",
-            'action_items': "Mock action items"
-        })
+
+        return SimpleNamespace(
+            **{
+                "analysis": "Mock analysis result",
+                "response": "Mock response",
+                "description": "Mock description",
+                "insights": "Mock insights",
+                "recommendations": "Mock recommendations",
+                "summary": "Mock summary",
+                "action_items": "Mock action items",
+            }
+        )
+
 
 from .model_registry import ModelRegistry, TaskType
 
@@ -56,8 +64,12 @@ class MultimodalSignature(Signature):
     def __init__(self):
         super().__init__("Multimodal", "Multimodal processing signature")
         self.text_input = InputField("text_input", "Text input for processing")
-        self.image_description = InputField("image_description", "Description of image content if image is present")
-        self.audio_transcript = InputField("audio_transcript", "Transcript of audio content if audio is present")
+        self.image_description = InputField(
+            "image_description", "Description of image content if image is present"
+        )
+        self.audio_transcript = InputField(
+            "audio_transcript", "Transcript of audio content if audio is present"
+        )
         self.task_type = InputField("task_type", "Type of multimodal task to perform")
         self.analysis = OutputField("analysis", "Multimodal analysis and insights")
         self.response = OutputField("response", "Response based on multimodal inputs")
@@ -70,7 +82,9 @@ class ImageAnalysisSignature(Signature):
     analysis_request = InputField("analysis_request", "What to analyze in the image")
     description = OutputField("description", "Detailed description of the image")
     insights = OutputField("insights", "Key insights and observations")
-    recommendations = OutputField("recommendations", "Recommendations based on image analysis")
+    recommendations = OutputField(
+        "recommendations", "Recommendations based on image analysis"
+    )
 
 
 class AudioProcessingSignature(Signature):
@@ -80,7 +94,9 @@ class AudioProcessingSignature(Signature):
     processing_task = InputField("processing_task", "Task to perform on audio content")
     analysis = OutputField("analysis", "Analysis of audio content")
     summary = OutputField("summary", "Summary of key points")
-    action_items = OutputField("action_items", "Action items or next steps if applicable")
+    action_items = OutputField(
+        "action_items", "Action items or next steps if applicable"
+    )
 
 
 class MultimodalProcessor:

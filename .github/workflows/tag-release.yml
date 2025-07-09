@@ -30,7 +30,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       changelog: ${{ steps.changelog.outputs.changelog }}
-      
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -64,26 +64,26 @@ jobs:
         import semver
         import os
         import sys
-        
+
         current_version = "${{ steps.current_version.outputs.current_version }}"
         if current_version.startswith('v'):
             current_version = current_version[1:]
-        
+
         # If no current version, start with 1.0.0
         if current_version == "0.0.0":
             current_version = "1.0.0"
-        
+
         # Parse version
         try:
             version_info = semver.VersionInfo.parse(current_version)
         except:
             version_info = semver.VersionInfo(1, 0, 0)
-        
+
         # Determine version type
         if "${{ github.event_name }}" == "workflow_dispatch":
             version_type = "${{ github.event.inputs.version_type }}"
             custom_version = "${{ github.event.inputs.custom_version }}"
-            
+
             if custom_version:
                 new_version = custom_version
             else:
@@ -101,21 +101,21 @@ jobs:
             # Auto-determine based on commit messages
             import subprocess
             import re
-            
+
             # Get commits since last tag
             try:
                 commits = subprocess.check_output([
-                    "git", "log", "--pretty=format:%s", 
+                    "git", "log", "--pretty=format:%s",
                     f"{current_version}..HEAD" if current_version != "1.0.0" else "HEAD"
                 ], text=True).strip().split('\n')
             except:
                 commits = []
-            
+
             # Analyze commit messages
             has_breaking = any(re.search(r'BREAKING CHANGE|!:', commit) for commit in commits)
             has_feat = any(re.search(r'^feat(\([^)]+\))?:', commit) for commit in commits)
             has_fix = any(re.search(r'^fix(\([^)]+\))?:', commit) for commit in commits)
-            
+
             if has_breaking:
                 new_version = str(version_info.bump_major())
             elif has_feat:
@@ -124,10 +124,10 @@ jobs:
                 new_version = str(version_info.bump_patch())
             else:
                 new_version = str(version_info.bump_patch())
-        
+
         print(f"version={new_version}")
         print(f"tag=v{new_version}")
-        
+
         # Write to GitHub output
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             f.write(f"version={new_version}\n")
@@ -142,10 +142,10 @@ jobs:
         import re
         import os
         from datetime import datetime
-        
+
         current_version = "${{ steps.current_version.outputs.current_version }}"
         new_version = "${{ steps.version.outputs.version }}"
-        
+
         # Get commits since last tag
         try:
             if current_version and current_version != "v0.0.0":
@@ -158,17 +158,17 @@ jobs:
                 ], text=True).strip().split('\n')
         except:
             commits = []
-        
+
         # Categorize commits
         features = []
         fixes = []
         breaking = []
         other = []
-        
+
         for commit in commits:
             if not commit.strip():
                 continue
-                
+
             if re.search(r'BREAKING CHANGE|!:', commit):
                 breaking.append(commit)
             elif re.search(r'^feat(\([^)]+\))?:', commit):
@@ -177,45 +177,45 @@ jobs:
                 fixes.append(commit)
             else:
                 other.append(commit)
-        
+
         # Generate changelog
         changelog = f"# Release v{new_version}\n\n"
         changelog += f"Released: {datetime.now().strftime('%Y-%m-%d')}\n\n"
-        
+
         if breaking:
             changelog += "## Breaking Changes\n"
             for commit in breaking:
                 changelog += f"- {commit}\n"
             changelog += "\n"
-        
+
         if features:
             changelog += "## New Features\n"
             for commit in features:
                 changelog += f"- {commit}\n"
             changelog += "\n"
-        
+
         if fixes:
             changelog += "## Bug Fixes\n"
             for commit in fixes:
                 changelog += f"- {commit}\n"
             changelog += "\n"
-        
+
         if other:
             changelog += "## Other Changes\n"
             for commit in other:
                 changelog += f"- {commit}\n"
             changelog += "\n"
-        
+
         changelog += "## Full Changelog\n"
         changelog += f"**Full Changelog**: https://github.com/${{ github.repository }}/compare/{current_version}...v{new_version}\n"
-        
+
         # Write changelog to file
         with open('CHANGELOG.md', 'w') as f:
             f.write(changelog)
-        
+
         # Escape for GitHub output
         changelog_escaped = changelog.replace('\n', '\\n').replace('\r', '\\r')
-        
+
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             f.write(f"changelog={changelog_escaped}\n")
         EOF
@@ -249,7 +249,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         pytest --cov=src/open_accelerator --cov-report=xml --cov-fail-under=100 tests/
-        
+
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
       with:
@@ -262,7 +262,7 @@ jobs:
     needs: [determine-version, test-and-coverage]
     runs-on: ubuntu-latest
     if: needs.determine-version.outputs.version != ''
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -277,13 +277,13 @@ jobs:
     - name: Update version in files
       run: |
         NEW_VERSION="${{ needs.determine-version.outputs.version }}"
-        
+
         # Update version in __init__.py
         sed -i "s/__version__ = .*/__version__ = \"${NEW_VERSION}\"/" src/open_accelerator/__init__.py
-        
+
         # Update version in pyproject.toml
         sed -i "s/version = .*/version = \"${NEW_VERSION}\"/" pyproject.toml
-        
+
         # Update version in package info
         find src/open_accelerator*.egg-info -name "PKG-INFO" -exec sed -i "s/Version: .*/Version: ${NEW_VERSION}/" {} \; 2>/dev/null || true
 
@@ -301,7 +301,7 @@ jobs:
   create-release:
     needs: [determine-version, create-tag]
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -327,7 +327,7 @@ jobs:
   build-and-publish:
     needs: [determine-version, create-tag, create-release, test-and-coverage]
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -357,11 +357,11 @@ jobs:
     needs: [determine-version, create-tag, create-release, build-and-publish]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
     - name: Send completion notification
       run: |
         echo "Release workflow completed!"
         echo "Version: ${{ needs.determine-version.outputs.version }}"
         echo "Tag: ${{ needs.determine-version.outputs.tag }}"
-        echo "Status: ${{ job.status }}" 
+        echo "Status: ${{ job.status }}"

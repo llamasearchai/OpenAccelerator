@@ -8,7 +8,7 @@ with emphasis on precision, safety, and regulatory compliance.
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -47,7 +47,7 @@ class MedicalWorkloadConfig(WorkloadConfig):
 
     # Override parent class workload_type to avoid GEMM validation
     workload_type: WorkloadType = WorkloadType.MEDICAL_IMAGING
-    
+
     modality: MedicalModalityType = MedicalModalityType.CT_SCAN
     task_type: MedicalTaskType = MedicalTaskType.SEGMENTATION
     image_size: tuple[int, int, int] = (256, 256, 16)  # (H, W, D) or (H, W, C)
@@ -56,16 +56,16 @@ class MedicalWorkloadConfig(WorkloadConfig):
     enable_safety_checks: bool = True
     regulatory_compliance: bool = True
     patient_data_protection: bool = True
-    
+
     # Set required medical parameters for parent class validation
     medical_modality: str = "CT"
     medical_image_size: tuple[int, int] = (256, 256)
-    
+
     def __post_init__(self):
         # Set medical parameters based on modality and image_size
         self.medical_modality = self.modality.value
         self.medical_image_size = self.image_size[:2]  # Take first 2 dimensions
-        
+
         # Call parent validation
         super().__post_init__()
 
@@ -78,7 +78,9 @@ class MedicalConvolution(BaseWorkload):
     """
 
     def __init__(self, config: MedicalWorkloadConfig):
-        super().__init__(f"MedicalConvolution_{config.modality.value}_{config.task_type.value}")
+        super().__init__(
+            f"MedicalConvolution_{config.modality.value}_{config.task_type.value}"
+        )
         self.config = config
 
         # Medical-specific parameters
@@ -104,49 +106,57 @@ class MedicalConvolution(BaseWorkload):
             self.generate_medical_ct_data()
             self._generate_medical_kernel()
             self.is_prepared = True
-            logger.info(f"Prepared medical convolution workload for {self.config.modality.value}")
-    
+            logger.info(
+                f"Prepared medical convolution workload for {self.config.modality.value}"
+            )
+
     def get_input_data(self) -> Dict[str, np.ndarray]:
         """Get input data for the medical convolution workload."""
         if not self.is_prepared:
             self.prepare()
-        
+
         input_matrix, weight_matrix = self.convert_to_systolic_gemm()
         return {
             "input_matrix": input_matrix,
             "weight_matrix": weight_matrix,
-            "medical_data": self.input_tensor if self.input_tensor is not None else np.array([])
+            "medical_data": self.input_tensor
+            if self.input_tensor is not None
+            else np.array([]),
         }
-    
+
     def get_expected_output(self) -> Dict[str, np.ndarray]:
         """Get expected output for validation."""
         if not self.is_prepared:
             self.prepare()
-        
+
         input_matrix, weight_matrix = self.convert_to_systolic_gemm()
         expected_result = np.dot(input_matrix, weight_matrix)
-        
+
         return {
             "result_matrix": expected_result,
-            "medical_result": self.expected_output if self.expected_output is not None else np.array([])
+            "medical_result": self.expected_output
+            if self.expected_output is not None
+            else np.array([]),
         }
-    
+
     def validate_output(self, actual_output: Dict[str, np.ndarray]) -> bool:
         """Validate actual output against expected results."""
         if "result_matrix" not in actual_output:
             return False
-        
+
         expected_output = self.get_expected_output()
         expected_result = expected_output["result_matrix"]
         actual_result = actual_output["result_matrix"]
-        
+
         # Medical-grade validation with stricter tolerance
         tolerance = 1e-6 if self.config.precision_level == "medical" else 1e-4
-        
+
         if expected_result.shape != actual_result.shape:
             return False
-        
-        return np.allclose(expected_result, actual_result, rtol=tolerance, atol=tolerance)
+
+        return np.allclose(
+            expected_result, actual_result, rtol=tolerance, atol=tolerance
+        )
 
     def generate_medical_ct_data(self, seed: int = 42) -> None:
         """Generate synthetic CT scan data for testing."""
@@ -389,7 +399,9 @@ class MedicalResNet(BaseWorkload):
     """
 
     def __init__(self, config: MedicalWorkloadConfig):
-        super().__init__(f"MedicalResNet_{config.modality.value}_{config.task_type.value}")
+        super().__init__(
+            f"MedicalResNet_{config.modality.value}_{config.task_type.value}"
+        )
         self.config = config
 
         # ResNet parameters
@@ -406,60 +418,70 @@ class MedicalResNet(BaseWorkload):
             # Generate ResNet layers and prepare data
             self.layers = self._define_resnet_layers()
             self.is_prepared = True
-            logger.info(f"Prepared medical ResNet workload for {self.config.modality.value}")
-    
+            logger.info(
+                f"Prepared medical ResNet workload for {self.config.modality.value}"
+            )
+
     def get_input_data(self) -> Dict[str, np.ndarray]:
         """Get input data for the medical ResNet workload."""
         if not self.is_prepared:
             self.prepare()
-        
+
         # Generate a sample input tensor
         H, W = self.config.image_size[:2]
         C = 1 if len(self.config.image_size) == 2 else self.config.image_size[2]
-        
-        input_tensor = np.random.randn(self.config.batch_size, H, W, C).astype(np.float32)
-        
+
+        input_tensor = np.random.randn(self.config.batch_size, H, W, C).astype(
+            np.float32
+        )
+
         return {
             "input_tensor": input_tensor,
-            "batch_size": np.array([self.config.batch_size])
+            "batch_size": np.array([self.config.batch_size]),
         }
-    
+
     def get_expected_output(self) -> Dict[str, np.ndarray]:
         """Get expected output for validation."""
         if not self.is_prepared:
             self.prepare()
-        
+
         # Generate expected classification output
-        expected_output = np.random.rand(self.config.batch_size, self.num_classes).astype(np.float32)
+        expected_output = np.random.rand(
+            self.config.batch_size, self.num_classes
+        ).astype(np.float32)
         # Apply softmax
-        expected_output = expected_output / np.sum(expected_output, axis=1, keepdims=True)
-        
+        expected_output = expected_output / np.sum(
+            expected_output, axis=1, keepdims=True
+        )
+
         return {
             "classification_output": expected_output,
-            "logits": np.random.randn(self.config.batch_size, self.num_classes).astype(np.float32)
+            "logits": np.random.randn(self.config.batch_size, self.num_classes).astype(
+                np.float32
+            ),
         }
-    
+
     def validate_output(self, actual_output: Dict[str, np.ndarray]) -> bool:
         """Validate actual output against expected results."""
         if "classification_output" not in actual_output:
             return False
-        
+
         actual_result = actual_output["classification_output"]
-        
+
         # Check shape
         expected_shape = (self.config.batch_size, self.num_classes)
         if actual_result.shape != expected_shape:
             return False
-        
+
         # Check if probabilities sum to 1 (approximately)
         prob_sums = np.sum(actual_result, axis=1)
         if not np.allclose(prob_sums, 1.0, rtol=1e-3):
             return False
-        
+
         # Check if all probabilities are non-negative
         if np.any(actual_result < 0):
             return False
-        
+
         return True
 
     def _get_num_classes(self) -> int:
@@ -594,7 +616,9 @@ class MedicalTransformer(BaseWorkload):
     """
 
     def __init__(self, config: MedicalWorkloadConfig):
-        super().__init__(f"MedicalTransformer_{config.modality.value}_{config.task_type.value}")
+        super().__init__(
+            f"MedicalTransformer_{config.modality.value}_{config.task_type.value}"
+        )
         self.config = config
         self.num_classes = self._get_num_classes()
 
@@ -615,62 +639,70 @@ class MedicalTransformer(BaseWorkload):
             # Calculate transformer parameters
             self.seq_length = self._calculate_sequence_length()
             self.is_prepared = True
-            logger.info(f"Prepared medical Transformer workload for {self.config.modality.value}")
-    
+            logger.info(
+                f"Prepared medical Transformer workload for {self.config.modality.value}"
+            )
+
     def get_input_data(self) -> Dict[str, np.ndarray]:
         """Get input data for the medical Transformer workload."""
         if not self.is_prepared:
             self.prepare()
-        
+
         # Generate input tensor for transformer
         input_tensor = np.random.randn(
             self.config.batch_size, self.seq_length, self.embed_dim
         ).astype(np.float32)
-        
+
         return {
             "input_tensor": input_tensor,
             "sequence_length": np.array([self.seq_length]),
-            "batch_size": np.array([self.config.batch_size])
+            "batch_size": np.array([self.config.batch_size]),
         }
-    
+
     def get_expected_output(self) -> Dict[str, np.ndarray]:
         """Get expected output for validation."""
         if not self.is_prepared:
             self.prepare()
-        
+
         # Generate expected attention output
-        expected_output = np.random.rand(self.config.batch_size, self.num_classes).astype(np.float32)
+        expected_output = np.random.rand(
+            self.config.batch_size, self.num_classes
+        ).astype(np.float32)
         # Apply softmax
-        expected_output = expected_output / np.sum(expected_output, axis=1, keepdims=True)
-        
+        expected_output = expected_output / np.sum(
+            expected_output, axis=1, keepdims=True
+        )
+
         return {
             "attention_output": expected_output,
-            "classification_logits": np.random.randn(self.config.batch_size, self.num_classes).astype(np.float32)
+            "classification_logits": np.random.randn(
+                self.config.batch_size, self.num_classes
+            ).astype(np.float32),
         }
-    
+
     def validate_output(self, actual_output: Dict[str, np.ndarray]) -> bool:
         """Validate actual output against expected results."""
         if "attention_output" not in actual_output:
             return False
-        
+
         actual_result = actual_output["attention_output"]
-        
+
         # Check shape
         expected_shape = (self.config.batch_size, self.num_classes)
         if actual_result.shape != expected_shape:
             return False
-        
+
         # Check if probabilities sum to 1 (approximately)
         prob_sums = np.sum(actual_result, axis=1)
         if not np.allclose(prob_sums, 1.0, rtol=1e-3):
             return False
-        
+
         # Check if all probabilities are non-negative
         if np.any(actual_result < 0):
             return False
-        
+
         return True
-    
+
     def _get_num_classes(self) -> int:
         """Get number of classes based on medical task."""
         class_map = {
@@ -757,8 +789,12 @@ class MedicalTransformer(BaseWorkload):
                     self.config.batch_size, self.seq_length, self.seq_length
                 )
                 # Apply softmax manually
-                exp_scores = np.exp(attention_scores - np.max(attention_scores, axis=-1, keepdims=True))
-                attention_weights = (exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)).astype(np.float32)
+                exp_scores = np.exp(
+                    attention_scores - np.max(attention_scores, axis=-1, keepdims=True)
+                )
+                attention_weights = (
+                    exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
+                ).astype(np.float32)
 
                 att_reshaped = attention_weights.reshape(-1, self.seq_length)
                 v_reshaped = v_matrix.reshape(-1, head_dim)
@@ -827,7 +863,9 @@ class MedicalTransformer(BaseWorkload):
         biased_weights = attention_weights + bias_matrix
 
         # Renormalize (manual softmax)
-        exp_weights = np.exp(biased_weights - np.max(biased_weights, axis=-1, keepdims=True))
+        exp_weights = np.exp(
+            biased_weights - np.max(biased_weights, axis=-1, keepdims=True)
+        )
         biased_weights = exp_weights / np.sum(exp_weights, axis=-1, keepdims=True)
 
         return biased_weights

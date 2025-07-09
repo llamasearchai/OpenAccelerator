@@ -10,4 +10,4 @@ Outline
 2. Register custom tools.
 3. Create agents with clear instructions and toolsets.
 4. Chain agents into compound workflows.
-5. Monitor and refine agent behaviour via performance metrics. 
+5. Monitor and refine agent behaviour via performance metrics.

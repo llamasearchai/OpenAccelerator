@@ -24,4 +24,4 @@ This example shows how to use the `AgentManager` to optimise workloads.
 
     optimised = optimizer.optimize_workload(workload)
     result = accelerator.run(optimised)
-    print(result.performance_metrics) 
+    print(result.performance_metrics)

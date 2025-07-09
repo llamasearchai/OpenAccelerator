@@ -141,16 +141,16 @@ Basic Agent Setup
 
     from open_accelerator.ai.agents import AgentManager
     from openai import OpenAI
-    
+
     # Initialize OpenAI client
     openai_client = OpenAI(api_key="your-api-key")
-    
+
     # Create agent manager
     agent_manager = AgentManager(
         openai_client=openai_client,
         accelerator=accelerator
     )
-    
+
     # Create a workload optimization agent
     optimizer_agent = agent_manager.create_agent(
         name="workload_optimizer",
@@ -165,26 +165,26 @@ Workload Optimization
 .. code-block:: python
 
     from open_accelerator.ai.agents import WorkloadOptimizationAgent
-    
+
     # Create workload optimization agent
     optimizer = WorkloadOptimizationAgent(
         openai_client=openai_client,
         accelerator=accelerator,
         optimization_strategy="performance_first"
     )
-    
+
     # Optimize workload parameters
     original_workload = WorkloadManager.create_gemm_workload(
         matrix_a_shape=(1024, 1024),
         matrix_b_shape=(1024, 1024),
         precision="fp32"
     )
-    
+
     optimized_workload = optimizer.optimize_workload(
         workload=original_workload,
         optimization_goals=["minimize_latency", "maximize_throughput"]
     )
-    
+
     print(f"Original precision: {original_workload.precision}")
     print(f"Optimized precision: {optimized_workload.precision}")
     print(f"Optimization recommendations: {optimizer.get_recommendations()}")
@@ -195,20 +195,20 @@ Performance Monitoring
 .. code-block:: python
 
     from open_accelerator.ai.agents import PerformanceMonitoringAgent
-    
+
     # Create performance monitoring agent
     monitor_agent = PerformanceMonitoringAgent(
         openai_client=openai_client,
         accelerator=accelerator,
         monitoring_interval=1.0  # seconds
     )
-    
+
     # Start monitoring
     monitor_agent.start_monitoring()
-    
+
     # Run workload with AI monitoring
     result = accelerator.run(workload)
-    
+
     # Get AI-generated performance insights
     insights = monitor_agent.get_performance_insights()
     print(f"Performance insights: {insights.summary}")
@@ -222,10 +222,10 @@ Medical AI Agent
 
     from open_accelerator.ai.agents import MedicalAIAgent
     from open_accelerator.medical.compliance import ComplianceManager
-    
+
     # Create compliance manager
     compliance_manager = ComplianceManager(hipaa_enabled=True)
-    
+
     # Create medical AI agent
     medical_agent = MedicalAIAgent(
         openai_client=openai_client,
@@ -233,7 +233,7 @@ Medical AI Agent
         compliance_manager=compliance_manager,
         medical_knowledge_base="medical_kb_v2.1"
     )
-    
+
     # Perform medical diagnosis
     diagnosis = medical_agent.diagnose(
         patient_data={
@@ -244,7 +244,7 @@ Medical AI Agent
         },
         imaging_data="chest_xray.dicom"
     )
-    
+
     print(f"Primary diagnosis: {diagnosis.primary_diagnosis}")
     print(f"Confidence: {diagnosis.confidence}")
     print(f"Differential diagnoses: {diagnosis.differential_diagnoses}")
@@ -256,13 +256,13 @@ Compound AI Systems
 .. code-block:: python
 
     from open_accelerator.ai.compound_ai import CompoundAIManager
-    
+
     # Create compound AI manager
     compound_ai = CompoundAIManager(
         openai_client=openai_client,
         accelerator=accelerator
     )
-    
+
     # Create multi-agent system
     multi_agent_system = compound_ai.create_multi_agent_system(
         agents=[
@@ -288,7 +288,7 @@ Compound AI Systems
             }
         ]
     )
-    
+
     # Execute compound AI workflow
     result = multi_agent_system.execute_workflow(
         input_data=workload_data,
@@ -301,13 +301,13 @@ Reasoning Chains
 .. code-block:: python
 
     from open_accelerator.ai.reasoning_chains import ReasoningChainManager
-    
+
     # Create reasoning chain manager
     reasoning_manager = ReasoningChainManager(
         openai_client=openai_client,
         accelerator=accelerator
     )
-    
+
     # Create chain of thought reasoning
     cot_chain = reasoning_manager.create_chain_of_thought(
         problem="Optimize memory allocation for large matrix multiplication",
@@ -317,7 +317,7 @@ Reasoning Chains
             "precision": "fp16"
         }
     )
-    
+
     # Execute reasoning chain
     reasoning_result = cot_chain.execute()
     print(f"Reasoning steps: {reasoning_result.steps}")
@@ -333,14 +333,14 @@ Performance Analysis Tools
 .. code-block:: python
 
     from open_accelerator.ai.tools import PerformanceAnalyzerTool
-    
+
     # Create performance analyzer tool
     perf_tool = PerformanceAnalyzerTool(accelerator=accelerator)
-    
+
     # Tool function for agents
     def analyze_performance(workload_params: dict) -> dict:
         return perf_tool.analyze(workload_params)
-    
+
     # Register tool with agent
     agent_manager.register_tool(
         name="performance_analyzer",
@@ -354,14 +354,14 @@ Memory Optimization Tools
 .. code-block:: python
 
     from open_accelerator.ai.tools import MemoryOptimizerTool
-    
+
     # Create memory optimizer tool
     memory_tool = MemoryOptimizerTool(accelerator=accelerator)
-    
+
     # Tool function for agents
     def optimize_memory(workload_params: dict) -> dict:
         return memory_tool.optimize(workload_params)
-    
+
     # Register tool with agent
     agent_manager.register_tool(
         name="memory_optimizer",
@@ -375,14 +375,14 @@ Power Management Tools
 .. code-block:: python
 
     from open_accelerator.ai.tools import PowerOptimizerTool
-    
+
     # Create power optimizer tool
     power_tool = PowerOptimizerTool(accelerator=accelerator)
-    
+
     # Tool function for agents
     def optimize_power(workload_params: dict) -> dict:
         return power_tool.optimize(workload_params)
-    
+
     # Register tool with agent
     agent_manager.register_tool(
         name="power_optimizer",
@@ -399,13 +399,13 @@ Model Management
 .. code-block:: python
 
     from open_accelerator.ai.model_registry import ModelRegistryManager
-    
+
     # Create model registry manager
     model_registry = ModelRegistryManager(
         storage_backend="s3",
         metadata_store="postgresql"
     )
-    
+
     # Register a model
     model_metadata = model_registry.register_model(
         name="gemm_optimizer_v2.1",
@@ -418,7 +418,7 @@ Model Management
             "throughput": 850
         }
     )
-    
+
     # Use model with agent
     agent = agent_manager.create_agent(
         name="model_based_optimizer",
@@ -442,14 +442,14 @@ Model Versioning
             "throughput": 920
         }
     )
-    
+
     # Compare model versions
     comparison = model_registry.compare_versions(
         model_id="gemm_optimizer_v2.1",
         version_a="2.1.0",
         version_b="2.2.0"
     )
-    
+
     print(f"Performance improvement: {comparison.improvement_summary}")
 
 Advanced Features
@@ -461,13 +461,13 @@ Multimodal Processing
 .. code-block:: python
 
     from open_accelerator.ai.multimodal_processor import MultimodalProcessor
-    
+
     # Create multimodal processor
     multimodal = MultimodalProcessor(
         openai_client=openai_client,
         accelerator=accelerator
     )
-    
+
     # Process multimodal medical data
     result = multimodal.process_medical_data(
         text_data="Patient presents with chest pain and shortness of breath",
@@ -477,7 +477,7 @@ Multimodal Processing
             "labs": {"troponin": 0.8, "bnp": 450}
         }
     )
-    
+
     print(f"Multimodal analysis: {result.analysis}")
     print(f"Confidence: {result.confidence}")
 
@@ -487,20 +487,20 @@ Adaptive Learning
 .. code-block:: python
 
     from open_accelerator.ai.adaptive_learning import AdaptiveLearningManager
-    
+
     # Create adaptive learning manager
     adaptive_manager = AdaptiveLearningManager(
         openai_client=openai_client,
         accelerator=accelerator
     )
-    
+
     # Enable adaptive learning for agent
     adaptive_agent = adaptive_manager.create_adaptive_agent(
         base_agent=optimizer_agent,
         learning_strategy="reinforcement_learning",
         feedback_mechanism="performance_metrics"
     )
-    
+
     # Agent learns from performance feedback
     for workload in workload_batch:
         result = accelerator.run(workload)
@@ -527,7 +527,7 @@ Exception Handling
 .. code-block:: python
 
     from open_accelerator.ai.agents import AgentError
-    
+
     try:
         result = optimizer_agent.optimize_workload(workload)
     except AgentError as e:
@@ -536,7 +536,7 @@ Exception Handling
     except Exception as e:
         print(f"Unexpected error: {e}")
         # Handle general error
-    
+
     # Retry with fallback
     try:
         result = optimizer_agent.optimize_workload(workload)
@@ -561,7 +561,7 @@ Agent Configuration
         "tools": ["performance_analyzer", "memory_optimizer"],
         "instructions": "Optimize workload parameters for best performance"
     }
-    
+
     agent = agent_manager.create_agent(
         name="configured_optimizer",
         config=agent_config
@@ -573,7 +573,7 @@ OpenAI Client Configuration
 .. code-block:: python
 
     from openai import OpenAI
-    
+
     # Configure OpenAI client
     openai_client = OpenAI(
         api_key="your-api-key",
@@ -581,7 +581,7 @@ OpenAI Client Configuration
         timeout=30.0,
         max_retries=3
     )
-    
+
     # Use with agent manager
     agent_manager = AgentManager(
         openai_client=openai_client,
@@ -629,9 +629,9 @@ FastAPI Integration
 
     from fastapi import FastAPI, HTTPException
     from open_accelerator.ai.agents import AgentManager
-    
+
     app = FastAPI()
-    
+
     @app.post("/agents/optimize")
     async def optimize_workload(request: OptimizationRequest):
         try:
@@ -646,12 +646,12 @@ WebSocket Integration
 .. code-block:: python
 
     from fastapi import WebSocket
-    
+
     @app.websocket("/agents/monitor")
     async def monitor_performance(websocket: WebSocket):
         await websocket.accept()
         monitor_agent.start_monitoring()
-        
+
         while True:
             insights = monitor_agent.get_real_time_insights()
             await websocket.send_json(insights)
@@ -663,12 +663,12 @@ Streaming Responses
 .. code-block:: python
 
     from fastapi.responses import StreamingResponse
-    
+
     @app.get("/agents/reasoning/stream")
     async def stream_reasoning(problem: str):
         def generate_reasoning():
             reasoning_chain = reasoning_manager.create_chain_of_thought(problem)
             for step in reasoning_chain.execute_streaming():
                 yield f"data: {step}\n\n"
-        
-        return StreamingResponse(generate_reasoning(), media_type="text/plain") 
+
+        return StreamingResponse(generate_reasoning(), media_type="text/plain")

@@ -89,12 +89,12 @@ Create a configuration file::
         l1_cache: 64KB
         l2_cache: 1MB
         main_memory: 4GB
-    
+
     medical:
       compliance_mode: true
       hipaa_logging: true
       encryption_enabled: true
-    
+
     api:
       host: "localhost"
       port: 8000
@@ -116,7 +116,7 @@ Verification
 Verify installation::
 
     python -c "import open_accelerator; print(open_accelerator.__version__)"
-    
+
     # Test basic functionality
     python -c "
     from open_accelerator import Accelerator
@@ -166,4 +166,4 @@ Getting Help
 * Issues: https://github.com/nikjois/OpenAccelerator/issues
 * Email: nikjois@llamasearch.ai
 
-For medical applications, please review the medical guide for additional compliance requirements. 
+For medical applications, please review the medical guide for additional compliance requirements.

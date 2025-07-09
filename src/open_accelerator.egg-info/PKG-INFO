@@ -398,7 +398,7 @@ from src.open_accelerator.workloads.medical import MedicalWorkloadConfig
 # CT Scan Segmentation
 ct_config = MedicalWorkloadConfig(
     modality="ct_scan",
-    task_type="segmentation", 
+    task_type="segmentation",
     image_size=(512, 512, 100),
     regulatory_compliance=True
 )
@@ -502,7 +502,7 @@ Success rate: 100.0%
 
 Detailed results:
   [SUCCESS] core_imports: PASS
-  [SUCCESS] gemm_simulation: PASS  
+  [SUCCESS] gemm_simulation: PASS
   [SUCCESS] ai_agents: PASS
   [SUCCESS] fastapi_components: PASS
   [SUCCESS] medical_workflows: PASS

@@ -4,7 +4,7 @@ CLI commands for OpenAccelerator.
 
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import click
 from rich.console import Console
@@ -23,6 +23,7 @@ from .animations import ProgressBarWithCat, RunningCatAnimation
 
 console = Console()
 
+
 def register_commands(app):
     """Register all CLI commands with the app."""
     # Add all the click commands to the group
@@ -30,12 +31,22 @@ def register_commands(app):
     app.add_command(simulate)
     app.add_command(benchmark)
 
+
 @click.command()
-@click.option('--interactive', '-i', is_flag=True, help='Interactive configuration')
-@click.option('--template', '-t', type=click.Choice(['small', 'large', 'medical', 'edge']),
-              help='Configuration template')
-@click.option('--output', '-o', type=click.Path(), default='config.yaml',
-              help='Output configuration file')
+@click.option("--interactive", "-i", is_flag=True, help="Interactive configuration")
+@click.option(
+    "--template",
+    "-t",
+    type=click.Choice(["small", "large", "medical", "edge"]),
+    help="Configuration template",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    default="config.yaml",
+    help="Output configuration file",
+)
 @click.pass_context
 def configure(ctx, interactive, template, output):
     """Configure accelerator parameters."""
@@ -59,6 +70,7 @@ def configure(ctx, interactive, template, output):
     # Display configuration summary
     _display_config_summary(config)
 
+
 def _interactive_config() -> AcceleratorConfig:
     """Interactive configuration wizard."""
     console.print("\n[bold]Interactive Configuration Wizard[/bold]")
@@ -81,7 +93,7 @@ def _interactive_config() -> AcceleratorConfig:
     config = AcceleratorConfig(
         name=name,
         array=ArrayConfig(rows=rows, cols=cols, frequency=frequency),
-        data_type=DataType.FLOAT32 if medical_mode else DataType.FLOAT32
+        data_type=DataType.FLOAT32 if medical_mode else DataType.FLOAT32,
     )
 
     # Set medical mode if requested
@@ -89,6 +101,7 @@ def _interactive_config() -> AcceleratorConfig:
         config.medical.enable_medical_mode = True
 
     return config
+
 
 def _display_config_summary(config: AcceleratorConfig):
     """Display configuration summary table."""
@@ -104,13 +117,18 @@ def _display_config_summary(config: AcceleratorConfig):
 
     console.print(table)
 
+
 @click.command()
-@click.option('--config', '-c', type=click.Path(exists=True),
-              help='Configuration file')
-@click.option('--workload', '-w', type=click.Choice(['gemm', 'medical']),
-              default='gemm', help='Workload type')
-@click.option('--output', '-o', type=click.Path(), help='Output directory')
-@click.option('--visualize', is_flag=True, help='Generate visualizations')
+@click.option("--config", "-c", type=click.Path(exists=True), help="Configuration file")
+@click.option(
+    "--workload",
+    "-w",
+    type=click.Choice(["gemm", "medical"]),
+    default="gemm",
+    help="Workload type",
+)
+@click.option("--output", "-o", type=click.Path(), help="Output directory")
+@click.option("--visualize", is_flag=True, help="Generate visualizations")
 @click.pass_context
 def simulate(ctx, config, workload, output, visualize):
     """Run accelerator simulation."""
@@ -134,15 +152,17 @@ def simulate(ctx, config, workload, output, visualize):
         simulator = Simulator(accel_config)
 
         # Create workload based on type
-        if workload == 'medical':
+        if workload == "medical":
             # Medical workload not available yet, fall back to GEMM
             console.print("[yellow]Medical workload not available, using GEMM[/yellow]")
             from ..workloads.gemm import GEMMWorkload, GEMMWorkloadConfig
+
             sim_workload = GEMMWorkload(GEMMWorkloadConfig())
             sim_workload.prepare()
         else:
             # Default to GEMM workload for generic simulations
             from ..workloads.gemm import GEMMWorkload, GEMMWorkloadConfig
+
             sim_workload = GEMMWorkload(GEMMWorkloadConfig())
             sim_workload.prepare()
 
@@ -167,6 +187,7 @@ def simulate(ctx, config, workload, output, visualize):
         console.print(f"[red]Simulation failed: {e}[/red]")
         raise
 
+
 def _display_simulation_results(metrics: Dict[str, Any]):
     """Display simulation results in a nice format."""
 
@@ -180,35 +201,36 @@ def _display_simulation_results(metrics: Dict[str, Any]):
     table.add_row("MAC Operations", f"{metrics['total_macs']:,}", "ops")
     table.add_row("Throughput", f"{metrics['throughput']:.2f}", "TOPS")
     table.add_row("Efficiency", f"{metrics['efficiency']:.1%}", "%")
-    
+
     # Handle optional metrics safely
-    power = metrics.get('power', 0)
+    power = metrics.get("power", 0)
     if power is not None:
         table.add_row("Power", f"{power:.1f}", "W")
-    
-    energy = metrics.get('energy', 0)
+
+    energy = metrics.get("energy", 0)
     if energy is not None:
         table.add_row("Energy", f"{energy:.2f}", "J")
 
     console.print(table)
 
     # Utilization breakdown
-    if 'pe_utilization' in metrics:
+    if "pe_utilization" in metrics:
         util_table = Table(title="Resource Utilization")
         util_table.add_column("Resource", style="cyan")
         util_table.add_column("Utilization", style="green")
         util_table.add_column("Bar", style="blue")
 
-        pe_util = metrics['pe_utilization']
+        pe_util = metrics["pe_utilization"]
         bar = "█" * int(pe_util * 20) + "░" * (20 - int(pe_util * 20))
         util_table.add_row("Processing Elements", f"{pe_util:.1%}", bar)
 
-        if 'memory_utilization' in metrics:
-            mem_util = metrics['memory_utilization']
+        if "memory_utilization" in metrics:
+            mem_util = metrics["memory_utilization"]
             bar = "█" * int(mem_util * 20) + "░" * (20 - int(mem_util * 20))
             util_table.add_row("Memory Bandwidth", f"{mem_util:.1%}", bar)
 
         console.print(util_table)
+
 
 def _generate_visualizations(results: Dict[str, Any], output_dir: str):
     """Generate visualization files."""
@@ -233,11 +255,16 @@ def _generate_visualizations(results: Dict[str, Any], output_dir: str):
 
     console.print("Visualizations complete.")
 
+
 @click.command()
-@click.option('--config', '-c', type=click.Path(exists=True))
-@click.option('--reference', '-r', type=click.Path(exists=True),
-              help='Reference configuration for comparison')
-@click.option('--output', '-o', type=click.Path(), help='Output report file')
+@click.option("--config", "-c", type=click.Path(exists=True))
+@click.option(
+    "--reference",
+    "-r",
+    type=click.Path(exists=True),
+    help="Reference configuration for comparison",
+)
+@click.option("--output", "-o", type=click.Path(), help="Output report file")
 @click.pass_context
 def benchmark(ctx, config, reference, output):
     """Run comprehensive benchmarks."""
@@ -260,6 +287,7 @@ def benchmark(ctx, config, reference, output):
         cat.stop()
         console.print(f"[red]Benchmark failed: {e}[/red]")
 
+
 def _display_benchmark_results():
     """Display benchmark results."""
     table = Table(title="Benchmark Results")
@@ -279,5 +307,6 @@ def _display_benchmark_results():
         table.add_row(workload, throughput, efficiency, score)
 
     console.print(table)
+
 
 # NOTE: Advanced Dashboard functionality will be re-added in a future release.

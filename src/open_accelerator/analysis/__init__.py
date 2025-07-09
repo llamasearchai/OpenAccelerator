@@ -22,13 +22,14 @@ __all__: list[str] = [
 
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import numpy as np
 
 # ---------------------------------------------------------------------------
 # Legacy compatibility layer
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class LegacyPerformanceMetrics:  # noqa: D401 – simple container
@@ -57,29 +58,49 @@ def analyze_simulation_results(
     to run unchanged.
     """
 
-    total_cycles: int = int(simulation_stats.get("total_cycles") or simulation_stats.get("results", {}).get("total_cycles", 0))
-    total_mac_operations: int = int(simulation_stats.get("total_mac_operations") or simulation_stats.get("results", {}).get("total_mac_operations", 0))
+    total_cycles: int = int(
+        simulation_stats.get("total_cycles")
+        or simulation_stats.get("results", {}).get("total_cycles", 0)
+    )
+    total_mac_operations: int = int(
+        simulation_stats.get("total_mac_operations")
+        or simulation_stats.get("results", {}).get("total_mac_operations", 0)
+    )
 
     # Utilisation
     pe_activity_map = simulation_stats.get("pe_activity_map_over_time")
-    if isinstance(pe_activity_map, np.ndarray) and pe_activity_map.size and total_cycles > 0:
+    if (
+        isinstance(pe_activity_map, np.ndarray)
+        and pe_activity_map.size
+        and total_cycles > 0
+    ):
         average_pe_utilization: float = float(np.mean(pe_activity_map))
     else:
         average_pe_utilization = 0.0
 
-    macs_per_cycle: float = 0.0 if total_cycles == 0 else total_mac_operations / total_cycles
+    macs_per_cycle: float = (
+        0.0 if total_cycles == 0 else total_mac_operations / total_cycles
+    )
 
     # Theoretical peak MACs per cycle
     theoretical_peak_macs: int = 0
     if accel_config is not None:
         # Try the property helpers first (for modern config classes)
-        theoretical_peak_macs = getattr(accel_config, "array_rows", 0) * getattr(accel_config, "array_cols", 0)
+        theoretical_peak_macs = getattr(accel_config, "array_rows", 0) * getattr(
+            accel_config, "array_cols", 0
+        )
         if theoretical_peak_macs == 0 and hasattr(accel_config, "array"):
             theoretical_peak_macs = accel_config.array.rows * accel_config.array.cols
-    if theoretical_peak_macs == 0 and isinstance(pe_activity_map, np.ndarray) and pe_activity_map.size:
+    if (
+        theoretical_peak_macs == 0
+        and isinstance(pe_activity_map, np.ndarray)
+        and pe_activity_map.size
+    ):
         theoretical_peak_macs = pe_activity_map.shape[0] * pe_activity_map.shape[1]
 
-    roofline_utilization: float = 0.0 if theoretical_peak_macs == 0 else macs_per_cycle / theoretical_peak_macs
+    roofline_utilization: float = (
+        0.0 if theoretical_peak_macs == 0 else macs_per_cycle / theoretical_peak_macs
+    )
 
     return LegacyPerformanceMetrics(
         total_cycles=total_cycles,
@@ -88,12 +109,16 @@ def analyze_simulation_results(
         macs_per_cycle=macs_per_cycle,
         theoretical_peak_macs=theoretical_peak_macs,
         roofline_utilization=roofline_utilization,
-        pe_activity_map=pe_activity_map if isinstance(pe_activity_map, np.ndarray) else None,
+        pe_activity_map=pe_activity_map
+        if isinstance(pe_activity_map, np.ndarray)
+        else None,
     )
 
 
 # Expose in public namespace for import *
-__all__.extend([
-    "LegacyPerformanceMetrics",
-    "analyze_simulation_results",
-])
+__all__.extend(
+    [
+        "LegacyPerformanceMetrics",
+        "analyze_simulation_results",
+    ]
+)

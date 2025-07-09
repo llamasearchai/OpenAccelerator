@@ -30,7 +30,7 @@ class TestBaseWorkload:
             data_type=DataType.FLOAT32,
             random_seed=42,
             validate_output=True,
-            tolerance=1e-6
+            tolerance=1e-6,
         )
 
     @pytest.fixture
@@ -66,10 +66,12 @@ class TestBaseWorkload:
     def test_base_workload_generate_data(self, mock_base_workload):
         """Test workload data generation."""
         # Mock generate_data method
-        mock_base_workload.generate_data = Mock(return_value={
-            "input_data": np.random.rand(10, 10),
-            "expected_output": np.random.rand(10, 10)
-        })
+        mock_base_workload.generate_data = Mock(
+            return_value={
+                "input_data": np.random.rand(10, 10),
+                "expected_output": np.random.rand(10, 10),
+            }
+        )
 
         # Test data generation
         data = mock_base_workload.generate_data()
@@ -91,12 +93,14 @@ class TestBaseWorkload:
     def test_base_workload_get_performance_metrics(self, mock_base_workload):
         """Test performance metrics collection."""
         # Mock performance metrics
-        mock_base_workload.get_performance_metrics = Mock(return_value={
-            "execution_time": 0.05,
-            "operations_count": 1000,
-            "memory_usage": 512,
-            "accuracy": 0.99
-        })
+        mock_base_workload.get_performance_metrics = Mock(
+            return_value={
+                "execution_time": 0.05,
+                "operations_count": 1000,
+                "memory_usage": 512,
+                "accuracy": 0.99,
+            }
+        )
 
         # Test metrics collection
         metrics = mock_base_workload.get_performance_metrics()
@@ -115,11 +119,13 @@ class TestGEMMWorkload:
         return WorkloadConfig(
             workload_type=WorkloadType.GEMM,
             name="test_gemm",
-            gemm_M=64, gemm_K=32, gemm_P=16,
+            gemm_M=64,
+            gemm_K=32,
+            gemm_P=16,
             data_type=DataType.FLOAT32,
             random_seed=42,
             validate_output=True,
-            tolerance=1e-6
+            tolerance=1e-6,
         )
 
     @pytest.fixture
@@ -150,11 +156,13 @@ class TestGEMMWorkload:
     def test_gemm_workload_generate_matrices(self, mock_gemm_workload):
         """Test GEMM matrix generation."""
         # Mock matrix generation
-        mock_gemm_workload.generate_matrices = Mock(return_value={
-            "A": np.random.rand(64, 32),
-            "B": np.random.rand(32, 16),
-            "C": np.zeros((64, 16))
-        })
+        mock_gemm_workload.generate_matrices = Mock(
+            return_value={
+                "A": np.random.rand(64, 32),
+                "B": np.random.rand(32, 16),
+                "C": np.zeros((64, 16)),
+            }
+        )
 
         # Test matrix generation
         matrices = mock_gemm_workload.generate_matrices()
@@ -182,12 +190,14 @@ class TestGEMMWorkload:
     def test_gemm_workload_validate_result(self, mock_gemm_workload):
         """Test GEMM result validation."""
         # Mock result validation
-        mock_gemm_workload.validate_result = Mock(return_value={
-            "is_valid": True,
-            "max_error": 1e-7,
-            "mean_error": 5e-8,
-            "accuracy": 0.999
-        })
+        mock_gemm_workload.validate_result = Mock(
+            return_value={
+                "is_valid": True,
+                "max_error": 1e-7,
+                "mean_error": 5e-8,
+                "accuracy": 0.999,
+            }
+        )
 
         # Test validation
         validation = mock_gemm_workload.validate_result()
@@ -198,7 +208,9 @@ class TestGEMMWorkload:
     def test_gemm_workload_get_operation_count(self, mock_gemm_workload):
         """Test GEMM operation count calculation."""
         # Mock operation count
-        mock_gemm_workload.get_operation_count = Mock(return_value=32768)  # 64 * 32 * 16
+        mock_gemm_workload.get_operation_count = Mock(
+            return_value=32768
+        )  # 64 * 32 * 16
 
         # Test operation count
         op_count = mock_gemm_workload.get_operation_count()
@@ -217,12 +229,14 @@ class TestGEMMWorkload:
     def test_gemm_workload_sparsity_support(self, mock_gemm_workload):
         """Test GEMM workload with sparsity support."""
         # Mock sparsity support
-        mock_gemm_workload.apply_sparsity = Mock(return_value={
-            "sparse_A": np.random.rand(20, 32),
-            "sparse_indices": np.random.randint(0, 64, 20),
-            "compression_ratio": 0.3,
-            "compressed_B": np.random.rand(10, 16)
-        })
+        mock_gemm_workload.apply_sparsity = Mock(
+            return_value={
+                "sparse_A": np.random.rand(20, 32),
+                "sparse_indices": np.random.randint(0, 64, 20),
+                "compression_ratio": 0.3,
+                "compressed_B": np.random.rand(10, 16),
+            }
+        )
 
         # Test sparsity application
         sparse_data = mock_gemm_workload.apply_sparsity()
@@ -247,7 +261,7 @@ class TestMedicalWorkload:
             data_type=DataType.FLOAT32,
             random_seed=42,
             validate_output=True,
-            tolerance=1e-6
+            tolerance=1e-6,
         )
 
     @pytest.fixture
@@ -276,15 +290,17 @@ class TestMedicalWorkload:
     def test_medical_workload_load_dicom(self, mock_medical_workload):
         """Test DICOM image loading."""
         # Mock DICOM loading
-        mock_medical_workload.load_dicom = Mock(return_value={
-            "image_data": np.random.rand(512, 512, 64),
-            "metadata": {
-                "PatientID": "12345",
-                "StudyDate": "20240101",
-                "Modality": "CT",
-                "SliceThickness": 1.0
+        mock_medical_workload.load_dicom = Mock(
+            return_value={
+                "image_data": np.random.rand(512, 512, 64),
+                "metadata": {
+                    "PatientID": "12345",
+                    "StudyDate": "20240101",
+                    "Modality": "CT",
+                    "SliceThickness": 1.0,
+                },
             }
-        })
+        )
 
         # Test DICOM loading
         dicom_data = mock_medical_workload.load_dicom()
@@ -296,11 +312,13 @@ class TestMedicalWorkload:
     def test_medical_workload_preprocessing(self, mock_medical_workload):
         """Test medical image preprocessing."""
         # Mock preprocessing
-        mock_medical_workload.preprocess_image = Mock(return_value={
-            "normalized_image": np.random.rand(512, 512, 64),
-            "windowed_image": np.random.rand(512, 512, 64),
-            "enhanced_image": np.random.rand(512, 512, 64)
-        })
+        mock_medical_workload.preprocess_image = Mock(
+            return_value={
+                "normalized_image": np.random.rand(512, 512, 64),
+                "windowed_image": np.random.rand(512, 512, 64),
+                "enhanced_image": np.random.rand(512, 512, 64),
+            }
+        )
 
         # Test preprocessing
         processed = mock_medical_workload.preprocess_image()
@@ -311,10 +329,12 @@ class TestMedicalWorkload:
     def test_medical_workload_segmentation(self, mock_medical_workload):
         """Test medical image segmentation."""
         # Mock segmentation
-        mock_medical_workload.segment_image = Mock(return_value={
-            "segmentation_mask": np.random.randint(0, 4, (512, 512, 64)),
-            "segment_labels": ["background", "organ", "lesion"]
-        })
+        mock_medical_workload.segment_image = Mock(
+            return_value={
+                "segmentation_mask": np.random.randint(0, 4, (512, 512, 64)),
+                "segment_labels": ["background", "organ", "lesion"],
+            }
+        )
 
         # Test segmentation
         segmentation = mock_medical_workload.segment_image()
@@ -325,14 +345,13 @@ class TestMedicalWorkload:
     def test_medical_workload_classification(self, mock_medical_workload):
         """Test medical image classification."""
         # Mock classification
-        mock_medical_workload.classify_image = Mock(return_value={
-            "predicted_class": "malignant",
-            "confidence": 0.95,
-            "class_probabilities": {
-                "benign": 0.05,
-                "malignant": 0.95
+        mock_medical_workload.classify_image = Mock(
+            return_value={
+                "predicted_class": "malignant",
+                "confidence": 0.95,
+                "class_probabilities": {"benign": 0.05, "malignant": 0.95},
             }
-        })
+        )
 
         # Test classification
         classification = mock_medical_workload.classify_image()
@@ -343,14 +362,16 @@ class TestMedicalWorkload:
     def test_medical_workload_phi_compliance(self, mock_medical_workload):
         """Test PHI compliance features."""
         # Mock PHI compliance
-        mock_medical_workload.anonymize_data = Mock(return_value={
-            "anonymized_image": np.random.rand(512, 512, 64),
-            "anonymized_metadata": {
-                "PatientID": "ANON_001",
-                "StudyDate": "ANON_DATE",
-                "Modality": "CT"
+        mock_medical_workload.anonymize_data = Mock(
+            return_value={
+                "anonymized_image": np.random.rand(512, 512, 64),
+                "anonymized_metadata": {
+                    "PatientID": "ANON_001",
+                    "StudyDate": "ANON_DATE",
+                    "Modality": "CT",
+                },
             }
-        })
+        )
 
         # Test anonymization
         anonymized = mock_medical_workload.anonymize_data()
@@ -361,14 +382,16 @@ class TestMedicalWorkload:
     def test_medical_workload_fda_validation(self, mock_medical_workload):
         """Test FDA validation features."""
         # Mock FDA validation
-        mock_medical_workload.validate_fda_compliance = Mock(return_value={
-            "compliance_status": "COMPLIANT",
-            "validation_report": {
-                "data_integrity": "PASS",
-                "algorithm_validation": "PASS",
-                "clinical_validation": "PASS"
+        mock_medical_workload.validate_fda_compliance = Mock(
+            return_value={
+                "compliance_status": "COMPLIANT",
+                "validation_report": {
+                    "data_integrity": "PASS",
+                    "algorithm_validation": "PASS",
+                    "clinical_validation": "PASS",
+                },
             }
-        })
+        )
 
         # Test FDA validation
         validation = mock_medical_workload.validate_fda_compliance()
@@ -414,11 +437,13 @@ class TestWorkloadIntegration:
     def test_workload_scheduling(self, mock_workload_manager):
         """Test workload scheduling."""
         # Mock workload scheduling
-        mock_workload_manager.schedule_workload = Mock(return_value={
-            "scheduled": True,
-            "queue_position": 0,
-            "estimated_start_time": 100
-        })
+        mock_workload_manager.schedule_workload = Mock(
+            return_value={
+                "scheduled": True,
+                "queue_position": 0,
+                "estimated_start_time": 100,
+            }
+        )
 
         # Test scheduling
         workload = Mock(spec=BaseWorkload)
@@ -431,12 +456,14 @@ class TestWorkloadIntegration:
     def test_workload_batch_processing(self, mock_workload_manager):
         """Test batch workload processing."""
         # Mock batch processing
-        mock_workload_manager.process_batch = Mock(return_value={
-            "processed_count": 5,
-            "failed_count": 0,
-            "total_execution_time": 2.5,
-            "average_execution_time": 0.5
-        })
+        mock_workload_manager.process_batch = Mock(
+            return_value={
+                "processed_count": 5,
+                "failed_count": 0,
+                "total_execution_time": 2.5,
+                "average_execution_time": 0.5,
+            }
+        )
 
         # Test batch processing
         workloads = [Mock(spec=BaseWorkload) for _ in range(5)]
@@ -450,19 +477,21 @@ class TestWorkloadIntegration:
     def test_workload_performance_comparison(self, mock_workload_manager):
         """Test workload performance comparison."""
         # Mock performance comparison
-        mock_workload_manager.compare_performance = Mock(return_value={
-            "workload1": {
-                "execution_time": 0.1,
-                "accuracy": 0.95,
-                "memory_usage": 100
-            },
-            "workload2": {
-                "execution_time": 0.2,
-                "accuracy": 0.90,
-                "memory_usage": 150
-            },
-            "winner": "workload1"
-        })
+        mock_workload_manager.compare_performance = Mock(
+            return_value={
+                "workload1": {
+                    "execution_time": 0.1,
+                    "accuracy": 0.95,
+                    "memory_usage": 100,
+                },
+                "workload2": {
+                    "execution_time": 0.2,
+                    "accuracy": 0.90,
+                    "memory_usage": 150,
+                },
+                "winner": "workload1",
+            }
+        )
 
         # Test performance comparison
         workload1 = Mock(spec=BaseWorkload)
@@ -484,16 +513,15 @@ class TestWorkloadDataGeneration:
         """Test synthetic data generation."""
         # Mock synthetic data generator
         generator = Mock()
-        generator.generate_synthetic_data = Mock(return_value={
-            "matrices": {
-                "A": np.random.rand(64, 32),
-                "B": np.random.rand(32, 16)
-            },
-            "images": {
-                "ct_scan": np.random.rand(512, 512, 64),
-                "mri_scan": np.random.rand(256, 256, 32)
+        generator.generate_synthetic_data = Mock(
+            return_value={
+                "matrices": {"A": np.random.rand(64, 32), "B": np.random.rand(32, 16)},
+                "images": {
+                    "ct_scan": np.random.rand(512, 512, 64),
+                    "mri_scan": np.random.rand(256, 256, 32),
+                },
             }
-        })
+        )
 
         # Test synthetic data generation
         data = generator.generate_synthetic_data()
@@ -506,16 +534,18 @@ class TestWorkloadDataGeneration:
         """Test real data loading."""
         # Mock real data loader
         loader = Mock()
-        loader.load_real_data = Mock(return_value={
-            "dataset_name": "medical_imaging_dataset",
-            "data_size": 1000,
-            "data_format": "DICOM",
-            "metadata": {
-                "patient_count": 100,
-                "study_count": 500,
-                "modalities": ["CT", "MRI"]
+        loader.load_real_data = Mock(
+            return_value={
+                "dataset_name": "medical_imaging_dataset",
+                "data_size": 1000,
+                "data_format": "DICOM",
+                "metadata": {
+                    "patient_count": 100,
+                    "study_count": 500,
+                    "modalities": ["CT", "MRI"],
+                },
             }
-        })
+        )
 
         # Test real data loading
         data = loader.load_real_data()
@@ -528,12 +558,14 @@ class TestWorkloadDataGeneration:
         """Test data validation."""
         # Mock data validator
         validator = Mock()
-        validator.validate_data = Mock(return_value={
-            "is_valid": True,
-            "validation_errors": [],
-            "data_quality_score": 0.95,
-            "completeness": 0.98
-        })
+        validator.validate_data = Mock(
+            return_value={
+                "is_valid": True,
+                "validation_errors": [],
+                "data_quality_score": 0.95,
+                "completeness": 0.98,
+            }
+        )
 
         # Test data validation
         validation = validator.validate_data()

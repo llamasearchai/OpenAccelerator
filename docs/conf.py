@@ -5,7 +5,6 @@
 
 import os
 import sys
-from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
@@ -42,7 +41,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.ifconfig",
     "sphinx.ext.doctest",
-    
     # Third-party extensions (carefully selected to avoid conflicts)
     "sphinx_rtd_theme",
     "sphinx_autodoc_typehints",
@@ -346,4 +344,4 @@ copybutton_remove_prompts = True
 
 # -- Options for sphinx_design extension ------------------------------------
 
-sd_fontawesome_latex = True 
+sd_fontawesome_latex = True

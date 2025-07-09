@@ -1,8 +1,8 @@
 # OpenAccelerator System Completion Report
 
-**Author:** Nik Jois <nikjois@llamasearch.ai>  
-**Date:** January 8, 2025  
-**Version:** 1.0.0  
+**Author:** Nik Jois <nikjois@llamasearch.ai>
+**Date:** January 8, 2025
+**Version:** 1.0.0
 
 ---
 
@@ -278,4 +278,4 @@ The OpenAccelerator system has been **successfully completed** with **100% funct
 
 ---
 
-*This report confirms the successful completion of the OpenAccelerator project with all requirements met and exceeded.* 
+*This report confirms the successful completion of the OpenAccelerator project with all requirements met and exceeded.*

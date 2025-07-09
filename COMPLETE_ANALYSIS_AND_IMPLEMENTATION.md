@@ -271,7 +271,7 @@ The project is now ready for production deployment with all features fully funct
 
 ---
 
-**Author**: Nik Jois <nikjois@llamasearch.ai>  
-**Project**: OpenAccelerator - Advanced ML Accelerator Simulator  
-**Version**: 1.0.0  
-**Status**: Production Ready [SUCCESS] 
+**Author**: Nik Jois <nikjois@llamasearch.ai>
+**Project**: OpenAccelerator - Advanced ML Accelerator Simulator
+**Version**: 1.0.0
+**Status**: Production Ready [SUCCESS]

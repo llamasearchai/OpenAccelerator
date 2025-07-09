@@ -415,4 +415,4 @@ app_metrics/
 *.confidential
 *_secret
 *_private
-*_confidential 
+*_confidential

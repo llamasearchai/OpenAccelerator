@@ -10,4 +10,4 @@ Key Metrics
 
 * **MACs per cycle**
 * **PE utilization**
-* **Energy consumption** 
+* **Energy consumption**

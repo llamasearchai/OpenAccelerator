@@ -42,7 +42,7 @@ print_header() {
 # Check dependencies
 check_dependencies() {
     print_header "Checking Dependencies"
-    
+
     # Check Python
     if command -v python3 &> /dev/null; then
         PYTHON_VERSION=$(python3 --version)
@@ -51,7 +51,7 @@ check_dependencies() {
         print_error "Python 3 is required but not found"
         exit 1
     fi
-    
+
     # Check Docker (optional)
     if command -v docker &> /dev/null; then
         DOCKER_VERSION=$(docker --version)
@@ -61,7 +61,7 @@ check_dependencies() {
         print_warning "Docker not found - container deployment disabled"
         DOCKER_AVAILABLE=false
     fi
-    
+
     # Check pip
     if command -v pip3 &> /dev/null; then
         print_status "pip3 found"
@@ -74,15 +74,15 @@ check_dependencies() {
 # Create virtual environment
 setup_venv() {
     print_header "Setting Up Virtual Environment"
-    
+
     if [ ! -d "venv" ]; then
         print_status "Creating virtual environment..."
         python3 -m venv venv
     fi
-    
+
     print_status "Activating virtual environment..."
     source venv/bin/activate
-    
+
     print_status "Upgrading pip..."
     pip install --upgrade pip
 }
@@ -90,7 +90,7 @@ setup_venv() {
 # Install dependencies
 install_dependencies() {
     print_header "Installing Dependencies"
-    
+
     if [ -f "pyproject.toml" ]; then
         print_status "Installing from pyproject.toml..."
         pip install -e .
@@ -106,7 +106,7 @@ install_dependencies() {
 # Setup environment
 setup_environment() {
     print_header "Setting Up Environment"
-    
+
     if [ ! -f "$ENV_FILE" ]; then
         print_status "Creating environment file..."
         cat > $ENV_FILE << EOL
@@ -148,12 +148,12 @@ EOL
 # Run tests
 run_tests() {
     print_header "Running Tests"
-    
+
     if [ -f "test_complete_system.py" ]; then
         print_status "Running comprehensive system test..."
         python test_complete_system.py
     fi
-    
+
     if [ -d "tests" ]; then
         print_status "Running pytest test suite..."
         python -m pytest tests/ -v
@@ -163,12 +163,12 @@ run_tests() {
 # Start development server
 start_dev_server() {
     print_header "Starting Development Server"
-    
+
     print_status "Starting FastAPI development server on port $PORT..."
     print_status "Access the API at: http://localhost:$PORT"
     print_status "Access API docs at: http://localhost:$PORT/api/v1/docs"
     print_status "Press Ctrl+C to stop the server"
-    
+
     python -m uvicorn src.open_accelerator.api.main:app \
         --host 0.0.0.0 \
         --port $PORT \
@@ -179,7 +179,7 @@ start_dev_server() {
 # Build Docker image
 build_docker() {
     print_header "Building Docker Image"
-    
+
     if [ "$DOCKER_AVAILABLE" = true ]; then
         print_status "Building Docker image: $DOCKER_IMAGE_NAME:$DOCKER_TAG"
         docker build -t $DOCKER_IMAGE_NAME:$DOCKER_TAG .
@@ -192,7 +192,7 @@ build_docker() {
 # Start Docker container
 start_docker() {
     print_header "Starting Docker Container"
-    
+
     if [ "$DOCKER_AVAILABLE" = true ]; then
         print_status "Starting Docker container..."
         docker run -d \
@@ -200,7 +200,7 @@ start_docker() {
             -p $PORT:$PORT \
             --env-file $ENV_FILE \
             $DOCKER_IMAGE_NAME:$DOCKER_TAG
-        
+
         print_status "Container started successfully"
         print_status "Access the API at: http://localhost:$PORT"
     else
@@ -211,7 +211,7 @@ start_docker() {
 # Stop Docker container
 stop_docker() {
     print_header "Stopping Docker Container"
-    
+
     if [ "$DOCKER_AVAILABLE" = true ]; then
         docker stop open-accelerator 2>/dev/null || true
         docker rm open-accelerator 2>/dev/null || true
@@ -246,12 +246,12 @@ show_help() {
 # Clean up
 clean() {
     print_header "Cleaning Up"
-    
+
     print_status "Removing build artifacts..."
     rm -rf build/ dist/ *.egg-info/ __pycache__/ .pytest_cache/
     find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
     find . -type f -name "*.pyc" -delete 2>/dev/null || true
-    
+
     print_status "Cleanup complete"
 }
 
@@ -297,4 +297,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

@@ -92,14 +92,14 @@ Creating GEMM Workloads
 .. code-block:: python
 
     from open_accelerator.workloads import WorkloadManager
-    
+
     # Create basic GEMM workload
     gemm_workload = WorkloadManager.create_gemm_workload(
         matrix_a_shape=(1024, 1024),
         matrix_b_shape=(1024, 1024),
         precision="fp16"
     )
-    
+
     # Create batched GEMM workload
     batched_gemm = WorkloadManager.create_batched_gemm_workload(
         batch_size=32,
@@ -107,7 +107,7 @@ Creating GEMM Workloads
         matrix_b_shape=(512, 512),
         precision="fp16"
     )
-    
+
     # Custom GEMM configuration
     custom_gemm = GEMMWorkload(
         matrix_a_shape=(2048, 2048),
@@ -129,7 +129,7 @@ Creating CNN Workloads
         batch_size=32,
         precision="fp16"
     )
-    
+
     # Create CNN workload for object detection
     detection_workload = WorkloadManager.create_cnn_workload(
         model_type="yolov5",
@@ -150,7 +150,7 @@ Creating Transformer Workloads
         batch_size=16,
         precision="fp16"
     )
-    
+
     # Create GPT workload for text generation
     gpt_workload = WorkloadManager.create_transformer_workload(
         model_type="gpt2",
@@ -165,7 +165,7 @@ Creating Medical Workloads
 .. code-block:: python
 
     from open_accelerator.workloads.medical import MedicalWorkload
-    
+
     # Create medical imaging workload
     medical_imaging = MedicalWorkload(
         workload_type="medical_imaging",
@@ -176,7 +176,7 @@ Creating Medical Workloads
         hipaa_compliant=True,
         encryption_enabled=True
     )
-    
+
     # Create diagnostics workload
     diagnostics = MedicalWorkload(
         workload_type="diagnostics",
@@ -203,7 +203,7 @@ Performance Optimization
         "batch_size": 32,
         "precision": "fp16"
     }
-    
+
     workload = WorkloadManager.create_workload(
         workload_type="gemm",
         config=performance_config
@@ -222,7 +222,7 @@ Power Optimization
         "batch_size": 16,
         "frequency_scaling": True
     }
-    
+
     workload = WorkloadManager.create_workload(
         workload_type="cnn",
         config=power_config
@@ -241,7 +241,7 @@ Medical Compliance
         "secure_processing": True,
         "compliance_validation": True
     }
-    
+
     workload = WorkloadManager.create_medical_workload(
         workload_type="medical_imaging",
         config=medical_config
@@ -256,13 +256,13 @@ Running Workloads
 .. code-block:: python
 
     from open_accelerator import Accelerator
-    
+
     # Initialize accelerator
     accelerator = Accelerator()
-    
+
     # Run workload
     result = accelerator.run(workload)
-    
+
     # Access results
     print(f"Execution time: {result.execution_time}ms")
     print(f"Throughput: {result.throughput} GOPS")
@@ -276,12 +276,12 @@ Batch Processing
 
     # Process multiple workloads
     workloads = [workload1, workload2, workload3]
-    
+
     results = []
     for workload in workloads:
         result = accelerator.run(workload)
         results.append(result)
-    
+
     # Parallel execution
     results = accelerator.run_parallel(workloads)
 
@@ -291,11 +291,11 @@ Asynchronous Execution
 .. code-block:: python
 
     import asyncio
-    
+
     async def run_workload_async(workload):
         result = await accelerator.run_async(workload)
         return result
-    
+
     # Run multiple workloads asynchronously
     async def run_multiple_workloads():
         tasks = [run_workload_async(w) for w in workloads]
@@ -311,16 +311,16 @@ Performance Monitoring
 .. code-block:: python
 
     from open_accelerator.monitoring import WorkloadMonitor
-    
+
     # Create monitor
     monitor = WorkloadMonitor(accelerator)
-    
+
     # Start monitoring
     monitor.start()
-    
+
     # Run workload with monitoring
     result = accelerator.run(workload)
-    
+
     # Get monitoring data
     metrics = monitor.get_metrics()
     print(f"Peak memory usage: {metrics.peak_memory_usage}MB")
@@ -332,13 +332,13 @@ Profiling
 .. code-block:: python
 
     from open_accelerator.profiling import WorkloadProfiler
-    
+
     # Create profiler
     profiler = WorkloadProfiler(accelerator)
-    
+
     # Profile workload execution
     profile_data = profiler.profile(workload)
-    
+
     # Generate profiling report
     profiler.generate_report(profile_data, output_file="profile_report.html")
 
@@ -358,13 +358,13 @@ Exception Handling
 .. code-block:: python
 
     from open_accelerator.workloads.base import WorkloadError
-    
+
     try:
         result = accelerator.run(workload)
     except WorkloadError as e:
         print(f"Workload execution failed: {e}")
         # Handle error appropriately
-        
+
     # Retry mechanism
     max_retries = 3
     for attempt in range(max_retries):
@@ -404,4 +404,4 @@ Medical Compliance
 2. **Audit Logging**: Enable comprehensive audit logging
 3. **Access Control**: Implement proper access controls
 4. **Compliance Validation**: Regularly validate compliance
-5. **Security Updates**: Keep security components updated 
+5. **Security Updates**: Keep security components updated

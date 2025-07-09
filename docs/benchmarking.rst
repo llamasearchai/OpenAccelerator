@@ -29,4 +29,4 @@ Interpreting Results
 Visualizations
 --------------
 
-Use `open_accelerator.visualization` to generate charts. 
+Use `open_accelerator.visualization` to generate charts.

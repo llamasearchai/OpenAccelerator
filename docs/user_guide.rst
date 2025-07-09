@@ -44,4 +44,4 @@ Frequently Asked Questions
 Feedback
 --------
 
-Found an issue or have an improvement idea? Please open a GitHub issue or pull request. 
+Found an issue or have an improvement idea? Please open a GitHub issue or pull request.

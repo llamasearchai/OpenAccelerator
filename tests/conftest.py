@@ -5,15 +5,14 @@ Provides comprehensive test configuration with fixtures for accelerator componen
 test data generation, and property-based testing setup with hypothesis.
 """
 
-import os
 import tempfile
-import pytest
 from pathlib import Path
-from typing import Dict, Any, Generator, Optional
+from typing import Any, Dict, Generator
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import hypothesis
+import numpy as np
+import pytest
 from hypothesis import strategies as st
 
 # Configure hypothesis for property-based testing
@@ -48,7 +47,7 @@ def mock_openai_client():
     with patch("openai.OpenAI") as mock_client:
         mock_instance = MagicMock()
         mock_client.return_value = mock_instance
-        
+
         # Mock chat completion response
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -56,9 +55,9 @@ def mock_openai_client():
         mock_response.usage.prompt_tokens = 10
         mock_response.usage.completion_tokens = 20
         mock_response.usage.total_tokens = 30
-        
+
         mock_instance.chat.completions.create.return_value = mock_response
-        
+
         yield mock_instance
 
 
@@ -76,7 +75,7 @@ def basic_config() -> Dict[str, Any]:
         "output_buffer_size": 1024,
         "medical_mode": False,
         "enable_security": False,
-        "enable_power_management": False
+        "enable_power_management": False,
     }
 
 
@@ -95,7 +94,7 @@ def medical_config() -> Dict[str, Any]:
         "enable_security": True,
         "enable_power_management": True,
         "precision": "float64",
-        "safety_level": "high"
+        "safety_level": "high",
     }
 
 
@@ -112,7 +111,7 @@ def test_config() -> Dict[str, Any]:
         "output_buffer_size": 1024,
         "medical_mode": False,
         "enable_security": False,
-        "enable_power_management": False
+        "enable_power_management": False,
     }
 
 
@@ -120,14 +119,14 @@ def test_config() -> Dict[str, Any]:
 def test_matrices() -> Dict[str, np.ndarray]:
     """Test matrices for GEMM operations."""
     np.random.seed(42)  # Reproducible test data
-    
+
     m, k, p = 16, 12, 8
-    
+
     return {
         "A": np.random.randn(m, k).astype(np.float32),
         "B": np.random.randn(k, p).astype(np.float32),
         "C": np.zeros((m, p), dtype=np.float32),
-        "expected_C": np.random.randn(m, k) @ np.random.randn(k, p)
+        "expected_C": np.random.randn(m, k) @ np.random.randn(k, p),
     }
 
 
@@ -135,13 +134,13 @@ def test_matrices() -> Dict[str, np.ndarray]:
 def medical_image_data() -> Dict[str, np.ndarray]:
     """Medical imaging test data."""
     np.random.seed(42)
-    
+
     return {
         "ct_scan": np.random.uniform(0, 1, (512, 512, 64)).astype(np.float32),
         "mri_scan": np.random.uniform(0, 1, (256, 256, 128)).astype(np.float32),
         "xray_image": np.random.uniform(0, 1, (1024, 1024, 1)).astype(np.float32),
         "segmentation_mask": np.random.randint(0, 2, (512, 512, 64)).astype(np.uint8),
-        "classification_labels": np.array([0, 1, 0, 1, 0], dtype=np.int32)
+        "classification_labels": np.array([0, 1, 0, 1, 0], dtype=np.int32),
     }
 
 
@@ -150,20 +149,20 @@ def medical_image_data() -> Dict[str, np.ndarray]:
 def mock_processing_element():
     """Mock processing element for testing."""
     from open_accelerator.core.pe import ProcessingElement
-    
+
     with patch.object(ProcessingElement, "__init__", return_value=None):
         pe = MagicMock(spec=ProcessingElement)
         pe.pe_id = (0, 0)
         pe.accumulator = 0.0
         pe.total_mac_ops = 0
         pe.is_computing_this_cycle = False
-        
+
         # Mock methods
         pe.load_inputs = MagicMock()
         pe.cycle = MagicMock()
         pe.get_output_for_propagation = MagicMock(return_value=(None, None))
         pe.get_final_result = MagicMock(return_value=0.0)
-        
+
         yield pe
 
 
@@ -171,20 +170,20 @@ def mock_processing_element():
 def mock_memory_buffer():
     """Mock memory buffer for testing."""
     from open_accelerator.core.memory import MemoryBuffer
-    
+
     with patch.object(MemoryBuffer, "__init__", return_value=None):
         buffer = MagicMock(spec=MemoryBuffer)
         buffer.name = "test_buffer"
         buffer.size = 1024
         buffer.bandwidth = 16
         buffer.data = []
-        
+
         # Mock methods
         buffer.write = MagicMock(return_value=True)
         buffer.read = MagicMock(return_value=None)
         buffer.is_full = MagicMock(return_value=False)
         buffer.is_empty = MagicMock(return_value=True)
-        
+
         yield buffer
 
 
@@ -192,18 +191,18 @@ def mock_memory_buffer():
 def mock_accelerator():
     """Mock accelerator for integration testing."""
     from open_accelerator.core.accelerator import AcceleratorController
-    
+
     with patch.object(AcceleratorController, "__init__", return_value=None):
         accelerator = MagicMock(spec=AcceleratorController)
         accelerator.config = MagicMock()
         accelerator.current_cycle = 0
         accelerator.is_running = False
-        
+
         # Mock methods
         accelerator.load_workload = MagicMock(return_value=True)
         accelerator.execute_workload = MagicMock(return_value={"status": "completed"})
         accelerator.reset = MagicMock()
-        
+
         yield accelerator
 
 
@@ -212,16 +211,12 @@ def mock_accelerator():
 def gemm_workload():
     """GEMM workload for testing."""
     from open_accelerator.workloads.gemm import GEMMWorkload, GEMMWorkloadConfig
-    
-    config = GEMMWorkloadConfig(
-        M=16,
-        K=12,
-        P=8
-    )
-    
+
+    config = GEMMWorkloadConfig(M=16, K=12, P=8)
+
     workload = GEMMWorkload(config)
     workload.prepare()
-    
+
     return workload
 
 
@@ -229,33 +224,34 @@ def gemm_workload():
 def test_workload_config():
     """Test workload configuration fixture."""
     from open_accelerator.utils.config import WorkloadConfig, WorkloadType
-    
+
     return WorkloadConfig(
-        workload_type=WorkloadType.GEMM,
-        gemm_M=16,
-        gemm_K=12,
-        gemm_P=8
+        workload_type=WorkloadType.GEMM, gemm_M=16, gemm_K=12, gemm_P=8
     )
 
 
 @pytest.fixture
 def medical_workload():
     """Medical workload for testing."""
-    from open_accelerator.workloads.medical import MedicalConvolution, MedicalWorkloadConfig
-    from open_accelerator.workloads.medical import MedicalModalityType, MedicalTaskType
-    
+    from open_accelerator.workloads.medical import (
+        MedicalConvolution,
+        MedicalModalityType,
+        MedicalTaskType,
+        MedicalWorkloadConfig,
+    )
+
     config = MedicalWorkloadConfig(
         name="test_medical",
         modality=MedicalModalityType.CT_SCAN,
         task_type=MedicalTaskType.SEGMENTATION,
         image_size=(128, 128, 16),
         batch_size=1,
-        precision_level="high"
+        precision_level="high",
     )
-    
+
     workload = MedicalConvolution(config)
     workload.generate_medical_ct_data()
-    
+
     return workload
 
 
@@ -265,20 +261,25 @@ def matrix_strategy(draw, min_size=2, max_size=32):
     """Strategy for generating test matrices."""
     rows = draw(st.integers(min_value=min_size, max_value=max_size))
     cols = draw(st.integers(min_value=min_size, max_value=max_size))
-    
+
     # Generate matrix with finite values
     matrix = draw(
         st.lists(
             st.lists(
-                st.floats(min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=-100.0,
+                    max_value=100.0,
+                    allow_nan=False,
+                    allow_infinity=False,
+                ),
                 min_size=cols,
-                max_size=cols
+                max_size=cols,
             ),
             min_size=rows,
-            max_size=rows
+            max_size=rows,
         )
     )
-    
+
     return np.array(matrix, dtype=np.float32)
 
 
@@ -288,7 +289,7 @@ def gemm_dimensions_strategy(draw):
     m = draw(st.integers(min_value=1, max_value=32))
     k = draw(st.integers(min_value=1, max_value=32))
     p = draw(st.integers(min_value=1, max_value=32))
-    
+
     return {"m": m, "k": k, "p": p}
 
 
@@ -298,24 +299,29 @@ def medical_image_strategy(draw):
     height = draw(st.integers(min_value=64, max_value=512))
     width = draw(st.integers(min_value=64, max_value=512))
     depth = draw(st.integers(min_value=1, max_value=64))
-    
+
     # Generate realistic medical image intensities
     image = draw(
         st.lists(
             st.lists(
                 st.lists(
-                    st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+                    st.floats(
+                        min_value=0.0,
+                        max_value=1.0,
+                        allow_nan=False,
+                        allow_infinity=False,
+                    ),
                     min_size=depth,
-                    max_size=depth
+                    max_size=depth,
                 ),
                 min_size=width,
-                max_size=width
+                max_size=width,
             ),
             min_size=height,
-            max_size=height
+            max_size=height,
         )
     )
-    
+
     return np.array(image, dtype=np.float32)
 
 
@@ -324,7 +330,7 @@ def accelerator_config_strategy(draw):
     """Strategy for generating accelerator configurations."""
     rows = draw(st.integers(min_value=2, max_value=16))
     cols = draw(st.integers(min_value=2, max_value=16))
-    
+
     return {
         "array_rows": rows,
         "array_cols": cols,
@@ -333,7 +339,7 @@ def accelerator_config_strategy(draw):
         "weight_buffer_size": draw(st.integers(min_value=512, max_value=4096)),
         "output_buffer_size": draw(st.integers(min_value=512, max_value=4096)),
         "medical_mode": draw(st.booleans()),
-        "enable_security": draw(st.booleans())
+        "enable_security": draw(st.booleans()),
     }
 
 
@@ -346,7 +352,7 @@ def benchmark_config():
         "max_time": 1.0,
         "warmup": True,
         "sort": "mean",
-        "timer": "time.perf_counter"
+        "timer": "time.perf_counter",
     }
 
 
@@ -357,11 +363,11 @@ def mock_file_system(tmp_path):
     # Create test directory structure
     test_dir = tmp_path / "test_workspace"
     test_dir.mkdir()
-    
+
     # Create test files
     (test_dir / "config.yaml").write_text("test: config")
     (test_dir / "data.json").write_text('{"test": "data"}')
-    
+
     return test_dir
 
 
@@ -369,46 +375,33 @@ def mock_file_system(tmp_path):
 @pytest.fixture
 def error_injection():
     """Error injection for testing error handling."""
+
     class ErrorInjector:
         def __init__(self):
             self.errors = {}
-        
+
         def add_error(self, method_name, error_type, error_message):
             self.errors[method_name] = (error_type, error_message)
-        
+
         def get_error(self, method_name):
             if method_name in self.errors:
                 error_type, error_message = self.errors[method_name]
                 return error_type(error_message)
             return None
-    
+
     return ErrorInjector()
 
 
 # Test markers
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as a performance test"
-    )
-    config.addinivalue_line(
-        "markers", "medical: mark test as a medical-specific test"
-    )
-    config.addinivalue_line(
-        "markers", "property: mark test as a property-based test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "requires_gpu: mark test as requiring GPU"
-    )
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "performance: mark test as a performance test")
+    config.addinivalue_line("markers", "medical: mark test as a medical-specific test")
+    config.addinivalue_line("markers", "property: mark test as a property-based test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "requires_gpu: mark test as requiring GPU")
     config.addinivalue_line(
         "markers", "requires_network: mark test as requiring network access"
     )
@@ -422,15 +415,16 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv("TESTING", "true")
     monkeypatch.setenv("LOG_LEVEL", "DEBUG")
     monkeypatch.setenv("DISABLE_CUDA", "true")
-    
+
     # Mock OpenAI API key to avoid accidental API calls
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
-    
+
     # Set numpy random seed for reproducible tests
     np.random.seed(42)
-    
+
     # Configure logging for tests
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
 
 
@@ -439,31 +433,38 @@ def setup_test_environment(monkeypatch):
 def cleanup_after_test():
     """Clean up after each test."""
     yield
-    
+
     # Clean up any test artifacts
     import gc
+
     gc.collect()
-    
+
     # Reset any global state
-    if hasattr(np.random, 'seed'):
+    if hasattr(np.random, "seed"):
         np.random.seed(42)
 
 
 # Test utilities
 class TestUtils:
     """Utility functions for testing."""
-    
+
     @staticmethod
     def assert_matrix_equal(actual, expected, tolerance=1e-6):
         """Assert that two matrices are equal within tolerance."""
-        assert actual.shape == expected.shape, f"Shape mismatch: {actual.shape} vs {expected.shape}"
-        assert np.allclose(actual, expected, atol=tolerance), "Matrices are not equal within tolerance"
-    
+        assert (
+            actual.shape == expected.shape
+        ), f"Shape mismatch: {actual.shape} vs {expected.shape}"
+        assert np.allclose(
+            actual, expected, atol=tolerance
+        ), "Matrices are not equal within tolerance"
+
     @staticmethod
     def assert_performance_within_bounds(actual_time, expected_time, tolerance=0.1):
         """Assert that performance is within expected bounds."""
-        assert actual_time <= expected_time * (1 + tolerance), f"Performance too slow: {actual_time} > {expected_time * (1 + tolerance)}"
-    
+        assert actual_time <= expected_time * (
+            1 + tolerance
+        ), f"Performance too slow: {actual_time} > {expected_time * (1 + tolerance)}"
+
     @staticmethod
     def generate_test_data(size, data_type="float32"):
         """Generate test data for testing."""
@@ -478,4 +479,4 @@ class TestUtils:
 @pytest.fixture
 def test_utils():
     """Provide test utilities."""
-    return TestUtils 
+    return TestUtils

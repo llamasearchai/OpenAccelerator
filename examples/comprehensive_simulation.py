@@ -19,7 +19,7 @@ from open_accelerator.core.power_management import (
     integrate_power_management,
 )
 from open_accelerator.simulation import Simulator
-from open_accelerator.utils import AcceleratorConfig, WorkloadConfig
+from open_accelerator.utils import AcceleratorConfig
 from open_accelerator.workloads import GEMMWorkload
 from open_accelerator.workloads.gemm import GEMMWorkloadConfig
 
@@ -144,14 +144,14 @@ class ComprehensiveSimulationSuite:
 
         # Create simulator
         simulator = Simulator(accel_config)
-        
+
         # Setup power management if enabled
         power_manager = None
         if enable_power_management:
             power_manager = integrate_power_management(
                 accel_config, config_info["power_config"]
             )
-        
+
         # Run simulation
         start_time = time.time()
         sim_stats = simulator.run(workload)
@@ -162,16 +162,22 @@ class ComprehensiveSimulationSuite:
             metrics = analyze_simulation_results(sim_stats, accel_config, workload)
         except Exception as e:
             print(f"  Warning: Analysis failed: {e}")
+
             # Create default metrics if analysis fails
             class DefaultMetrics:
                 def __init__(self):
-                    self.total_cycles = sim_stats.get('total_cycles', 1000)
-                    self.total_mac_operations = sim_stats.get('total_mac_operations', 5000)
+                    self.total_cycles = sim_stats.get("total_cycles", 1000)
+                    self.total_mac_operations = sim_stats.get(
+                        "total_mac_operations", 5000
+                    )
                     self.average_pe_utilization = 0.5
                     self.macs_per_cycle = 5.0
-                    self.theoretical_peak_macs = accel_config.array_rows * accel_config.array_cols
+                    self.theoretical_peak_macs = (
+                        accel_config.array_rows * accel_config.array_cols
+                    )
                     self.roofline_utilization = 0.5
                     self.pe_activity_map = None
+
             metrics = DefaultMetrics()
 
         # Compile results
@@ -253,7 +259,7 @@ class ComprehensiveSimulationSuite:
             if not result or "metrics" not in result:
                 print(f"  Skipping {sim_key}: No metrics available")
                 continue
-                
+
             metrics = result["metrics"]
             config_name = result["config_name"]
             workload_name = result["workload_name"]
@@ -285,7 +291,7 @@ class ComprehensiveSimulationSuite:
 
         analysis["performance_comparison"] = {
             "data": performance_data,
-            "count": len(performance_data)
+            "count": len(performance_data),
         }
 
         # Find best and worst performers
@@ -371,7 +377,8 @@ class ComprehensiveSimulationSuite:
         configs = [d["config"] for d in performance_data]
         throughputs = [d["macs_per_cycle"] for d in performance_data]
         import matplotlib.cm as cm
-        colors = cm.get_cmap('viridis')(np.linspace(0, 1, len(set(configs))))
+
+        colors = cm.get_cmap("viridis")(np.linspace(0, 1, len(set(configs))))
         config_colors = {config: colors[i] for i, config in enumerate(set(configs))}
         bar_colors = [config_colors[config] for config in configs]
 
@@ -512,7 +519,7 @@ class ComprehensiveSimulationSuite:
                     )
 
         # Add colorbar
-        im = ax5.imshow(heatmap_data, cmap='viridis', aspect='auto')
+        im = ax5.imshow(heatmap_data, cmap="viridis", aspect="auto")
         plt.colorbar(im, ax=ax5, label="MACs per Cycle")
 
         plt.suptitle(

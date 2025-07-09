@@ -36,16 +36,16 @@ Installation::
 Basic Usage::
 
     from open_accelerator import Accelerator, WorkloadManager
-    
+
     # Initialize accelerator
     accelerator = Accelerator()
-    
+
     # Create and run workload
     workload = WorkloadManager.create_gemm_workload(
         matrix_size=1024,
         precision="fp16"
     )
-    
+
     result = accelerator.run(workload)
     print(f"Performance: {result.performance_metrics}")
 
@@ -53,7 +53,7 @@ API Server::
 
     # Start FastAPI server
     uvicorn open_accelerator.api.main:app --reload
-    
+
     # Access API documentation at http://localhost:8000/docs
 
 Table of Contents
@@ -112,4 +112,4 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search` 
+* :ref:`search`

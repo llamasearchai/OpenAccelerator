@@ -8,47 +8,57 @@ clock gating, and thermal management for energy-efficient operation.
 import logging
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path  # <- needed for type annotations
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class PowerState(Enum):
     """Power states for accelerator components."""
+
     ACTIVE = "active"
     IDLE = "idle"
     SLEEP = "sleep"
     DEEP_SLEEP = "deep_sleep"
     POWER_OFF = "power_off"
 
+
 class VoltageLevel(Enum):
     """Voltage levels for DVFS."""
-    HIGH = "high"      # 1.2V - High performance
-    NOMINAL = "nominal" # 1.0V - Standard operation
-    LOW = "low"        # 0.8V - Low power
+
+    HIGH = "high"  # 1.2V - High performance
+    NOMINAL = "nominal"  # 1.0V - Standard operation
+    LOW = "low"  # 0.8V - Low power
     ULTRA_LOW = "ultra_low"  # 0.6V - Minimum operation
+
 
 class FrequencyLevel(Enum):
     """Frequency levels for DVFS."""
-    HIGH = "high"      # 1000 MHz
-    NOMINAL = "nominal" # 800 MHz
-    LOW = "low"        # 600 MHz
+
+    HIGH = "high"  # 1000 MHz
+    NOMINAL = "nominal"  # 800 MHz
+    LOW = "low"  # 600 MHz
     ULTRA_LOW = "ultra_low"  # 400 MHz
+
 
 class ThermalState(Enum):
     """Thermal management states."""
-    NORMAL = "normal"        # < 70°C
-    WARM = "warm"           # 70-80°C
-    HOT = "hot"             # 80-90°C
-    CRITICAL = "critical"    # > 90°C
+
+    NORMAL = "normal"  # < 70°C
+    WARM = "warm"  # 70-80°C
+    HOT = "hot"  # 80-90°C
+    CRITICAL = "critical"  # > 90°C
+
 
 @dataclass
 class PowerConfig:
     """Power management configuration."""
+
     enable_dvfs: bool = True
     enable_power_gating: bool = True
     enable_clock_gating: bool = True
@@ -81,9 +91,11 @@ class PowerConfig:
     target_energy_efficiency_tops_per_watt: float = 50.0
     min_performance_threshold_percent: float = 80.0
 
+
 @dataclass
 class PowerMetrics:
     """Power consumption and efficiency metrics."""
+
     # Current measurements
     current_power_watts: float = 0.0
     current_voltage: float = 1.0
@@ -113,9 +125,11 @@ class PowerMetrics:
     control_power_watts: float = 0.0
     io_power_watts: float = 0.0
 
+
 @dataclass
 class ComponentPowerProfile:
     """Power profile for an accelerator component."""
+
     component_name: str
     base_power_watts: float  # Static power consumption
     dynamic_power_factor: float  # Power scaling with activity
@@ -129,14 +143,17 @@ class ComponentPowerProfile:
     sleep_power_multiplier: float = 0.1
     deep_sleep_power_multiplier: float = 0.05
 
+
 class PowerModel(ABC):
     """Abstract base class for power modeling."""
 
     @abstractmethod
-    def calculate_power(self, utilization: float, voltage: float,
-                       frequency: float, state: PowerState) -> float:
+    def calculate_power(
+        self, utilization: float, voltage: float, frequency: float, state: PowerState
+    ) -> float:
         """Calculate power consumption for given parameters."""
         pass
+
 
 class SimplePowerModel(PowerModel):
     """Simple power model based on utilization and DVFS parameters."""
@@ -150,8 +167,9 @@ class SimplePowerModel(PowerModel):
         """
         self.profile = profile
 
-    def calculate_power(self, utilization: float, voltage: float,
-                       frequency: float, state: PowerState) -> float:
+    def calculate_power(
+        self, utilization: float, voltage: float, frequency: float, state: PowerState
+    ) -> float:
         """
         Calculate power using simple model: P = P_static + P_dynamic * utilization * V² * f
 
@@ -168,10 +186,12 @@ class SimplePowerModel(PowerModel):
         static_power = self.profile.base_power_watts
 
         # Dynamic power based on utilization
-        dynamic_power = (self.profile.dynamic_power_factor *
-                        utilization *
-                        (voltage ** self.profile.voltage_sensitivity) *
-                        (frequency / 1000.0) ** self.profile.frequency_sensitivity)
+        dynamic_power = (
+            self.profile.dynamic_power_factor
+            * utilization
+            * (voltage**self.profile.voltage_sensitivity)
+            * (frequency / 1000.0) ** self.profile.frequency_sensitivity
+        )
 
         total_power = static_power + dynamic_power
 
@@ -192,6 +212,7 @@ class SimplePowerModel(PowerModel):
         # Clamp to maximum power
         return min(final_power, self.profile.max_power_watts)
 
+
 class DVFSController:
     """Dynamic Voltage and Frequency Scaling controller."""
 
@@ -209,14 +230,14 @@ class DVFSController:
             VoltageLevel.HIGH: 1.2,
             VoltageLevel.NOMINAL: 1.0,
             VoltageLevel.LOW: 0.8,
-            VoltageLevel.ULTRA_LOW: 0.6
+            VoltageLevel.ULTRA_LOW: 0.6,
         }
 
         self.frequency_levels = {
             FrequencyLevel.HIGH: 1000.0,
             FrequencyLevel.NOMINAL: 800.0,
             FrequencyLevel.LOW: 600.0,
-            FrequencyLevel.ULTRA_LOW: 400.0
+            FrequencyLevel.ULTRA_LOW: 400.0,
         }
 
         # Current operating point
@@ -239,8 +260,13 @@ class DVFSController:
 
         logger.info("DVFS controller initialized")
 
-    def update_operating_point(self, utilization: float, power_consumption: float,
-                              performance: float, temperature: float) -> Tuple[VoltageLevel, FrequencyLevel]:
+    def update_operating_point(
+        self,
+        utilization: float,
+        power_consumption: float,
+        performance: float,
+        temperature: float,
+    ) -> Tuple[VoltageLevel, FrequencyLevel]:
         """
         Update voltage and frequency based on system metrics.
 
@@ -280,32 +306,44 @@ class DVFSController:
         new_frequency = self.current_frequency_level
 
         # Scale up if high utilization or low performance
-        if (avg_utilization > self.utilization_high_threshold or
-            avg_performance < self.performance_low_threshold):
-
+        if (
+            avg_utilization > self.utilization_high_threshold
+            or avg_performance < self.performance_low_threshold
+        ):
             # Check if we can increase without exceeding thermal or power limits
-            if temperature < self.config.thermal_throttle_temp_c and avg_power < self.power_high_threshold:
+            if (
+                temperature < self.config.thermal_throttle_temp_c
+                and avg_power < self.power_high_threshold
+            ):
                 new_voltage, new_frequency = self._scale_up(new_voltage, new_frequency)
 
         # Scale down if low utilization and power/thermal pressure
-        elif (avg_utilization < self.utilization_low_threshold or
-              avg_power > self.power_high_threshold or
-              temperature > self.config.thermal_target_temp_c):
-
+        elif (
+            avg_utilization < self.utilization_low_threshold
+            or avg_power > self.power_high_threshold
+            or temperature > self.config.thermal_target_temp_c
+        ):
             new_voltage, new_frequency = self._scale_down(new_voltage, new_frequency)
 
         # Apply changes if different from current
-        if new_voltage != self.current_voltage_level or new_frequency != self.current_frequency_level:
+        if (
+            new_voltage != self.current_voltage_level
+            or new_frequency != self.current_frequency_level
+        ):
             self.current_voltage_level = new_voltage
             self.current_frequency_level = new_frequency
             self.last_dvfs_time = current_time
             self.transition_count += 1
 
-            logger.debug(f"DVFS transition to {new_voltage.value}V, {new_frequency.value}MHz")
+            logger.debug(
+                f"DVFS transition to {new_voltage.value}V, {new_frequency.value}MHz"
+            )
 
         return new_voltage, new_frequency
 
-    def _scale_up(self, voltage: VoltageLevel, frequency: FrequencyLevel) -> Tuple[VoltageLevel, FrequencyLevel]:
+    def _scale_up(
+        self, voltage: VoltageLevel, frequency: FrequencyLevel
+    ) -> Tuple[VoltageLevel, FrequencyLevel]:
         """Scale up voltage/frequency for higher performance."""
         # Prioritize frequency scaling first (better energy efficiency)
         if frequency == FrequencyLevel.ULTRA_LOW:
@@ -326,7 +364,9 @@ class DVFSController:
         # Already at maximum
         return voltage, frequency
 
-    def _scale_down(self, voltage: VoltageLevel, frequency: FrequencyLevel) -> Tuple[VoltageLevel, FrequencyLevel]:
+    def _scale_down(
+        self, voltage: VoltageLevel, frequency: FrequencyLevel
+    ) -> Tuple[VoltageLevel, FrequencyLevel]:
         """Scale down voltage/frequency for lower power."""
         # Prioritize voltage scaling first (quadratic power reduction)
         if voltage == VoltageLevel.HIGH:
@@ -358,15 +398,22 @@ class DVFSController:
     def get_dvfs_metrics(self) -> Dict[str, Any]:
         """Get DVFS performance metrics."""
         return {
-            'current_voltage_level': self.current_voltage_level.value,
-            'current_frequency_level': self.current_frequency_level.value,
-            'current_voltage_v': self.get_current_voltage(),
-            'current_frequency_mhz': self.get_current_frequency(),
-            'transition_count': self.transition_count,
-            'avg_utilization': np.mean(self.utilization_history) if self.utilization_history else 0.0,
-            'avg_power_fraction': np.mean(self.power_history) if self.power_history else 0.0,
-            'avg_performance_fraction': np.mean(self.performance_history) if self.performance_history else 0.0
+            "current_voltage_level": self.current_voltage_level.value,
+            "current_frequency_level": self.current_frequency_level.value,
+            "current_voltage_v": self.get_current_voltage(),
+            "current_frequency_mhz": self.get_current_frequency(),
+            "transition_count": self.transition_count,
+            "avg_utilization": np.mean(self.utilization_history)
+            if self.utilization_history
+            else 0.0,
+            "avg_power_fraction": np.mean(self.power_history)
+            if self.power_history
+            else 0.0,
+            "avg_performance_fraction": np.mean(self.performance_history)
+            if self.performance_history
+            else 0.0,
         }
+
 
 class ThermalManager:
     """Thermal management and throttling system."""
@@ -393,7 +440,9 @@ class ThermalManager:
 
         logger.info("Thermal manager initialized")
 
-    def update_temperature(self, power_consumption: float, ambient_temp: Optional[float] = None) -> float:
+    def update_temperature(
+        self, power_consumption: float, ambient_temp: Optional[float] = None
+    ) -> float:
         """
         Update chip temperature based on power consumption.
 
@@ -408,13 +457,16 @@ class ThermalManager:
             self.ambient_temperature = ambient_temp
 
         # Simple thermal model: T = T_ambient + P * R_thermal
-        target_temperature = self.ambient_temperature + (power_consumption * self.thermal_resistance)
+        target_temperature = self.ambient_temperature + (
+            power_consumption * self.thermal_resistance
+        )
 
         # Apply thermal time constant (first-order response)
         dt = 0.1  # Assume 100ms update interval
         alpha = dt / (self.thermal_time_constant + dt)
-        self.current_temperature = (alpha * target_temperature +
-                                  (1 - alpha) * self.current_temperature)
+        self.current_temperature = (
+            alpha * target_temperature + (1 - alpha) * self.current_temperature
+        )
 
         # Update thermal state
         self._update_thermal_state()
@@ -455,37 +507,52 @@ class ThermalManager:
             throttle_factor = 0.5
         elif self.thermal_state == ThermalState.HOT:
             # Moderate throttling for hot temperature
-            temp_excess = (self.current_temperature - self.config.thermal_throttle_temp_c)
-            temp_range = (self.config.thermal_critical_temp_c - self.config.thermal_throttle_temp_c)
+            temp_excess = self.current_temperature - self.config.thermal_throttle_temp_c
+            temp_range = (
+                self.config.thermal_critical_temp_c
+                - self.config.thermal_throttle_temp_c
+            )
             throttle_factor = max(0.5, 1.0 - (temp_excess / temp_range) * 0.5)
         else:
             throttle_factor = 1.0
 
         # Record throttle event if throttling is active
         if throttle_factor < 1.0:
-            self.throttle_events.append({
-                'timestamp': time.time(),
-                'temperature': self.current_temperature,
-                'throttle_factor': throttle_factor,
-                'thermal_state': self.thermal_state.value
-            })
+            self.throttle_events.append(
+                {
+                    "timestamp": time.time(),
+                    "temperature": self.current_temperature,
+                    "throttle_factor": throttle_factor,
+                    "thermal_state": self.thermal_state.value,
+                }
+            )
 
         return throttle_factor
 
     def get_thermal_metrics(self) -> Dict[str, Any]:
         """Get thermal management metrics."""
         return {
-            'current_temperature_c': self.current_temperature,
-            'thermal_state': self.thermal_state.value,
-            'ambient_temperature_c': self.ambient_temperature,
-            'thermal_utilization_percent': min(100.0,
-                (self.current_temperature - self.ambient_temperature) /
-                (self.config.thermal_critical_temp_c - self.ambient_temperature) * 100),
-            'throttle_events_count': len(self.throttle_events),
-            'recent_throttle_events': self.throttle_events[-5:] if self.throttle_events else [],
-            'avg_temperature_c': np.mean(self.temperature_history) if self.temperature_history else self.current_temperature,
-            'max_temperature_c': max(self.temperature_history) if self.temperature_history else self.current_temperature
+            "current_temperature_c": self.current_temperature,
+            "thermal_state": self.thermal_state.value,
+            "ambient_temperature_c": self.ambient_temperature,
+            "thermal_utilization_percent": min(
+                100.0,
+                (self.current_temperature - self.ambient_temperature)
+                / (self.config.thermal_critical_temp_c - self.ambient_temperature)
+                * 100,
+            ),
+            "throttle_events_count": len(self.throttle_events),
+            "recent_throttle_events": self.throttle_events[-5:]
+            if self.throttle_events
+            else [],
+            "avg_temperature_c": np.mean(self.temperature_history)
+            if self.temperature_history
+            else self.current_temperature,
+            "max_temperature_c": max(self.temperature_history)
+            if self.temperature_history
+            else self.current_temperature,
         }
+
 
 class PowerGatingController:
     """Power gating controller for unused components."""
@@ -535,8 +602,11 @@ class PowerGatingController:
             self.idle_counters[component_name] += 1
 
             # Check if we should gate the component
-            if (current_state == PowerState.ACTIVE and
-                self.idle_counters[component_name] >= self.config.power_gate_threshold_idle_cycles):
+            if (
+                current_state == PowerState.ACTIVE
+                and self.idle_counters[component_name]
+                >= self.config.power_gate_threshold_idle_cycles
+            ):
                 self._gate_component(component_name)
 
     def _gate_component(self, component_name: str):
@@ -558,14 +628,16 @@ class PowerGatingController:
         self.component_states[component_name] = new_state
 
         # Record gate event
-        self.gate_events.append({
-            'timestamp': time.time(),
-            'component': component_name,
-            'action': 'gate',
-            'old_state': old_state.value,
-            'new_state': new_state.value,
-            'idle_cycles': idle_cycles
-        })
+        self.gate_events.append(
+            {
+                "timestamp": time.time(),
+                "component": component_name,
+                "action": "gate",
+                "old_state": old_state.value,
+                "new_state": new_state.value,
+                "idle_cycles": idle_cycles,
+            }
+        )
 
         logger.debug(f"Power gated component {component_name} to {new_state.value}")
 
@@ -575,14 +647,16 @@ class PowerGatingController:
         self.component_states[component_name] = PowerState.ACTIVE
 
         # Record wake event
-        self.gate_events.append({
-            'timestamp': time.time(),
-            'component': component_name,
-            'action': 'wake',
-            'old_state': old_state.value,
-            'new_state': PowerState.ACTIVE.value,
-            'wake_penalty_cycles': self.config.power_gate_wake_penalty_cycles
-        })
+        self.gate_events.append(
+            {
+                "timestamp": time.time(),
+                "component": component_name,
+                "action": "wake",
+                "old_state": old_state.value,
+                "new_state": PowerState.ACTIVE.value,
+                "wake_penalty_cycles": self.config.power_gate_wake_penalty_cycles,
+            }
+        )
 
         logger.debug(f"Woke up component {component_name} from {old_state.value}")
 
@@ -603,17 +677,20 @@ class PowerGatingController:
     def get_power_gating_metrics(self) -> Dict[str, Any]:
         """Get power gating metrics."""
         total_events = len(self.gate_events)
-        gate_events = [e for e in self.gate_events if e['action'] == 'gate']
-        wake_events = [e for e in self.gate_events if e['action'] == 'wake']
+        gate_events = [e for e in self.gate_events if e["action"] == "gate"]
+        wake_events = [e for e in self.gate_events if e["action"] == "wake"]
 
         return {
-            'total_events': total_events,
-            'gate_events': len(gate_events),
-            'wake_events': len(wake_events),
-            'component_states': {name: state.value for name, state in self.component_states.items()},
-            'idle_counters': self.idle_counters.copy(),
-            'recent_events': self.gate_events[-10:] if self.gate_events else []
+            "total_events": total_events,
+            "gate_events": len(gate_events),
+            "wake_events": len(wake_events),
+            "component_states": {
+                name: state.value for name, state in self.component_states.items()
+            },
+            "idle_counters": self.idle_counters.copy(),
+            "recent_events": self.gate_events[-10:] if self.gate_events else [],
         }
+
 
 class ClockGatingController:
     """Clock gating controller for fine-grained power management."""
@@ -661,8 +738,11 @@ class ClockGatingController:
             self.idle_counters[domain_name] += 1
 
             # Check if we should gate the clock
-            if (self.clock_enabled[domain_name] and
-                self.idle_counters[domain_name] >= self.config.clock_gate_threshold_idle_cycles):
+            if (
+                self.clock_enabled[domain_name]
+                and self.idle_counters[domain_name]
+                >= self.config.clock_gate_threshold_idle_cycles
+            ):
                 self._gate_clock(domain_name)
 
     def _gate_clock(self, domain_name: str):
@@ -673,12 +753,14 @@ class ClockGatingController:
         self.clock_enabled[domain_name] = False
 
         # Record gate event
-        self.gate_events.append({
-            'timestamp': time.time(),
-            'domain': domain_name,
-            'action': 'gate',
-            'idle_cycles': self.idle_counters[domain_name]
-        })
+        self.gate_events.append(
+            {
+                "timestamp": time.time(),
+                "domain": domain_name,
+                "action": "gate",
+                "idle_cycles": self.idle_counters[domain_name],
+            }
+        )
 
         logger.debug(f"Clock gated domain {domain_name}")
 
@@ -687,12 +769,14 @@ class ClockGatingController:
         self.clock_enabled[domain_name] = True
 
         # Record enable event
-        self.gate_events.append({
-            'timestamp': time.time(),
-            'domain': domain_name,
-            'action': 'enable',
-            'wake_penalty_cycles': self.config.clock_gate_wake_penalty_cycles
-        })
+        self.gate_events.append(
+            {
+                "timestamp": time.time(),
+                "domain": domain_name,
+                "action": "enable",
+                "wake_penalty_cycles": self.config.clock_gate_wake_penalty_cycles,
+            }
+        )
 
         logger.debug(f"Clock enabled for domain {domain_name}")
 
@@ -703,17 +787,18 @@ class ClockGatingController:
     def get_clock_gating_metrics(self) -> Dict[str, Any]:
         """Get clock gating metrics."""
         total_events = len(self.gate_events)
-        gate_events = [e for e in self.gate_events if e['action'] == 'gate']
-        enable_events = [e for e in self.gate_events if e['action'] == 'enable']
+        gate_events = [e for e in self.gate_events if e["action"] == "gate"]
+        enable_events = [e for e in self.gate_events if e["action"] == "enable"]
 
         return {
-            'total_events': total_events,
-            'gate_events': len(gate_events),
-            'enable_events': len(enable_events),
-            'domain_states': self.clock_enabled.copy(),
-            'idle_counters': self.idle_counters.copy(),
-            'recent_events': self.gate_events[-10:] if self.gate_events else []
+            "total_events": total_events,
+            "gate_events": len(gate_events),
+            "enable_events": len(enable_events),
+            "domain_states": self.clock_enabled.copy(),
+            "idle_counters": self.idle_counters.copy(),
+            "recent_events": self.gate_events[-10:] if self.gate_events else [],
         }
+
 
 class PowerManager:
     """Main power management system coordinating all power management components."""
@@ -758,7 +843,7 @@ class PowerManager:
             dynamic_power_factor=100.0,
             voltage_sensitivity=2.0,  # Quadratic voltage scaling
             frequency_sensitivity=1.0,  # Linear frequency scaling
-            max_power_watts=200.0
+            max_power_watts=200.0,
         )
         self.add_component("systolic_array", SimplePowerModel(systolic_profile))
 
@@ -769,7 +854,7 @@ class PowerManager:
             dynamic_power_factor=30.0,
             voltage_sensitivity=1.5,
             frequency_sensitivity=0.8,
-            max_power_watts=60.0
+            max_power_watts=60.0,
         )
         self.add_component("memory", SimplePowerModel(memory_profile))
 
@@ -780,7 +865,7 @@ class PowerManager:
             dynamic_power_factor=15.0,
             voltage_sensitivity=1.8,
             frequency_sensitivity=1.2,
-            max_power_watts=30.0
+            max_power_watts=30.0,
         )
         self.add_component("control", SimplePowerModel(control_profile))
 
@@ -791,7 +876,7 @@ class PowerManager:
             dynamic_power_factor=10.0,
             voltage_sensitivity=1.0,
             frequency_sensitivity=0.5,
-            max_power_watts=20.0
+            max_power_watts=20.0,
         )
         self.add_component("io", SimplePowerModel(io_profile))
 
@@ -810,12 +895,18 @@ class PowerManager:
     def update_component_utilization(self, component_name: str, utilization: float):
         """Update component utilization for power calculation."""
         if component_name in self.component_utilizations:
-            self.component_utilizations[component_name] = max(0.0, min(1.0, utilization))
+            self.component_utilizations[component_name] = max(
+                0.0, min(1.0, utilization)
+            )
 
             # Update power gating controller
             is_active = utilization > 0.01  # Consider active if > 1% utilization
-            self.power_gating_controller.update_component_activity(component_name, is_active)
-            self.clock_gating_controller.update_domain_activity(component_name, is_active)
+            self.power_gating_controller.update_component_activity(
+                component_name, is_active
+            )
+            self.clock_gating_controller.update_domain_activity(
+                component_name, is_active
+            )
 
     def cycle_update(self):
         """Update power management state for one simulation cycle."""
@@ -833,18 +924,24 @@ class PowerManager:
         # Get system metrics for DVFS
         system_utilization = np.mean(list(self.component_utilizations.values()))
         power_fraction = total_power / self.config.max_power_budget_watts
-        performance_fraction = 1.0  # Default performance fraction for thermal calculation
+        performance_fraction = (
+            1.0  # Default performance fraction for thermal calculation
+        )
 
         # Update DVFS operating point
         voltage_level, frequency_level = self.dvfs_controller.update_operating_point(
-            float(system_utilization), power_fraction, performance_fraction,
-            self.metrics.current_temperature_c
+            float(system_utilization),
+            power_fraction,
+            performance_fraction,
+            self.metrics.current_temperature_c,
         )
 
         # Update metrics
         self.metrics.current_power_watts = total_power
         self.metrics.current_voltage = self.dvfs_controller.get_current_voltage()
-        self.metrics.current_frequency_mhz = self.dvfs_controller.get_current_frequency()
+        self.metrics.current_frequency_mhz = (
+            self.dvfs_controller.get_current_frequency()
+        )
 
         # Update energy consumption
         self.metrics.total_energy_joules += total_power * dt
@@ -861,10 +958,16 @@ class PowerManager:
         if total_power > 0:
             # TOPS calculation based on theoretical peak performance
             estimated_tops = system_utilization * 100.0  # Assume 100 TOPS peak
-            self.metrics.energy_efficiency_tops_per_watt = float(estimated_tops / total_power)
+            self.metrics.energy_efficiency_tops_per_watt = float(
+                estimated_tops / total_power
+            )
 
-        self.metrics.power_utilization_percent = (total_power / self.config.max_power_budget_watts) * 100
-        self.metrics.thermal_utilization_percent = self.thermal_manager.get_thermal_metrics()['thermal_utilization_percent']
+        self.metrics.power_utilization_percent = (
+            total_power / self.config.max_power_budget_watts
+        ) * 100
+        self.metrics.thermal_utilization_percent = (
+            self.thermal_manager.get_thermal_metrics()["thermal_utilization_percent"]
+        )
 
         # Update component power breakdown
         self._update_component_power_breakdown()
@@ -892,7 +995,9 @@ class PowerManager:
                 utilization *= throttle_factor
 
             # Calculate component power
-            component_power = power_model.calculate_power(utilization, voltage, frequency, state)
+            component_power = power_model.calculate_power(
+                utilization, voltage, frequency, state
+            )
             total_power += component_power
 
         return total_power
@@ -911,7 +1016,9 @@ class PowerManager:
                 throttle_factor = self.thermal_manager.get_throttle_factor()
                 utilization *= throttle_factor
 
-            component_power = power_model.calculate_power(utilization, voltage, frequency, state)
+            component_power = power_model.calculate_power(
+                utilization, voltage, frequency, state
+            )
 
             # Update metrics based on component type
             if component_name == "systolic_array":
@@ -943,41 +1050,46 @@ class PowerManager:
     def get_power_status(self) -> Dict[str, Any]:
         """Get comprehensive power management status."""
         return {
-            'current_metrics': {
-                'power_watts': self.metrics.current_power_watts,
-                'voltage': self.metrics.current_voltage,
-                'frequency_mhz': self.metrics.current_frequency_mhz,
-                'temperature_c': self.metrics.current_temperature_c,
-                'energy_joules': self.metrics.total_energy_joules,
-                'energy_efficiency_tops_per_watt': self.metrics.energy_efficiency_tops_per_watt
+            "current_metrics": {
+                "power_watts": self.metrics.current_power_watts,
+                "voltage": self.metrics.current_voltage,
+                "frequency_mhz": self.metrics.current_frequency_mhz,
+                "temperature_c": self.metrics.current_temperature_c,
+                "energy_joules": self.metrics.total_energy_joules,
+                "energy_efficiency_tops_per_watt": self.metrics.energy_efficiency_tops_per_watt,
             },
-            'component_breakdown': {
-                'systolic_array_watts': self.metrics.systolic_array_power_watts,
-                'memory_watts': self.metrics.memory_power_watts,
-                'control_watts': self.metrics.control_power_watts,
-                'io_watts': self.metrics.io_power_watts
+            "component_breakdown": {
+                "systolic_array_watts": self.metrics.systolic_array_power_watts,
+                "memory_watts": self.metrics.memory_power_watts,
+                "control_watts": self.metrics.control_power_watts,
+                "io_watts": self.metrics.io_power_watts,
             },
-            'utilization_metrics': {
-                'power_utilization_percent': self.metrics.power_utilization_percent,
-                'thermal_utilization_percent': self.metrics.thermal_utilization_percent,
-                'component_utilizations': self.component_utilizations.copy()
+            "utilization_metrics": {
+                "power_utilization_percent": self.metrics.power_utilization_percent,
+                "thermal_utilization_percent": self.metrics.thermal_utilization_percent,
+                "component_utilizations": self.component_utilizations.copy(),
             },
-            'time_breakdown': {
-                'active_time_seconds': self.metrics.active_time_seconds,
-                'idle_time_seconds': self.metrics.idle_time_seconds,
-                'sleep_time_seconds': self.metrics.sleep_time_seconds,
-                'total_simulation_time': time.time() - self.simulation_start_time
+            "time_breakdown": {
+                "active_time_seconds": self.metrics.active_time_seconds,
+                "idle_time_seconds": self.metrics.idle_time_seconds,
+                "sleep_time_seconds": self.metrics.sleep_time_seconds,
+                "total_simulation_time": time.time() - self.simulation_start_time,
             },
-            'dvfs_status': self.dvfs_controller.get_dvfs_metrics(),
-            'thermal_status': self.thermal_manager.get_thermal_metrics(),
-            'power_gating_status': self.power_gating_controller.get_power_gating_metrics(),
-            'clock_gating_status': self.clock_gating_controller.get_clock_gating_metrics(),
-            'budget_status': {
-                'max_power_budget_watts': self.config.max_power_budget_watts,
-                'current_power_watts': self.metrics.current_power_watts,
-                'budget_utilization_percent': (self.metrics.current_power_watts / self.config.max_power_budget_watts) * 100,
-                'power_budget_margin_watts': self.config.max_power_budget_watts - self.metrics.current_power_watts
-            }
+            "dvfs_status": self.dvfs_controller.get_dvfs_metrics(),
+            "thermal_status": self.thermal_manager.get_thermal_metrics(),
+            "power_gating_status": self.power_gating_controller.get_power_gating_metrics(),
+            "clock_gating_status": self.clock_gating_controller.get_clock_gating_metrics(),
+            "budget_status": {
+                "max_power_budget_watts": self.config.max_power_budget_watts,
+                "current_power_watts": self.metrics.current_power_watts,
+                "budget_utilization_percent": (
+                    self.metrics.current_power_watts
+                    / self.config.max_power_budget_watts
+                )
+                * 100,
+                "power_budget_margin_watts": self.config.max_power_budget_watts
+                - self.metrics.current_power_watts,
+            },
         }
 
     def reset(self):
@@ -1005,7 +1117,9 @@ class PowerManager:
 
         # Reset gating controllers
         for component_name in self.power_gating_controller.component_states:
-            self.power_gating_controller.component_states[component_name] = PowerState.ACTIVE
+            self.power_gating_controller.component_states[
+                component_name
+            ] = PowerState.ACTIVE
             self.power_gating_controller.idle_counters[component_name] = 0
         self.power_gating_controller.gate_events.clear()
 
@@ -1015,6 +1129,7 @@ class PowerManager:
         self.clock_gating_controller.gate_events.clear()
 
         logger.info("Power manager reset")
+
 
 class PowerOptimizer:
     """Power optimization algorithms and strategies."""
@@ -1029,7 +1144,9 @@ class PowerOptimizer:
         self.config = config
         self.optimization_history: List[Dict[str, Any]] = []
 
-    def optimize_for_energy_efficiency(self, workload_characteristics: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize_for_energy_efficiency(
+        self, workload_characteristics: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Optimize system configuration for maximum energy efficiency.
 
@@ -1042,53 +1159,59 @@ class PowerOptimizer:
         recommendations = {}
 
         # Analyze workload characteristics
-        compute_intensity = workload_characteristics.get('compute_intensity', 0.5)
-        memory_intensity = workload_characteristics.get('memory_intensity', 0.5)
-        parallelism = workload_characteristics.get('parallelism', 0.5)
-        duration = workload_characteristics.get('duration_seconds', 1.0)
+        compute_intensity = workload_characteristics.get("compute_intensity", 0.5)
+        memory_intensity = workload_characteristics.get("memory_intensity", 0.5)
+        parallelism = workload_characteristics.get("parallelism", 0.5)
+        duration = workload_characteristics.get("duration_seconds", 1.0)
 
         # Recommend DVFS settings based on workload
         if compute_intensity > 0.8:
             # High compute workload - optimize for performance
-            recommendations['voltage_level'] = VoltageLevel.HIGH
-            recommendations['frequency_level'] = FrequencyLevel.HIGH
+            recommendations["voltage_level"] = VoltageLevel.HIGH
+            recommendations["frequency_level"] = FrequencyLevel.HIGH
         elif compute_intensity < 0.3:
             # Low compute workload - optimize for energy
-            recommendations['voltage_level'] = VoltageLevel.LOW
-            recommendations['frequency_level'] = FrequencyLevel.LOW
+            recommendations["voltage_level"] = VoltageLevel.LOW
+            recommendations["frequency_level"] = FrequencyLevel.LOW
         else:
             # Balanced workload
-            recommendations['voltage_level'] = VoltageLevel.NOMINAL
-            recommendations['frequency_level'] = FrequencyLevel.NOMINAL
+            recommendations["voltage_level"] = VoltageLevel.NOMINAL
+            recommendations["frequency_level"] = FrequencyLevel.NOMINAL
 
         # Recommend power gating strategy
         if parallelism < 0.5:
             # Low parallelism - aggressive power gating
-            recommendations['power_gate_threshold'] = self.config.power_gate_threshold_idle_cycles // 2
+            recommendations["power_gate_threshold"] = (
+                self.config.power_gate_threshold_idle_cycles // 2
+            )
         else:
             # High parallelism - conservative power gating
-            recommendations['power_gate_threshold'] = self.config.power_gate_threshold_idle_cycles * 2
+            recommendations["power_gate_threshold"] = (
+                self.config.power_gate_threshold_idle_cycles * 2
+            )
 
         # Recommend thermal management
         if duration > 10.0:
             # Long-running workload - conservative thermal management
-            recommendations['thermal_target'] = self.config.thermal_target_temp_c - 5.0
+            recommendations["thermal_target"] = self.config.thermal_target_temp_c - 5.0
         else:
             # Short workload - allow higher temperatures
-            recommendations['thermal_target'] = self.config.thermal_target_temp_c + 5.0
+            recommendations["thermal_target"] = self.config.thermal_target_temp_c + 5.0
 
         # Record optimization decision
         optimization_record = {
-            'timestamp': time.time(),
-            'workload_characteristics': workload_characteristics,
-            'recommendations': recommendations,
-            'optimization_type': 'energy_efficiency'
+            "timestamp": time.time(),
+            "workload_characteristics": workload_characteristics,
+            "recommendations": recommendations,
+            "optimization_type": "energy_efficiency",
         }
         self.optimization_history.append(optimization_record)
 
         return recommendations
 
-    def optimize_for_performance(self, performance_requirements: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize_for_performance(
+        self, performance_requirements: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Optimize system configuration for maximum performance.
 
@@ -1100,39 +1223,50 @@ class PowerOptimizer:
         """
         recommendations = {}
 
-        target_throughput = performance_requirements.get('target_throughput_tops', 100.0)
-        latency_constraint = performance_requirements.get('max_latency_ms', 10.0)
-        power_budget = performance_requirements.get('power_budget_watts', self.config.max_power_budget_watts)
+        target_throughput = performance_requirements.get(
+            "target_throughput_tops", 100.0
+        )
+        latency_constraint = performance_requirements.get("max_latency_ms", 10.0)
+        power_budget = performance_requirements.get(
+            "power_budget_watts", self.config.max_power_budget_watts
+        )
 
         # Maximize performance within power budget
         if power_budget >= self.config.max_power_budget_watts * 0.9:
             # High power budget - maximize performance
-            recommendations['voltage_level'] = VoltageLevel.HIGH
-            recommendations['frequency_level'] = FrequencyLevel.HIGH
-            recommendations['power_gate_threshold'] = self.config.power_gate_threshold_idle_cycles * 4
+            recommendations["voltage_level"] = VoltageLevel.HIGH
+            recommendations["frequency_level"] = FrequencyLevel.HIGH
+            recommendations["power_gate_threshold"] = (
+                self.config.power_gate_threshold_idle_cycles * 4
+            )
         elif power_budget >= self.config.max_power_budget_watts * 0.7:
             # Medium power budget - balanced performance
-            recommendations['voltage_level'] = VoltageLevel.NOMINAL
-            recommendations['frequency_level'] = FrequencyLevel.HIGH
-            recommendations['power_gate_threshold'] = self.config.power_gate_threshold_idle_cycles * 2
+            recommendations["voltage_level"] = VoltageLevel.NOMINAL
+            recommendations["frequency_level"] = FrequencyLevel.HIGH
+            recommendations["power_gate_threshold"] = (
+                self.config.power_gate_threshold_idle_cycles * 2
+            )
         else:
             # Low power budget - optimize efficiency
-            recommendations['voltage_level'] = VoltageLevel.LOW
-            recommendations['frequency_level'] = FrequencyLevel.NOMINAL
-            recommendations['power_gate_threshold'] = self.config.power_gate_threshold_idle_cycles
+            recommendations["voltage_level"] = VoltageLevel.LOW
+            recommendations["frequency_level"] = FrequencyLevel.NOMINAL
+            recommendations[
+                "power_gate_threshold"
+            ] = self.config.power_gate_threshold_idle_cycles
 
         # Thermal considerations for performance
-        recommendations['thermal_target'] = min(
-            self.config.thermal_target_temp_c + 10.0,  # Allow higher temps for performance
-            self.config.thermal_critical_temp_c - 5.0   # But stay safe
+        recommendations["thermal_target"] = min(
+            self.config.thermal_target_temp_c
+            + 10.0,  # Allow higher temps for performance
+            self.config.thermal_critical_temp_c - 5.0,  # But stay safe
         )
 
         # Record optimization decision
         optimization_record = {
-            'timestamp': time.time(),
-            'performance_requirements': performance_requirements,
-            'recommendations': recommendations,
-            'optimization_type': 'performance'
+            "timestamp": time.time(),
+            "performance_requirements": performance_requirements,
+            "recommendations": recommendations,
+            "optimization_type": "performance",
         }
         self.optimization_history.append(optimization_record)
 
@@ -1142,7 +1276,9 @@ class PowerOptimizer:
         """Get history of optimization decisions."""
         return self.optimization_history.copy()
 
+
 # Factory functions for common power management configurations
+
 
 def create_medical_power_config() -> PowerConfig:
     """Create power configuration optimized for medical AI applications."""
@@ -1151,25 +1287,22 @@ def create_medical_power_config() -> PowerConfig:
         enable_power_gating=True,
         enable_clock_gating=True,
         enable_thermal_management=True,
-
         # Conservative DVFS for reliability
         default_voltage=VoltageLevel.NOMINAL,
         default_frequency=FrequencyLevel.NOMINAL,
         dvfs_reaction_time_ms=50.0,  # Slower reaction for stability
-
         # Conservative power gating for predictable performance
         power_gate_threshold_idle_cycles=2000,
         power_gate_wake_penalty_cycles=200,
-
         # Aggressive thermal management for safety
         thermal_target_temp_c=70.0,
         thermal_critical_temp_c=85.0,
         thermal_throttle_temp_c=80.0,
-
         # Moderate power budget for medical devices
         max_power_budget_watts=200.0,
-        target_energy_efficiency_tops_per_watt=60.0
+        target_energy_efficiency_tops_per_watt=60.0,
     )
+
 
 def create_automotive_power_config() -> PowerConfig:
     """Create power configuration optimized for automotive AI applications."""
@@ -1178,25 +1311,22 @@ def create_automotive_power_config() -> PowerConfig:
         enable_power_gating=True,
         enable_clock_gating=True,
         enable_thermal_management=True,
-
         # Responsive DVFS for dynamic workloads
         default_voltage=VoltageLevel.NOMINAL,
         default_frequency=FrequencyLevel.NOMINAL,
         dvfs_reaction_time_ms=5.0,  # Fast reaction for automotive
-
         # Moderate power gating for real-time performance
         power_gate_threshold_idle_cycles=500,
         power_gate_wake_penalty_cycles=50,
-
         # Automotive thermal management
         thermal_target_temp_c=80.0,
         thermal_critical_temp_c=95.0,
         thermal_throttle_temp_c=90.0,
-
         # High power budget for automotive performance
         max_power_budget_watts=500.0,
-        target_energy_efficiency_tops_per_watt=40.0
+        target_energy_efficiency_tops_per_watt=40.0,
     )
+
 
 def create_edge_power_config() -> PowerConfig:
     """Create power configuration optimized for edge AI applications."""
@@ -1205,25 +1335,22 @@ def create_edge_power_config() -> PowerConfig:
         enable_power_gating=True,
         enable_clock_gating=True,
         enable_thermal_management=True,
-
         # Aggressive DVFS for energy efficiency
         default_voltage=VoltageLevel.LOW,
         default_frequency=FrequencyLevel.NOMINAL,
         dvfs_reaction_time_ms=20.0,
-
         # Aggressive power gating for edge efficiency
         power_gate_threshold_idle_cycles=100,
         power_gate_wake_penalty_cycles=20,
-
         # Edge thermal management
         thermal_target_temp_c=65.0,
         thermal_critical_temp_c=80.0,
         thermal_throttle_temp_c=75.0,
-
         # Low power budget for edge devices
         max_power_budget_watts=50.0,
-        target_energy_efficiency_tops_per_watt=100.0
+        target_energy_efficiency_tops_per_watt=100.0,
     )
+
 
 def create_datacenter_power_config() -> PowerConfig:
     """Create power configuration optimized for datacenter AI applications."""
@@ -1232,27 +1359,25 @@ def create_datacenter_power_config() -> PowerConfig:
         enable_power_gating=False,  # Less power gating in datacenter for predictability
         enable_clock_gating=True,
         enable_thermal_management=True,
-
         # Performance-oriented DVFS
         default_voltage=VoltageLevel.HIGH,
         default_frequency=FrequencyLevel.HIGH,
         dvfs_reaction_time_ms=1.0,  # Very fast reaction
-
         # Minimal power gating
         power_gate_threshold_idle_cycles=5000,
         power_gate_wake_penalty_cycles=500,
-
         # Datacenter thermal management with better cooling
         thermal_target_temp_c=85.0,
         thermal_critical_temp_c=100.0,
         thermal_throttle_temp_c=95.0,
-
         # High power budget for datacenter performance
         max_power_budget_watts=1000.0,
-        target_energy_efficiency_tops_per_watt=30.0  # Lower efficiency for max performance
+        target_energy_efficiency_tops_per_watt=30.0,  # Lower efficiency for max performance
     )
 
+
 # Power analysis and reporting utilities
+
 
 class PowerAnalyzer:
     """Analyzes power consumption patterns and provides insights."""
@@ -1288,40 +1413,52 @@ class PowerAnalyzer:
         temperature_array = np.array(self.temperature_samples)
 
         return {
-            'power_stats': {
-                'mean_watts': float(np.mean(power_array)),
-                'median_watts': float(np.median(power_array)),
-                'std_watts': float(np.std(power_array)),
-                'min_watts': float(np.min(power_array)),
-                'max_watts': float(np.max(power_array)),
-                'p95_watts': float(np.percentile(power_array, 95)),
-                'p99_watts': float(np.percentile(power_array, 99))
+            "power_stats": {
+                "mean_watts": float(np.mean(power_array)),
+                "median_watts": float(np.median(power_array)),
+                "std_watts": float(np.std(power_array)),
+                "min_watts": float(np.min(power_array)),
+                "max_watts": float(np.max(power_array)),
+                "p95_watts": float(np.percentile(power_array, 95)),
+                "p99_watts": float(np.percentile(power_array, 99)),
             },
-            'utilization_stats': {
-                'mean_utilization': float(np.mean(utilization_array)),
-                'median_utilization': float(np.median(utilization_array)),
-                'std_utilization': float(np.std(utilization_array)),
-                'min_utilization': float(np.min(utilization_array)),
-                'max_utilization': float(np.max(utilization_array))
+            "utilization_stats": {
+                "mean_utilization": float(np.mean(utilization_array)),
+                "median_utilization": float(np.median(utilization_array)),
+                "std_utilization": float(np.std(utilization_array)),
+                "min_utilization": float(np.min(utilization_array)),
+                "max_utilization": float(np.max(utilization_array)),
             },
-            'temperature_stats': {
-                'mean_temp_c': float(np.mean(temperature_array)),
-                'median_temp_c': float(np.median(temperature_array)),
-                'std_temp_c': float(np.std(temperature_array)),
-                'min_temp_c': float(np.min(temperature_array)),
-                'max_temp_c': float(np.max(temperature_array)),
-                'p95_temp_c': float(np.percentile(temperature_array, 95)),
-                'p99_temp_c': float(np.percentile(temperature_array, 99))
+            "temperature_stats": {
+                "mean_temp_c": float(np.mean(temperature_array)),
+                "median_temp_c": float(np.median(temperature_array)),
+                "std_temp_c": float(np.std(temperature_array)),
+                "min_temp_c": float(np.min(temperature_array)),
+                "max_temp_c": float(np.max(temperature_array)),
+                "p95_temp_c": float(np.percentile(temperature_array, 95)),
+                "p99_temp_c": float(np.percentile(temperature_array, 99)),
             },
-            'efficiency_stats': {
-                'power_utilization_correlation': float(np.corrcoef(power_array, utilization_array)[0, 1]) if len(power_array) > 1 else 0.0,
-                'power_temperature_correlation': float(np.corrcoef(power_array, temperature_array)[0, 1]) if len(power_array) > 1 else 0.0
+            "efficiency_stats": {
+                "power_utilization_correlation": float(
+                    np.corrcoef(power_array, utilization_array)[0, 1]
+                )
+                if len(power_array) > 1
+                else 0.0,
+                "power_temperature_correlation": float(
+                    np.corrcoef(power_array, temperature_array)[0, 1]
+                )
+                if len(power_array) > 1
+                else 0.0,
             },
-            'sample_count': len(self.power_samples),
-            'analysis_duration_seconds': self.timestamps[-1] - self.timestamps[0] if len(self.timestamps) > 1 else 0.0
+            "sample_count": len(self.power_samples),
+            "analysis_duration_seconds": self.timestamps[-1] - self.timestamps[0]
+            if len(self.timestamps) > 1
+            else 0.0,
         }
 
-    def detect_power_anomalies(self, threshold_std_devs: float = 3.0) -> List[Dict[str, Any]]:
+    def detect_power_anomalies(
+        self, threshold_std_devs: float = 3.0
+    ) -> List[Dict[str, Any]]:
         """Detect power consumption anomalies."""
         if len(self.power_samples) < 10:
             return []
@@ -1331,19 +1468,23 @@ class PowerAnalyzer:
         std_power = np.std(power_array)
 
         anomalies = []
-        for i, (power, timestamp) in enumerate(zip(self.power_samples, self.timestamps)):
+        for i, (power, timestamp) in enumerate(
+            zip(self.power_samples, self.timestamps)
+        ):
             z_score = abs(power - mean_power) / std_power if std_power > 0 else 0
 
             if z_score > threshold_std_devs:
-                anomalies.append({
-                    'timestamp': timestamp,
-                    'sample_index': i,
-                    'power_watts': power,
-                    'z_score': z_score,
-                    'deviation_from_mean': power - mean_power,
-                    'utilization': self.utilization_samples[i],
-                    'temperature_c': self.temperature_samples[i]
-                })
+                anomalies.append(
+                    {
+                        "timestamp": timestamp,
+                        "sample_index": i,
+                        "power_watts": power,
+                        "z_score": z_score,
+                        "deviation_from_mean": power - mean_power,
+                        "utilization": self.utilization_samples[i],
+                        "temperature_c": self.temperature_samples[i],
+                    }
+                )
 
         return anomalies
 
@@ -1365,73 +1506,99 @@ class PowerAnalyzer:
             if power > 0:
                 efficiency_ratios.append(util / power)
 
-        efficiency_array = np.array(efficiency_ratios) if efficiency_ratios else np.array([0])
+        efficiency_array = (
+            np.array(efficiency_ratios) if efficiency_ratios else np.array([0])
+        )
 
         return {
-            'summary': {
-                'total_samples': len(self.power_samples),
-                'analysis_duration_hours': (self.timestamps[-1] - self.timestamps[0]) / 3600 if len(self.timestamps) > 1 else 0.0,
-                'average_power_watts': stats['power_stats']['mean_watts'],
-                'peak_power_watts': stats['power_stats']['max_watts'],
-                'average_utilization': stats['utilization_stats']['mean_utilization'],
-                'average_temperature_c': stats['temperature_stats']['mean_temp_c']
+            "summary": {
+                "total_samples": len(self.power_samples),
+                "analysis_duration_hours": (self.timestamps[-1] - self.timestamps[0])
+                / 3600
+                if len(self.timestamps) > 1
+                else 0.0,
+                "average_power_watts": stats["power_stats"]["mean_watts"],
+                "peak_power_watts": stats["power_stats"]["max_watts"],
+                "average_utilization": stats["utilization_stats"]["mean_utilization"],
+                "average_temperature_c": stats["temperature_stats"]["mean_temp_c"],
             },
-            'efficiency_metrics': {
-                'mean_efficiency_ratio': float(np.mean(efficiency_array)),
-                'median_efficiency_ratio': float(np.median(efficiency_array)),
-                'best_efficiency_ratio': float(np.max(efficiency_array)),
-                'worst_efficiency_ratio': float(np.min(efficiency_array))
+            "efficiency_metrics": {
+                "mean_efficiency_ratio": float(np.mean(efficiency_array)),
+                "median_efficiency_ratio": float(np.median(efficiency_array)),
+                "best_efficiency_ratio": float(np.max(efficiency_array)),
+                "worst_efficiency_ratio": float(np.min(efficiency_array)),
             },
-            'detailed_stats': stats,
-            'anomalies': {
-                'count': len(anomalies),
-                'anomaly_rate_percent': (len(anomalies) / len(self.power_samples)) * 100 if self.power_samples else 0.0,
-                'recent_anomalies': anomalies[-5:] if anomalies else []
+            "detailed_stats": stats,
+            "anomalies": {
+                "count": len(anomalies),
+                "anomaly_rate_percent": (len(anomalies) / len(self.power_samples)) * 100
+                if self.power_samples
+                else 0.0,
+                "recent_anomalies": anomalies[-5:] if anomalies else [],
             },
-            'recommendations': self._generate_efficiency_recommendations(stats, anomalies)
+            "recommendations": self._generate_efficiency_recommendations(
+                stats, anomalies
+            ),
         }
 
-    def _generate_efficiency_recommendations(self, stats: Dict[str, Any],
-                                           anomalies: List[Dict[str, Any]]) -> List[str]:
+    def _generate_efficiency_recommendations(
+        self, stats: Dict[str, Any], anomalies: List[Dict[str, Any]]
+    ) -> List[str]:
         """Generate power efficiency improvement recommendations."""
         recommendations = []
 
-        power_stats = stats.get('power_stats', {})
-        util_stats = stats.get('utilization_stats', {})
-        temp_stats = stats.get('temperature_stats', {})
+        power_stats = stats.get("power_stats", {})
+        util_stats = stats.get("utilization_stats", {})
+        temp_stats = stats.get("temperature_stats", {})
 
         # High power variability
-        if power_stats.get('std_watts', 0) > power_stats.get('mean_watts', 1) * 0.3:
-            recommendations.append("High power variability detected. Consider DVFS tuning for more stable power consumption.")
+        if power_stats.get("std_watts", 0) > power_stats.get("mean_watts", 1) * 0.3:
+            recommendations.append(
+                "High power variability detected. Consider DVFS tuning for more stable power consumption."
+            )
 
         # Low utilization with high power
-        if (util_stats.get('mean_utilization', 0) < 0.5 and
-            power_stats.get('mean_watts', 0) > 100):
-            recommendations.append("Low utilization with high power consumption. Enable more aggressive power gating.")
+        if (
+            util_stats.get("mean_utilization", 0) < 0.5
+            and power_stats.get("mean_watts", 0) > 100
+        ):
+            recommendations.append(
+                "Low utilization with high power consumption. Enable more aggressive power gating."
+            )
 
         # High temperature
-        if temp_stats.get('mean_temp_c', 0) > 80:
-            recommendations.append("High operating temperature detected. Improve cooling or reduce power consumption.")
+        if temp_stats.get("mean_temp_c", 0) > 80:
+            recommendations.append(
+                "High operating temperature detected. Improve cooling or reduce power consumption."
+            )
 
         # Frequent anomalies
         if len(anomalies) > len(self.power_samples) * 0.1:
-            recommendations.append("Frequent power anomalies detected. Check for workload irregularities or hardware issues.")
+            recommendations.append(
+                "Frequent power anomalies detected. Check for workload irregularities or hardware issues."
+            )
 
         # Low efficiency
-        if (util_stats.get('mean_utilization', 0) > 0.7 and
-            power_stats.get('mean_watts', 0) > 200):
-            recommendations.append("High power consumption with good utilization. Consider optimizing algorithms or hardware.")
+        if (
+            util_stats.get("mean_utilization", 0) > 0.7
+            and power_stats.get("mean_watts", 0) > 200
+        ):
+            recommendations.append(
+                "High power consumption with good utilization. Consider optimizing algorithms or hardware."
+            )
 
         return recommendations
+
 
 # ---------------------------------------------------------------------------
 # Convenience helpers – *simple* glue for high-level examples
 # ---------------------------------------------------------------------------
 
+
 def integrate_power_management(
-    accelerator_config: 'AcceleratorConfig',  # type: ignore forward-ref
+    accelerator_config: "AcceleratorConfig",  # type: ignore forward-ref
     power_config: Optional[PowerConfig] = None,
-) -> 'PowerManager':
+) -> "PowerManager":
     """Create and attach a :class:`PowerManager` to the given accelerator.
 
     The helper returns a fully-initialised :class:`PowerManager` instance that
@@ -1465,11 +1632,16 @@ def integrate_power_management(
     #       that via dedicated callbacks.  The examples only rely on static
     #       reporting after the run has finished which works without coupling.
 
-    logger.info("Power manager integrated with accelerator config '%s'", getattr(accelerator_config, "name", "Unnamed"))
+    logger.info(
+        "Power manager integrated with accelerator config '%s'",
+        getattr(accelerator_config, "name", "Unnamed"),
+    )
     return pm
 
 
-def create_power_report(power_manager: 'PowerManager', output_path: Optional[Union[str, Path]] = None) -> Path:
+def create_power_report(
+    power_manager: "PowerManager", output_path: Optional[Union[str, Path]] = None
+) -> Path:
     """Generate a minimal power report and write it to *output_path*.
 
     The human-readable report contains current as well as cumulative power
@@ -1510,7 +1682,7 @@ def create_power_report(power_manager: 'PowerManager', output_path: Optional[Uni
 
 __all__ = [
     "PowerState",
-    "VoltageLevel", 
+    "VoltageLevel",
     "FrequencyLevel",
     "ThermalState",
     "PowerConfig",

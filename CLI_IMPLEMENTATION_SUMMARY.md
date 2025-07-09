@@ -1,8 +1,8 @@
 # OpenAccelerator CLI Implementation Summary
 
-**Project:** OpenAccelerator - Advanced ML Accelerator Simulator  
-**Author:** Nik Jois <nikjois@llamasearch.ai>  
-**Date:** January 8, 2025  
+**Project:** OpenAccelerator - Advanced ML Accelerator Simulator
+**Author:** Nik Jois <nikjois@llamasearch.ai>
+**Date:** January 8, 2025
 **Status:** [COMPLETE] - Fully Functional Command Line Interface
 
 ---
@@ -268,6 +268,6 @@ The OpenAccelerator CLI is now **production-ready** and provides:
 
 ---
 
-**Author:** Nik Jois <nikjois@llamasearch.ai>  
-**Implementation Date:** January 8, 2025  
-**Status:** [COMPLETE] - Production Ready 
+**Author:** Nik Jois <nikjois@llamasearch.ai>
+**Implementation Date:** January 8, 2025
+**Status:** [COMPLETE] - Production Ready

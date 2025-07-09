@@ -1,8 +1,8 @@
 # OpenAccelerator Final Improvements Summary
 
-**Author:** Nik Jois <nikjois@llamasearch.ai>  
-**Date:** January 8, 2025  
-**Version:** 1.0.0  
+**Author:** Nik Jois <nikjois@llamasearch.ai>
+**Date:** January 8, 2025
+**Version:** 1.0.0
 **Status:** [COMPLETE] All Improvements Successfully Implemented
 
 ---
@@ -215,6 +215,6 @@ The OpenAccelerator project has been successfully enhanced with **100% functiona
 
 ---
 
-**Author:** Nik Jois <nikjois@llamasearch.ai>  
-**Project:** OpenAccelerator - Advanced ML Accelerator Simulator  
-**Status:** [SUCCESS] **COMPLETE AND PRODUCTION-READY** 
+**Author:** Nik Jois <nikjois@llamasearch.ai>
+**Project:** OpenAccelerator - Advanced ML Accelerator Simulator
+**Status:** [SUCCESS] **COMPLETE AND PRODUCTION-READY**

@@ -9,4 +9,4 @@ Currently benchmarking utilities are provided via `open_accelerator.analysis`.
 Contents
 --------
 
-* :pyfunc:`open_accelerator.analysis.analyze_simulation_results` 
+* :pyfunc:`open_accelerator.analysis.analyze_simulation_results`

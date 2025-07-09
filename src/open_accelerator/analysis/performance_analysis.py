@@ -64,7 +64,7 @@ class PerformanceAnalyzer:
     def analyze_performance(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze performance from simulation results (test compatibility method)."""
         # Update internal stats with new results
-        if hasattr(self._stats, 'update'):
+        if hasattr(self._stats, "update"):
             self._stats.update(results)
         else:
             # Handle case where _stats might not be a dict
@@ -99,7 +99,9 @@ class PerformanceAnalyzer:
                 peak_macs_per_cycle = 1  # Prevent div-by-zero
             pe_util = 0.0
 
-        efficiency = 0.0 if peak_macs_per_cycle == 0 else macs_per_cycle / peak_macs_per_cycle
+        efficiency = (
+            0.0 if peak_macs_per_cycle == 0 else macs_per_cycle / peak_macs_per_cycle
+        )
 
         # Optional throughput calculation (assume 1 GHz clock for rough TOPS)
         throughput_tops = (macs_per_cycle * 1e9) / self._TERA  # cycles/s → TOPS
@@ -111,4 +113,4 @@ class PerformanceAnalyzer:
             efficiency=efficiency,
             pe_utilization=pe_util,
             throughput=throughput_tops,
-        ) 
+        )

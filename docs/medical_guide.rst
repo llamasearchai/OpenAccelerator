@@ -41,4 +41,4 @@ FDA Validation Steps
 Further Reading
 ---------------
 
-See the :doc:`tutorials/medical_ai_workflows` tutorial for an end-to-end example. 
+See the :doc:`tutorials/medical_ai_workflows` tutorial for an end-to-end example.

@@ -9,40 +9,48 @@ import logging
 import random
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class FaultType(Enum):
     """Types of faults that can occur."""
-    TRANSIENT = "transient"          # Soft errors (cosmic rays, etc.)
-    PERMANENT = "permanent"          # Hard errors (device wear-out)
-    INTERMITTENT = "intermittent"    # Intermittent failures
-    SYSTEMATIC = "systematic"        # Design or software bugs
+
+    TRANSIENT = "transient"  # Soft errors (cosmic rays, etc.)
+    PERMANENT = "permanent"  # Hard errors (device wear-out)
+    INTERMITTENT = "intermittent"  # Intermittent failures
+    SYSTEMATIC = "systematic"  # Design or software bugs
+
 
 class ErrorType(Enum):
     """Types of errors detected."""
-    SINGLE_BIT = "single_bit"        # Single bit error
-    MULTI_BIT = "multi_bit"          # Multiple bit errors
-    ARITHMETIC = "arithmetic"        # Arithmetic operation errors
-    CONTROL = "control"              # Control flow errors
-    MEMORY = "memory"                # Memory access errors
-    COMMUNICATION = "communication"   # Inter-component communication errors
+
+    SINGLE_BIT = "single_bit"  # Single bit error
+    MULTI_BIT = "multi_bit"  # Multiple bit errors
+    ARITHMETIC = "arithmetic"  # Arithmetic operation errors
+    CONTROL = "control"  # Control flow errors
+    MEMORY = "memory"  # Memory access errors
+    COMMUNICATION = "communication"  # Inter-component communication errors
+
 
 class RedundancyType(Enum):
     """Types of redundancy mechanisms."""
-    DMR = "dmr"                      # Dual Modular Redundancy
-    TMR = "tmr"                      # Triple Modular Redundancy
-    TEMPORAL = "temporal"            # Temporal redundancy (re-execution)
-    INFORMATION = "information"      # Information redundancy (ECC, checksums)
+
+    DMR = "dmr"  # Dual Modular Redundancy
+    TMR = "tmr"  # Triple Modular Redundancy
+    TEMPORAL = "temporal"  # Temporal redundancy (re-execution)
+    INFORMATION = "information"  # Information redundancy (ECC, checksums)
+
 
 @dataclass
 class ReliabilityConfig:
     """Reliability configuration parameters."""
+
     enable_error_detection: bool = True
     enable_error_correction: bool = True
     enable_redundancy: bool = True
@@ -69,9 +77,11 @@ class ReliabilityConfig:
     required_availability: float = 0.99999  # 99.999% uptime
     mean_time_between_failures_hours: float = 8760  # 1 year
 
+
 @dataclass
 class ErrorReport:
     """Error detection and correction report."""
+
     cycle: int
     component: str
     error_type: ErrorType
@@ -82,9 +92,11 @@ class ErrorReport:
     severity: str = "low"
     corrective_action: Optional[str] = None
 
+
 @dataclass
 class ReliabilityMetrics:
     """Reliability metrics and statistics."""
+
     total_errors_detected: int = 0
     total_errors_corrected: int = 0
     uncorrectable_errors: int = 0
@@ -105,13 +117,17 @@ class ReliabilityMetrics:
     energy_overhead: float = 0.0
     area_overhead: float = 0.0
 
+
 class ErrorDetector(ABC):
     """Abstract base class for error detection mechanisms."""
 
     @abstractmethod
-    def detect_errors(self, data: np.ndarray, metadata: Dict[str, Any]) -> List[ErrorReport]:
+    def detect_errors(
+        self, data: np.ndarray, metadata: Dict[str, Any]
+    ) -> List[ErrorReport]:
         """Detect errors in data."""
         pass
+
 
 class ParityChecker(ErrorDetector):
     """Parity-based error detection."""
@@ -126,7 +142,9 @@ class ParityChecker(ErrorDetector):
         self.parity_bits = parity_bits
         self.error_count = 0
 
-    def detect_errors(self, data: np.ndarray, metadata: Dict[str, Any]) -> List[ErrorReport]:
+    def detect_errors(
+        self, data: np.ndarray, metadata: Dict[str, Any]
+    ) -> List[ErrorReport]:
         """
         Detect single-bit errors using parity checking.
 
@@ -138,15 +156,15 @@ class ParityChecker(ErrorDetector):
             List of detected errors
         """
         errors = []
-        cycle = metadata.get('cycle', 0)
-        component = metadata.get('component', 'unknown')
+        cycle = metadata.get("cycle", 0)
+        component = metadata.get("component", "unknown")
 
         # Convert data to bits for parity calculation
         data_bits = np.unpackbits(data.view(np.uint8))
 
         # Calculate parity
         calculated_parity = np.sum(data_bits) % 2
-        expected_parity = metadata.get('parity', calculated_parity)
+        expected_parity = metadata.get("parity", calculated_parity)
 
         if calculated_parity != expected_parity:
             self.error_count += 1
@@ -158,12 +176,13 @@ class ParityChecker(ErrorDetector):
                 detected=True,
                 corrected=False,
                 location=f"parity_check_{self.error_count}",
-                severity="medium"
+                severity="medium",
             )
             errors.append(error)
             logger.warning(f"Parity error detected in {component} at cycle {cycle}")
 
         return errors
+
 
 class ECCChecker(ErrorDetector):
     """Error Correcting Code (ECC) based error detection and correction."""
@@ -197,7 +216,9 @@ class ECCChecker(ErrorDetector):
         matrix = np.random.randint(0, 2, (self.check_bits, self.total_bits))
         return matrix
 
-    def detect_errors(self, data: np.ndarray, metadata: Dict[str, Any]) -> List[ErrorReport]:
+    def detect_errors(
+        self, data: np.ndarray, metadata: Dict[str, Any]
+    ) -> List[ErrorReport]:
         """
         Detect and attempt to correct errors using ECC.
 
@@ -209,12 +230,12 @@ class ECCChecker(ErrorDetector):
             List of detected errors
         """
         errors = []
-        cycle = metadata.get('cycle', 0)
-        component = metadata.get('component', 'unknown')
+        cycle = metadata.get("cycle", 0)
+        component = metadata.get("component", "unknown")
 
         # Extract data and check bits
-        data_portion = data[:self.data_bits]
-        check_portion = data[self.data_bits:self.data_bits + self.check_bits]
+        data_portion = data[: self.data_bits]
+        check_portion = data[self.data_bits : self.data_bits + self.check_bits]
 
         # Calculate syndrome
         syndrome = self._calculate_syndrome(data, check_portion)
@@ -226,7 +247,9 @@ class ECCChecker(ErrorDetector):
             if error_location < self.total_bits:
                 # Single-bit error - correctable
                 corrected_data = data.copy()
-                corrected_data[error_location] = 1 - corrected_data[error_location]  # Flip bit
+                corrected_data[error_location] = (
+                    1 - corrected_data[error_location]
+                )  # Flip bit
 
                 error = ErrorReport(
                     cycle=cycle,
@@ -237,7 +260,7 @@ class ECCChecker(ErrorDetector):
                     corrected=True,
                     location=f"bit_{error_location}",
                     severity="low",
-                    corrective_action="single_bit_correction"
+                    corrective_action="single_bit_correction",
                 )
             else:
                 # Multi-bit error - uncorrectable
@@ -250,15 +273,19 @@ class ECCChecker(ErrorDetector):
                     corrected=False,
                     location="multiple_bits",
                     severity="high",
-                    corrective_action="error_flagged"
+                    corrective_action="error_flagged",
                 )
 
             errors.append(error)
-            logger.info(f"ECC {'corrected' if error.corrected else 'detected'} error in {component}")
+            logger.info(
+                f"ECC {'corrected' if error.corrected else 'detected'} error in {component}"
+            )
 
         return errors
 
-    def _calculate_syndrome(self, data: np.ndarray, check_bits: np.ndarray) -> np.ndarray:
+    def _calculate_syndrome(
+        self, data: np.ndarray, check_bits: np.ndarray
+    ) -> np.ndarray:
         """Calculate error syndrome."""
         # Simplified syndrome calculation
         received_word = np.concatenate([data, check_bits])
@@ -272,6 +299,7 @@ class ECCChecker(ErrorDetector):
             return np.where(syndrome)[0][0]
         else:
             return self.total_bits  # Multi-bit error indicator
+
 
 class RedundancyManager:
     """Manages redundant execution and voting."""
@@ -288,7 +316,9 @@ class RedundancyManager:
         self.voting_threshold = voting_threshold
         self.execution_history: List[Dict[str, Any]] = []
 
-    def execute_with_redundancy(self, operation: Callable, *args, **kwargs) -> Tuple[Any, List[ErrorReport]]:
+    def execute_with_redundancy(
+        self, operation: Callable, *args, **kwargs
+    ) -> Tuple[Any, List[ErrorReport]]:
         """
         Execute operation with redundancy.
 
@@ -311,7 +341,9 @@ class RedundancyManager:
             # No redundancy - single execution
             return operation(*args, **kwargs), errors
 
-    def _execute_dmr(self, operation: Callable, *args, **kwargs) -> Tuple[Any, List[ErrorReport]]:
+    def _execute_dmr(
+        self, operation: Callable, *args, **kwargs
+    ) -> Tuple[Any, List[ErrorReport]]:
         """Execute with Dual Modular Redundancy."""
         errors = []
 
@@ -325,21 +357,23 @@ class RedundancyManager:
         else:
             # Mismatch detected
             error = ErrorReport(
-                cycle=kwargs.get('cycle', 0),
-                component=kwargs.get('component', 'dmr_executor'),
+                cycle=kwargs.get("cycle", 0),
+                component=kwargs.get("component", "dmr_executor"),
                 error_type=ErrorType.ARITHMETIC,
                 fault_type=FaultType.TRANSIENT,
                 detected=True,
                 corrected=False,
                 severity="high",
-                corrective_action="dmr_mismatch_detected"
+                corrective_action="dmr_mismatch_detected",
             )
             errors.append(error)
 
             # Return first result as default (could implement other strategies)
             return result1, errors
 
-    def _execute_tmr(self, operation: Callable, *args, **kwargs) -> Tuple[Any, List[ErrorReport]]:
+    def _execute_tmr(
+        self, operation: Callable, *args, **kwargs
+    ) -> Tuple[Any, List[ErrorReport]]:
         """Execute with Triple Modular Redundancy."""
         errors = []
 
@@ -358,14 +392,14 @@ class RedundancyManager:
             if vote_count < 3:
                 # Some disagreement detected
                 error = ErrorReport(
-                    cycle=kwargs.get('cycle', 0),
-                    component=kwargs.get('component', 'tmr_executor'),
+                    cycle=kwargs.get("cycle", 0),
+                    component=kwargs.get("component", "tmr_executor"),
                     error_type=ErrorType.ARITHMETIC,
                     fault_type=FaultType.TRANSIENT,
                     detected=True,
                     corrected=True,
                     severity="medium",
-                    corrective_action="tmr_majority_vote"
+                    corrective_action="tmr_majority_vote",
                 )
                 errors.append(error)
 
@@ -373,20 +407,22 @@ class RedundancyManager:
         else:
             # Voting failed - no majority
             error = ErrorReport(
-                cycle=kwargs.get('cycle', 0),
-                component=kwargs.get('component', 'tmr_executor'),
+                cycle=kwargs.get("cycle", 0),
+                component=kwargs.get("component", "tmr_executor"),
                 error_type=ErrorType.ARITHMETIC,
                 fault_type=FaultType.PERMANENT,
                 detected=True,
                 corrected=False,
                 severity="critical",
-                corrective_action="tmr_voting_failed"
+                corrective_action="tmr_voting_failed",
             )
             errors.append(error)
 
             return result1, errors  # Fallback to first result
 
-    def _execute_temporal(self, operation: Callable, *args, **kwargs) -> Tuple[Any, List[ErrorReport]]:
+    def _execute_temporal(
+        self, operation: Callable, *args, **kwargs
+    ) -> Tuple[Any, List[ErrorReport]]:
         """Execute with temporal redundancy (re-execution)."""
         errors = []
         max_retries = 3
@@ -398,14 +434,14 @@ class RedundancyManager:
                 if attempt > 0:
                     # Re-execution was needed
                     error = ErrorReport(
-                        cycle=kwargs.get('cycle', 0),
-                        component=kwargs.get('component', 'temporal_executor'),
+                        cycle=kwargs.get("cycle", 0),
+                        component=kwargs.get("component", "temporal_executor"),
                         error_type=ErrorType.ARITHMETIC,
                         fault_type=FaultType.TRANSIENT,
                         detected=True,
                         corrected=True,
                         severity="low",
-                        corrective_action=f"temporal_retry_attempt_{attempt}"
+                        corrective_action=f"temporal_retry_attempt_{attempt}",
                     )
                     errors.append(error)
 
@@ -415,14 +451,14 @@ class RedundancyManager:
                 if attempt == max_retries - 1:
                     # Final attempt failed
                     error = ErrorReport(
-                        cycle=kwargs.get('cycle', 0),
-                        component=kwargs.get('component', 'temporal_executor'),
+                        cycle=kwargs.get("cycle", 0),
+                        component=kwargs.get("component", "temporal_executor"),
                         error_type=ErrorType.ARITHMETIC,
                         fault_type=FaultType.PERMANENT,
                         detected=True,
                         corrected=False,
                         severity="critical",
-                        corrective_action="temporal_retry_exhausted"
+                        corrective_action="temporal_retry_exhausted",
                     )
                     errors.append(error)
                     raise e
@@ -455,6 +491,7 @@ class RedundancyManager:
 
         return results[0], 1  # Fallback
 
+
 class FaultInjector:
     """Fault injector for reliability testing."""
 
@@ -470,8 +507,13 @@ class FaultInjector:
         self.random_seed = 42
         random.seed(self.random_seed)
 
-    def inject_fault(self, data: np.ndarray, cycle: int,
-                    component: str, fault_type: FaultType = FaultType.TRANSIENT) -> np.ndarray:
+    def inject_fault(
+        self,
+        data: np.ndarray,
+        cycle: int,
+        component: str,
+        fault_type: FaultType = FaultType.TRANSIENT,
+    ) -> np.ndarray:
         """
         Inject fault into data for testing.
 
@@ -511,7 +553,7 @@ class FaultInjector:
                 if len(data_bytes) > 0:
                     byte_index = random.randint(0, len(data_bytes) - 1)
                     bit_position = random.randint(0, 7)
-                    data_bytes[byte_index] ^= (1 << bit_position)
+                    data_bytes[byte_index] ^= 1 << bit_position
 
                 corrupted_data = data_bytes.view(data.dtype).reshape(data.shape)
 
@@ -521,30 +563,38 @@ class FaultInjector:
 
         # Log injected fault
         fault_record = {
-            'cycle': cycle,
-            'component': component,
-            'fault_type': fault_type.value,
-            'location': f"fault_{len(self.injected_faults)}",
-            'original_data_hash': hash(data.tobytes()),
-            'corrupted_data_hash': hash(corrupted_data.tobytes())
+            "cycle": cycle,
+            "component": component,
+            "fault_type": fault_type.value,
+            "location": f"fault_{len(self.injected_faults)}",
+            "original_data_hash": hash(data.tobytes()),
+            "corrupted_data_hash": hash(corrupted_data.tobytes()),
         }
         self.injected_faults.append(fault_record)
 
-        logger.debug(f"Injected {fault_type.value} fault in {component} at cycle {cycle}")
+        logger.debug(
+            f"Injected {fault_type.value} fault in {component} at cycle {cycle}"
+        )
 
         return corrupted_data
 
     def get_injection_report(self) -> Dict[str, Any]:
         """Get report of all injected faults."""
         return {
-            'total_faults_injected': len(self.injected_faults),
-            'fault_breakdown': {
-                fault_type.value: len([f for f in self.injected_faults
-                                     if f['fault_type'] == fault_type.value])
+            "total_faults_injected": len(self.injected_faults),
+            "fault_breakdown": {
+                fault_type.value: len(
+                    [
+                        f
+                        for f in self.injected_faults
+                        if f["fault_type"] == fault_type.value
+                    ]
+                )
                 for fault_type in FaultType
             },
-            'injected_faults': self.injected_faults
+            "injected_faults": self.injected_faults,
         }
+
 
 class ReliabilityManager:
     """Main reliability management system."""
@@ -560,18 +610,19 @@ class ReliabilityManager:
 
         # Error detection and correction
         self.error_detectors: Dict[str, ErrorDetector] = {
-            'parity': ParityChecker(),
-            'ecc': ECCChecker()
+            "parity": ParityChecker(),
+            "ecc": ECCChecker(),
         }
 
         # Redundancy management
         self.redundancy_manager = RedundancyManager(
-            config.redundancy_type,
-            config.voting_threshold
+            config.redundancy_type, config.voting_threshold
         )
 
         # Fault injection for testing
-        self.fault_injector = FaultInjector(config) if config.enable_fault_injection else None
+        self.fault_injector = (
+            FaultInjector(config) if config.enable_fault_injection else None
+        )
 
         # Metrics and reporting
         self.metrics = ReliabilityMetrics()
@@ -579,7 +630,9 @@ class ReliabilityManager:
         self.fault_log: List[Dict[str, Any]] = []
 
         # Component health tracking
-        self.component_health: Dict[str, float] = defaultdict(lambda: 1.0)  # 1.0 = healthy
+        self.component_health: Dict[str, float] = defaultdict(
+            lambda: 1.0
+        )  # 1.0 = healthy
         self.component_error_counts: Dict[str, int] = defaultdict(int)
 
         # Operational state
@@ -589,10 +642,13 @@ class ReliabilityManager:
 
         logger.info("Reliability manager initialized")
 
-    def process_data_with_reliability(self, data: np.ndarray,
-                                    component: str,
-                                    cycle: int,
-                                    operation: Optional[Callable] = None) -> Tuple[np.ndarray, List[ErrorReport]]:
+    def process_data_with_reliability(
+        self,
+        data: np.ndarray,
+        component: str,
+        cycle: int,
+        operation: Optional[Callable] = None,
+    ) -> Tuple[np.ndarray, List[ErrorReport]]:
         """
         Process data through reliability mechanisms.
 
@@ -647,15 +703,13 @@ class ReliabilityManager:
 
         return processed_data, all_errors
 
-    def _detect_errors(self, data: np.ndarray, component: str, cycle: int) -> List[ErrorReport]:
+    def _detect_errors(
+        self, data: np.ndarray, component: str, cycle: int
+    ) -> List[ErrorReport]:
         """Run error detection on data."""
         all_errors = []
 
-        metadata = {
-            'cycle': cycle,
-            'component': component,
-            'data_size': data.size
-        }
+        metadata = {"cycle": cycle, "component": component, "data_size": data.size}
 
         # Run all enabled error detectors
         for detector_name, detector in self.error_detectors.items():
@@ -667,13 +721,16 @@ class ReliabilityManager:
 
         return all_errors
 
-    def _correct_errors(self, data: np.ndarray, errors: List[ErrorReport],
-                       component: str, cycle: int) -> Tuple[np.ndarray, List[ErrorReport]]:
+    def _correct_errors(
+        self, data: np.ndarray, errors: List[ErrorReport], component: str, cycle: int
+    ) -> Tuple[np.ndarray, List[ErrorReport]]:
         """Attempt error correction."""
         corrected_data = data.copy()
         correction_errors = []
 
-        correctable_errors = [e for e in errors if e.error_type in [ErrorType.SINGLE_BIT]]
+        correctable_errors = [
+            e for e in errors if e.error_type in [ErrorType.SINGLE_BIT]
+        ]
         uncorrectable_errors = [e for e in errors if e not in correctable_errors]
 
         # Attempt correction of correctable errors
@@ -681,16 +738,18 @@ class ReliabilityManager:
             if error.error_type == ErrorType.SINGLE_BIT and error.location:
                 try:
                     # Simple bit flip correction (would be more sophisticated in practice)
-                    if 'bit_' in error.location:
-                        bit_pos = int(error.location.split('_')[1])
+                    if "bit_" in error.location:
+                        bit_pos = int(error.location.split("_")[1])
                         if bit_pos < corrected_data.size * 8:  # Within bounds
                             # Flip the bit (simplified)
                             flat_data = corrected_data.flatten().view(np.uint8)
                             byte_pos = bit_pos // 8
                             bit_in_byte = bit_pos % 8
                             if byte_pos < len(flat_data):
-                                flat_data[byte_pos] ^= (1 << bit_in_byte)
-                                corrected_data = flat_data.view(data.dtype).reshape(data.shape)
+                                flat_data[byte_pos] ^= 1 << bit_in_byte
+                                corrected_data = flat_data.view(data.dtype).reshape(
+                                    data.shape
+                                )
                                 error.corrected = True
 
                 except Exception as e:
@@ -707,17 +766,21 @@ class ReliabilityManager:
                 corrected=False,
                 location=error.location,
                 severity="high",
-                corrective_action="uncorrectable_error_logged"
+                corrective_action="uncorrectable_error_logged",
             )
             correction_errors.append(correction_error)
 
         return corrected_data, correction_errors
 
-    def _update_component_health(self, component: str, errors: List[ErrorReport]) -> None:
+    def _update_component_health(
+        self, component: str, errors: List[ErrorReport]
+    ) -> None:
         """Update component health based on detected errors."""
         if not errors:
             # No errors - slight health recovery
-            self.component_health[component] = min(1.0, self.component_health[component] + 0.001)
+            self.component_health[component] = min(
+                1.0, self.component_health[component] + 0.001
+            )
             return
 
         # Degrade health based on error severity
@@ -732,10 +795,14 @@ class ReliabilityManager:
             elif error.severity == "critical":
                 health_impact += 0.1
 
-        self.component_health[component] = max(0.0, self.component_health[component] - health_impact)
+        self.component_health[component] = max(
+            0.0, self.component_health[component] - health_impact
+        )
         self.component_error_counts[component] += len(errors)
 
-        logger.debug(f"Component {component} health: {self.component_health[component]:.3f}")
+        logger.debug(
+            f"Component {component} health: {self.component_health[component]:.3f}"
+        )
 
     def _update_metrics(self, errors: List[ErrorReport]) -> None:
         """Update reliability metrics."""
@@ -766,7 +833,9 @@ class ReliabilityManager:
         # Check for shutdown conditions
         if uncorrectable_errors >= self.config.error_threshold_for_shutdown:
             if not self.shutdown_initiated:
-                logger.critical(f"Initiating system shutdown due to {uncorrectable_errors} uncorrectable errors")
+                logger.critical(
+                    f"Initiating system shutdown due to {uncorrectable_errors} uncorrectable errors"
+                )
                 self.shutdown_initiated = True
                 self.system_operational = False
 
@@ -777,8 +846,9 @@ class ReliabilityManager:
                 self.degraded_mode = True
 
         # Check component health
-        unhealthy_components = [comp for comp, health in self.component_health.items()
-                              if health < 0.5]
+        unhealthy_components = [
+            comp for comp, health in self.component_health.items() if health < 0.5
+        ]
 
         if unhealthy_components:
             logger.warning(f"Unhealthy components detected: {unhealthy_components}")
@@ -789,44 +859,47 @@ class ReliabilityManager:
         # Calculate derived metrics
         total_operations = max(1, len(self.error_log))  # Avoid division by zero
 
-        self.metrics.fault_coverage = (
-            self.metrics.total_errors_detected /
-            max(1, self.metrics.total_errors_detected + len(self.fault_log))
+        self.metrics.fault_coverage = self.metrics.total_errors_detected / max(
+            1, self.metrics.total_errors_detected + len(self.fault_log)
         )
 
         # Calculate availability
-        downtime_cycles = 1000 if self.shutdown_initiated else (100 if self.degraded_mode else 0)
+        downtime_cycles = (
+            1000 if self.shutdown_initiated else (100 if self.degraded_mode else 0)
+        )
         total_cycles = max(1000, downtime_cycles + 10000)  # Simplified calculation
         self.metrics.availability = 1.0 - (downtime_cycles / total_cycles)
 
         # Performance overhead (simplified)
-        self.metrics.performance_overhead = 0.02 if self.config.enable_redundancy else 0.01
+        self.metrics.performance_overhead = (
+            0.02 if self.config.enable_redundancy else 0.01
+        )
         self.metrics.energy_overhead = 0.05 if self.config.enable_redundancy else 0.02
         self.metrics.area_overhead = 0.15 if self.config.enable_ecc else 0.05
 
         return {
-            'reliability_metrics': self.metrics.__dict__,
-            'system_status': {
-                'operational': self.system_operational,
-                'degraded_mode': self.degraded_mode,
-                'shutdown_initiated': self.shutdown_initiated
+            "reliability_metrics": self.metrics.__dict__,
+            "system_status": {
+                "operational": self.system_operational,
+                "degraded_mode": self.degraded_mode,
+                "shutdown_initiated": self.shutdown_initiated,
             },
-            'component_health': dict(self.component_health),
-            'component_error_counts': dict(self.component_error_counts),
-            'error_summary': {
-                'total_errors': len(self.error_log),
-                'errors_by_type': self._summarize_errors_by_type(),
-                'errors_by_component': self._summarize_errors_by_component(),
-                'recent_critical_errors': [
-                    e.__dict__ for e in self.error_log[-10:]
-                    if e.severity == "critical"
-                ]
+            "component_health": dict(self.component_health),
+            "component_error_counts": dict(self.component_error_counts),
+            "error_summary": {
+                "total_errors": len(self.error_log),
+                "errors_by_type": self._summarize_errors_by_type(),
+                "errors_by_component": self._summarize_errors_by_component(),
+                "recent_critical_errors": [
+                    e.__dict__ for e in self.error_log[-10:] if e.severity == "critical"
+                ],
             },
-            'fault_injection_report': (
+            "fault_injection_report": (
                 self.fault_injector.get_injection_report()
-                if self.fault_injector else None
+                if self.fault_injector
+                else None
             ),
-            'recommendations': self._generate_reliability_recommendations()
+            "recommendations": self._generate_reliability_recommendations(),
         }
 
     def _summarize_errors_by_type(self) -> Dict[str, int]:
@@ -859,8 +932,9 @@ class ReliabilityManager:
                 f"({self.config.required_availability:.5f}). Improve fault tolerance."
             )
 
-        unhealthy_components = [comp for comp, health in self.component_health.items()
-                              if health < 0.7]
+        unhealthy_components = [
+            comp for comp, health in self.component_health.items() if health < 0.7
+        ]
         if unhealthy_components:
             recommendations.append(
                 f"Components with degraded health: {unhealthy_components}. "
@@ -880,8 +954,13 @@ class ReliabilityManager:
 
         return recommendations
 
-    def inject_fault(self, data: np.ndarray, cycle: int, 
-                    component: str, fault_type: FaultType = FaultType.TRANSIENT) -> np.ndarray:
+    def inject_fault(
+        self,
+        data: np.ndarray,
+        cycle: int,
+        component: str,
+        fault_type: FaultType = FaultType.TRANSIENT,
+    ) -> np.ndarray:
         """
         Inject fault into data for testing.
 
@@ -912,6 +991,7 @@ class ReliabilityManager:
 
         logger.info("Reliability metrics reset")
 
+
 def create_medical_reliability_config() -> ReliabilityConfig:
     """Create reliability configuration for medical applications."""
     return ReliabilityConfig(
@@ -922,5 +1002,5 @@ def create_medical_reliability_config() -> ReliabilityConfig:
         redundancy_type=RedundancyType.TMR,
         safety_critical=True,
         required_availability=0.99999,
-        mean_time_between_failures_hours=8760
+        mean_time_between_failures_hours=8760,
     )

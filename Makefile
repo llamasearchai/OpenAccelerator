@@ -331,4 +331,4 @@ info: ## Show system information
 	@echo "Git: $(shell git --version 2>/dev/null || echo 'Not installed')"
 	@echo "Author: Nik Jois <nikjois@llamasearch.ai>"
 	@echo "Project: OpenAccelerator"
-	@echo "Version: $(shell $(PYTHON) -c 'import open_accelerator; print(open_accelerator.__version__)' 2>/dev/null || echo 'Not installed')" 
+	@echo "Version: $(shell $(PYTHON) -c 'import open_accelerator; print(open_accelerator.__version__)' 2>/dev/null || echo 'Not installed')"

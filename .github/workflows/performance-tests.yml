@@ -23,7 +23,7 @@ jobs:
           - power_management
           - medical_workflows
           - ai_agents
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -57,7 +57,7 @@ jobs:
   performance-regression:
     runs-on: ubuntu-latest
     needs: benchmark-core
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -99,7 +99,7 @@ jobs:
         script: |
           const fs = require('fs');
           const report = fs.readFileSync('performance_regression_report.md', 'utf8');
-          
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
@@ -109,7 +109,7 @@ jobs:
 
   memory-profiling:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -148,7 +148,7 @@ jobs:
     strategy:
       matrix:
         scale-factor: [1, 2, 4, 8, 16]
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -177,7 +177,7 @@ jobs:
   stress-testing:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [benchmark-core, performance-regression, memory-profiling, scalability-testing, stress-testing]
     if: always()
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -245,4 +245,4 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./performance-report
-        destination_dir: performance 
+        destination_dir: performance

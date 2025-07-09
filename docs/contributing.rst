@@ -35,4 +35,4 @@ Testing
 Issue Reporting
 ---------------
 
-Please include reproduction steps and environment details. 
+Please include reproduction steps and environment details.

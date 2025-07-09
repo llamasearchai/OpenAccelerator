@@ -135,6 +135,6 @@ The OpenAccelerator project has achieved **100% functionality** with all request
 
 ---
 
-*Author: Assistant (Claude)*  
-*Date: 2024*  
-*Project: OpenAccelerator by Nik Jois <nikjois@llamasearch.ai>* 
+*Author: Assistant (Claude)*
+*Date: 2024*
+*Project: OpenAccelerator by Nik Jois <nikjois@llamasearch.ai>*

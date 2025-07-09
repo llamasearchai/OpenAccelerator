@@ -12,6 +12,7 @@ from typing import Any, Optional
 try:
     import openai
     from openai import OpenAI as OpenAIClient
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -413,7 +414,7 @@ class ModelRegistry:
         """Get an OpenAI client instance."""
         if not OPENAI_AVAILABLE:
             raise ImportError("OpenAI library not available")
-            
+
         if model_name not in self._model_instances:
             model_config = self.get_model(model_name)
             if not model_config:
@@ -421,8 +422,7 @@ class ModelRegistry:
 
             # Create OpenAI client instance
             self._model_instances[model_name] = OpenAIClient(
-                api_key=self.api_key,
-                **kwargs
+                api_key=self.api_key, **kwargs
             )
 
         return self._model_instances[model_name]

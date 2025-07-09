@@ -6,18 +6,20 @@ including diagnostic models, screening models, and monitoring models.
 """
 
 import logging
-import numpy as np
-from datetime import datetime
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
-from enum import Enum
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
 class ModelType(Enum):
     """Types of medical models."""
+
     DIAGNOSTIC = "diagnostic"
     SCREENING = "screening"
     MONITORING = "monitoring"
@@ -28,6 +30,7 @@ class ModelType(Enum):
 
 class ModelComplexity(Enum):
     """Model complexity levels."""
+
     SIMPLE = "simple"
     MODERATE = "moderate"
     COMPLEX = "complex"
@@ -37,6 +40,7 @@ class ModelComplexity(Enum):
 @dataclass
 class ModelMetadata:
     """Medical model metadata."""
+
     model_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     description: str = ""
@@ -56,6 +60,7 @@ class ModelMetadata:
 @dataclass
 class ModelPerformance:
     """Model performance metrics."""
+
     accuracy: float = 0.0
     sensitivity: float = 0.0
     specificity: float = 0.0
@@ -73,20 +78,24 @@ class ModelPerformance:
 
 class MedicalModel:
     """Medical model (alias for BaseMedicalModel)."""
-    
+
     def __init__(self, metadata: ModelMetadata):
         """Initialize medical model."""
         self.base_model = BaseMedicalModel(metadata)
         self.metadata = metadata
-        
-    def train(self, training_data: Dict[str, Any], validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def train(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Train the medical model."""
         return self.base_model.train(training_data, validation_data)
-        
+
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Make predictions using the medical model."""
         return self.base_model.predict(input_data)
-        
+
     def validate(self, validation_data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the medical model."""
         return self.base_model.validate(validation_data)
@@ -94,7 +103,7 @@ class MedicalModel:
 
 class BaseMedicalModel:
     """Base class for medical AI models."""
-    
+
     def __init__(self, metadata: ModelMetadata):
         """Initialize base medical model."""
         self.metadata = metadata
@@ -104,138 +113,147 @@ class BaseMedicalModel:
         self.model_parameters: Dict[str, Any] = {}
         self.is_trained = False
         self.is_validated = False
-        
+
         logger.info(f"Initialized medical model: {metadata.name}")
-    
-    def train(self, training_data: Dict[str, Any], validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def train(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Train the medical model.
-        
+
         Args:
             training_data: Training dataset
             validation_data: Validation dataset
-            
+
         Returns:
             Training results
         """
         training_start = datetime.now()
-        
+
         try:
             # Validate training data
             self._validate_training_data(training_data)
-            
+
             # Perform training
             training_results = self._perform_training(training_data, validation_data)
-            
+
             # Update model state
             self.is_trained = True
             self.metadata.last_updated = datetime.now()
-            
+
             # Log training
             self._log_training(training_start, training_results)
-            
+
             logger.info(f"Model training completed: {self.metadata.name}")
             return training_results
-            
+
         except Exception as e:
             logger.error(f"Model training failed: {str(e)}")
             raise
-    
+
     def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Make predictions using the medical model.
-        
+
         Args:
             input_data: Input data for prediction
-            
+
         Returns:
             Prediction results
         """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
-        
+
         prediction_start = datetime.now()
-        
+
         try:
             # Validate input data
             self._validate_input_data(input_data)
-            
+
             # Perform prediction
             prediction_results = self._perform_prediction(input_data)
-            
+
             # Log inference
             self._log_inference(prediction_start, prediction_results)
-            
+
             return prediction_results
-            
+
         except Exception as e:
             logger.error(f"Model prediction failed: {str(e)}")
             raise
-    
+
     def evaluate(self, test_data: Dict[str, Any]) -> ModelPerformance:
         """
         Evaluate model performance.
-        
+
         Args:
             test_data: Test dataset
-            
+
         Returns:
             Model performance metrics
         """
         if not self.is_trained:
             raise ValueError("Model must be trained before evaluation")
-        
+
         try:
             # Perform evaluation
             performance = self._perform_evaluation(test_data)
-            
+
             # Update model performance
             self.performance = performance
             self.is_validated = True
-            
-            logger.info(f"Model evaluation completed: accuracy={performance.accuracy:.3f}")
+
+            logger.info(
+                f"Model evaluation completed: accuracy={performance.accuracy:.3f}"
+            )
             return performance
-            
+
         except Exception as e:
             logger.error(f"Model evaluation failed: {str(e)}")
             raise
-    
+
     def _validate_training_data(self, training_data: Dict[str, Any]):
         """Validate training data."""
         required_fields = ["features", "labels"]
         for field in required_fields:
             if field not in training_data:
                 raise ValueError(f"Training data missing required field: {field}")
-    
+
     def _validate_input_data(self, input_data: Dict[str, Any]):
         """Validate input data for prediction."""
         if "features" not in input_data:
             raise ValueError("Input data missing 'features' field")
-    
-    def _perform_training(self, training_data: Dict[str, Any], 
-                         validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def _perform_training(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Perform model training (to be implemented by subclasses)."""
         # Default implementation - override in subclasses
         return {
             "training_completed": True,
             "epochs": 100,
             "final_loss": 0.01,
-            "training_time": 300.0
+            "training_time": 300.0,
         }
-    
+
     def _perform_prediction(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform model prediction (to be implemented by subclasses)."""
         # Default implementation - override in subclasses
         features = input_data["features"]
         batch_size = len(features) if isinstance(features, list) else 1
-        
+
         return {
             "predictions": np.random.rand(batch_size).tolist(),
             "confidence": np.random.rand(batch_size).tolist(),
             "prediction_time": 0.1,
-            "model_version": self.metadata.version
+            "model_version": self.metadata.version,
         }
-    
+
     def _perform_evaluation(self, test_data: Dict[str, Any]) -> ModelPerformance:
         """Perform model evaluation (to be implemented by subclasses)."""
         # Default implementation - override in subclasses
@@ -247,9 +265,9 @@ class BaseMedicalModel:
             recall=0.92,
             f1_score=0.90,
             auc_roc=0.94,
-            auc_pr=0.91
+            auc_pr=0.91,
         )
-    
+
     def _log_training(self, start_time: datetime, results: Dict[str, Any]):
         """Log training results."""
         training_log = {
@@ -257,11 +275,11 @@ class BaseMedicalModel:
             "duration": (datetime.now() - start_time).total_seconds(),
             "model_id": self.metadata.model_id,
             "model_name": self.metadata.name,
-            "training_results": results
+            "training_results": results,
         }
-        
+
         self.training_history.append(training_log)
-    
+
     def _log_inference(self, start_time: datetime, results: Dict[str, Any]):
         """Log inference results."""
         inference_log = {
@@ -269,42 +287,47 @@ class BaseMedicalModel:
             "duration": (datetime.now() - start_time).total_seconds(),
             "model_id": self.metadata.model_id,
             "prediction_count": len(results.get("predictions", [])),
-            "average_confidence": np.mean(results.get("confidence", [0.0]))
+            "average_confidence": np.mean(results.get("confidence", [0.0])),
         }
-        
+
         self.inference_history.append(inference_log)
 
 
 class DiagnosticModel(BaseMedicalModel):
     """Medical diagnostic model for disease detection and classification."""
-    
+
     def __init__(self, metadata: ModelMetadata):
         """Initialize diagnostic model."""
         super().__init__(metadata)
         self.disease_classes: List[str] = []
         self.diagnostic_threshold: float = 0.5
         self.confidence_threshold: float = 0.8
-        
+
         # Diagnostic-specific parameters
-        self.model_parameters.update({
-            "diagnostic_threshold": self.diagnostic_threshold,
-            "confidence_threshold": self.confidence_threshold,
-            "multi_class": True,
-            "class_weights": None
-        })
-    
+        self.model_parameters.update(
+            {
+                "diagnostic_threshold": self.diagnostic_threshold,
+                "confidence_threshold": self.confidence_threshold,
+                "multi_class": True,
+                "class_weights": None,
+            }
+        )
+
     def set_disease_classes(self, classes: List[str]):
         """Set disease classes for diagnosis."""
         self.disease_classes = classes
         self.model_parameters["num_classes"] = len(classes)
         logger.info(f"Set {len(classes)} disease classes for diagnostic model")
-    
-    def _perform_training(self, training_data: Dict[str, Any], 
-                         validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def _perform_training(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Perform diagnostic model training."""
         features = training_data["features"]
         labels = training_data["labels"]
-        
+
         # Simulate diagnostic model training
         training_results = {
             "training_completed": True,
@@ -315,41 +338,43 @@ class DiagnosticModel(BaseMedicalModel):
             "training_time": 450.0,
             "convergence_achieved": True,
             "early_stopping": False,
-            "best_epoch": 142
+            "best_epoch": 142,
         }
-        
+
         # Set model as trained
         self.is_trained = True
-        
+
         return training_results
-    
+
     def _perform_prediction(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform diagnostic prediction."""
         features = input_data["features"]
         batch_size = len(features) if isinstance(features, list) else 1
-        
+
         # Simulate diagnostic predictions
         predictions = np.random.rand(batch_size, len(self.disease_classes))
         confidence_scores = np.max(predictions, axis=1)
         predicted_classes = np.argmax(predictions, axis=1)
-        
+
         # Apply diagnostic threshold
         high_confidence_mask = confidence_scores >= self.confidence_threshold
-        
+
         results = {
             "predictions": predicted_classes.tolist(),
             "class_probabilities": predictions.tolist(),
             "confidence_scores": confidence_scores.tolist(),
             "high_confidence_predictions": high_confidence_mask.tolist(),
-            "predicted_diseases": [self.disease_classes[i] if i < len(self.disease_classes) else "unknown" 
-                                 for i in predicted_classes],
+            "predicted_diseases": [
+                self.disease_classes[i] if i < len(self.disease_classes) else "unknown"
+                for i in predicted_classes
+            ],
             "diagnostic_threshold": self.diagnostic_threshold,
             "model_version": self.metadata.version,
-            "prediction_time": 0.15
+            "prediction_time": 0.15,
         }
-        
+
         return results
-    
+
     def _perform_evaluation(self, test_data: Dict[str, Any]) -> ModelPerformance:
         """Perform diagnostic model evaluation."""
         # Simulate comprehensive diagnostic evaluation
@@ -366,29 +391,34 @@ class DiagnosticModel(BaseMedicalModel):
             negative_predictive_value=0.923,
             false_positive_rate=0.113,
             false_negative_rate=0.069,
-            confidence_interval=(0.941, 0.967)
+            confidence_interval=(0.941, 0.967),
         )
 
 
 class ScreeningModel(BaseMedicalModel):
     """Medical screening model for early detection and risk assessment."""
-    
+
     def __init__(self, metadata: ModelMetadata):
         """Initialize screening model."""
         super().__init__(metadata)
         self.risk_levels: List[str] = ["low", "moderate", "high", "very_high"]
         self.screening_sensitivity: float = 0.95  # High sensitivity for screening
-        
+
         # Screening-specific parameters
-        self.model_parameters.update({
-            "screening_sensitivity": self.screening_sensitivity,
-            "risk_stratification": True,
-            "early_detection_focus": True,
-            "false_positive_tolerance": 0.1
-        })
-    
-    def _perform_training(self, training_data: Dict[str, Any], 
-                         validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        self.model_parameters.update(
+            {
+                "screening_sensitivity": self.screening_sensitivity,
+                "risk_stratification": True,
+                "early_detection_focus": True,
+                "false_positive_tolerance": 0.1,
+            }
+        )
+
+    def _perform_training(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Perform screening model training."""
         # Simulate screening model training with focus on sensitivity
         training_results = {
@@ -399,21 +429,21 @@ class ScreeningModel(BaseMedicalModel):
             "validation_sensitivity": 0.95,
             "training_time": 380.0,
             "sensitivity_optimization": True,
-            "class_balance_handled": True
+            "class_balance_handled": True,
         }
-        
+
         self.is_trained = True
         return training_results
-    
+
     def _perform_prediction(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform screening prediction with risk stratification."""
         features = input_data["features"]
         batch_size = len(features) if isinstance(features, list) else 1
-        
+
         # Simulate screening predictions with risk levels
         risk_scores = np.random.rand(batch_size)
         risk_levels = []
-        
+
         for score in risk_scores:
             if score < 0.25:
                 risk_levels.append("low")
@@ -423,7 +453,7 @@ class ScreeningModel(BaseMedicalModel):
                 risk_levels.append("high")
             else:
                 risk_levels.append("very_high")
-        
+
         # Determine screening recommendations
         recommendations = []
         for risk_level in risk_levels:
@@ -435,18 +465,20 @@ class ScreeningModel(BaseMedicalModel):
                 recommendations.append("frequent_monitoring")
             else:
                 recommendations.append("immediate_evaluation")
-        
+
         results = {
             "risk_scores": risk_scores.tolist(),
             "risk_levels": risk_levels,
             "screening_recommendations": recommendations,
-            "requires_follow_up": [level in ["high", "very_high"] for level in risk_levels],
+            "requires_follow_up": [
+                level in ["high", "very_high"] for level in risk_levels
+            ],
             "model_version": self.metadata.version,
-            "prediction_time": 0.08
+            "prediction_time": 0.08,
         }
-        
+
         return results
-    
+
     def _perform_evaluation(self, test_data: Dict[str, Any]) -> ModelPerformance:
         """Perform screening model evaluation."""
         # High sensitivity evaluation for screening
@@ -463,36 +495,43 @@ class ScreeningModel(BaseMedicalModel):
             negative_predictive_value=0.956,
             false_positive_rate=0.166,
             false_negative_rate=0.037,  # Low false negative rate
-            confidence_interval=(0.907, 0.935)
+            confidence_interval=(0.907, 0.935),
         )
 
 
 class MonitoringModel(BaseMedicalModel):
     """Medical monitoring model for patient follow-up and trend analysis."""
-    
+
     def __init__(self, metadata: ModelMetadata):
         """Initialize monitoring model."""
         super().__init__(metadata)
         self.monitoring_parameters: List[str] = []
         self.alert_thresholds: Dict[str, float] = {}
         self.trend_analysis_enabled = True
-        
+
         # Monitoring-specific parameters
-        self.model_parameters.update({
-            "temporal_modeling": True,
-            "trend_analysis": True,
-            "anomaly_detection": True,
-            "alert_generation": True
-        })
-    
-    def set_monitoring_parameters(self, parameters: List[str], thresholds: Dict[str, float]):
+        self.model_parameters.update(
+            {
+                "temporal_modeling": True,
+                "trend_analysis": True,
+                "anomaly_detection": True,
+                "alert_generation": True,
+            }
+        )
+
+    def set_monitoring_parameters(
+        self, parameters: List[str], thresholds: Dict[str, float]
+    ):
         """Set monitoring parameters and alert thresholds."""
         self.monitoring_parameters = parameters
         self.alert_thresholds = thresholds
         logger.info(f"Set {len(parameters)} monitoring parameters")
-    
-    def _perform_training(self, training_data: Dict[str, Any], 
-                         validation_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def _perform_training(
+        self,
+        training_data: Dict[str, Any],
+        validation_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Perform monitoring model training."""
         # Simulate temporal model training
         training_results = {
@@ -504,35 +543,43 @@ class MonitoringModel(BaseMedicalModel):
             "anomaly_detection_accuracy": 0.92,
             "training_time": 320.0,
             "sequence_length": 30,
-            "temporal_features": len(self.monitoring_parameters)
+            "temporal_features": len(self.monitoring_parameters),
         }
-        
+
         self.is_trained = True
         return training_results
-    
+
     def _perform_prediction(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform monitoring prediction with trend analysis."""
         features = input_data["features"]
         batch_size = len(features) if isinstance(features, list) else 1
-        
+
         # Simulate monitoring predictions
-        current_values = {param: np.random.rand() for param in self.monitoring_parameters}
-        predicted_values = {param: np.random.rand() for param in self.monitoring_parameters}
-        trend_directions = {param: np.random.choice(["increasing", "decreasing", "stable"]) 
-                          for param in self.monitoring_parameters}
-        
+        current_values = {
+            param: np.random.rand() for param in self.monitoring_parameters
+        }
+        predicted_values = {
+            param: np.random.rand() for param in self.monitoring_parameters
+        }
+        trend_directions = {
+            param: np.random.choice(["increasing", "decreasing", "stable"])
+            for param in self.monitoring_parameters
+        }
+
         # Generate alerts based on thresholds
         alerts = []
         for param, value in current_values.items():
             threshold = self.alert_thresholds.get(param, 0.8)
             if value > threshold:
-                alerts.append({
-                    "parameter": param,
-                    "current_value": value,
-                    "threshold": threshold,
-                    "severity": "high" if value > threshold * 1.2 else "medium"
-                })
-        
+                alerts.append(
+                    {
+                        "parameter": param,
+                        "current_value": value,
+                        "threshold": threshold,
+                        "severity": "high" if value > threshold * 1.2 else "medium",
+                    }
+                )
+
         results = {
             "current_values": current_values,
             "predicted_values": predicted_values,
@@ -541,11 +588,11 @@ class MonitoringModel(BaseMedicalModel):
             "anomalies_detected": len(alerts) > 0,
             "monitoring_status": "normal" if len(alerts) == 0 else "attention_required",
             "model_version": self.metadata.version,
-            "prediction_time": 0.12
+            "prediction_time": 0.12,
         }
-        
+
         return results
-    
+
     def _perform_evaluation(self, test_data: Dict[str, Any]) -> ModelPerformance:
         """Perform monitoring model evaluation."""
         # Evaluation focused on temporal accuracy and anomaly detection
@@ -562,29 +609,27 @@ class MonitoringModel(BaseMedicalModel):
             negative_predictive_value=0.895,
             false_positive_rate=0.088,
             false_negative_rate=0.126,
-            confidence_interval=(0.883, 0.913)
+            confidence_interval=(0.883, 0.913),
         )
 
 
 def create_medical_model(model_type: str, name: str = "", **kwargs) -> BaseMedicalModel:
     """
     Create a medical model based on type.
-    
+
     Args:
         model_type: Type of medical model to create
         name: Name of the model
         **kwargs: Additional model parameters
-        
+
     Returns:
         Configured medical model
     """
     # Create model metadata
     metadata = ModelMetadata(
-        name=name or f"{model_type}_model",
-        model_type=ModelType(model_type),
-        **kwargs
+        name=name or f"{model_type}_model", model_type=ModelType(model_type), **kwargs
     )
-    
+
     # Create appropriate model based on type
     if model_type == "diagnostic":
         return DiagnosticModel(metadata)
@@ -593,4 +638,4 @@ def create_medical_model(model_type: str, name: str = "", **kwargs) -> BaseMedic
     elif model_type == "monitoring":
         return MonitoringModel(metadata)
     else:
-        return BaseMedicalModel(metadata) 
+        return BaseMedicalModel(metadata)

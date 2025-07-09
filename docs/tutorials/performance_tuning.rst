@@ -10,4 +10,4 @@ Topics Covered
 * Precision trade-offs (FP32 vs FP16 vs INT8)
 * Buffer bandwidth considerations
 * Power gating strategies
-* Analysing PE utilisation heatmaps 
+* Analysing PE utilisation heatmaps

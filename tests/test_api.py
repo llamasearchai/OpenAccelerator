@@ -4,21 +4,28 @@ Comprehensive tests for API modules.
 Tests FastAPI application, middleware, models, and routes for complete coverage.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi.testclient import TestClient
 from fastapi import HTTPException
-import json
+from fastapi.testclient import TestClient
 
 from open_accelerator.api.main import app, get_current_user
-from open_accelerator.api.middleware import SecurityMiddleware, LoggingMiddleware, CORSMiddleware
-from open_accelerator.api.models import (
-    SimulationRequest, SimulationResponse, AgentRequest, AgentResponse,
-    MedicalRequest, MedicalResponse, HealthResponse, ErrorResponse
+from open_accelerator.api.middleware import (
+    CORSMiddleware,
+    LoggingMiddleware,
+    SecurityMiddleware,
 )
-from open_accelerator.api.routes import router
-from open_accelerator.utils.config import AcceleratorConfig, WorkloadConfig, WorkloadType
+from open_accelerator.api.models import (
+    AgentRequest,
+    AgentResponse,
+    ErrorResponse,
+    HealthResponse,
+    MedicalRequest,
+    MedicalResponse,
+    SimulationRequest,
+    SimulationResponse,
+)
 
 
 class TestAPIMain:
@@ -34,15 +41,15 @@ class TestAPIMain:
     def test_app_routes(self):
         """Test that all routes are registered."""
         client = TestClient(app)
-        
+
         # Test health endpoint
         response = client.get("/health")
         assert response.status_code == 200
-        
+
         # Test docs endpoint
         response = client.get("/docs")
         assert response.status_code == 200
-        
+
         # Test OpenAPI spec
         response = client.get("/openapi.json")
         assert response.status_code == 200
@@ -50,25 +57,25 @@ class TestAPIMain:
     def test_cors_configuration(self):
         """Test CORS configuration."""
         client = TestClient(app)
-        
+
         # Test preflight request
         response = client.options("/api/v1/health")
         assert response.status_code == 200
-        
+
         # Check CORS headers
         response = client.get("/api/v1/health")
         assert "access-control-allow-origin" in response.headers
 
-    @patch('open_accelerator.api.main.verify_token')
+    @patch("open_accelerator.api.main.verify_token")
     def test_authentication_dependency(self, mock_verify):
         """Test authentication dependency."""
         mock_verify.return_value = {"user_id": "test", "role": "admin"}
-        
+
         # Test with valid token
         result = get_current_user("Bearer valid-token")
         assert result["user_id"] == "test"
         assert result["role"] == "admin"
-        
+
         # Test with invalid token
         mock_verify.side_effect = HTTPException(status_code=401, detail="Invalid token")
         with pytest.raises(HTTPException):
@@ -77,11 +84,11 @@ class TestAPIMain:
     def test_error_handling(self):
         """Test global error handling."""
         client = TestClient(app)
-        
+
         # Test 404 error
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        
+
         # Test method not allowed
         response = client.post("/health")
         assert response.status_code == 405
@@ -94,26 +101,26 @@ class TestAPIMiddleware:
         """Test security middleware initialization."""
         middleware = SecurityMiddleware()
         assert middleware is not None
-        assert hasattr(middleware, 'process_request')
-        assert hasattr(middleware, 'process_response')
+        assert hasattr(middleware, "process_request")
+        assert hasattr(middleware, "process_response")
 
     @pytest.mark.asyncio
     async def test_security_middleware_headers(self):
         """Test security middleware adds security headers."""
         middleware = SecurityMiddleware()
-        
+
         # Mock request and response
         request = Mock()
         request.headers = {}
         request.method = "GET"
         request.url.path = "/api/v1/health"
-        
+
         response = Mock()
         response.headers = {}
-        
+
         # Process response
         await middleware.process_response(request, response)
-        
+
         # Check security headers
         assert "X-Content-Type-Options" in response.headers
         assert "X-Frame-Options" in response.headers
@@ -123,20 +130,20 @@ class TestAPIMiddleware:
         """Test logging middleware initialization."""
         middleware = LoggingMiddleware()
         assert middleware is not None
-        assert hasattr(middleware, 'log_request')
-        assert hasattr(middleware, 'log_response')
+        assert hasattr(middleware, "log_request")
+        assert hasattr(middleware, "log_response")
 
     @pytest.mark.asyncio
     async def test_logging_middleware_request_logging(self):
         """Test logging middleware logs requests."""
         middleware = LoggingMiddleware()
-        
+
         request = Mock()
         request.method = "POST"
         request.url.path = "/api/v1/simulation/run"
         request.client.host = "127.0.0.1"
-        
-        with patch('open_accelerator.api.middleware.logger') as mock_logger:
+
+        with patch("open_accelerator.api.middleware.logger") as mock_logger:
             await middleware.log_request(request)
             mock_logger.info.assert_called()
 
@@ -144,8 +151,8 @@ class TestAPIMiddleware:
         """Test CORS middleware initialization."""
         middleware = CORSMiddleware()
         assert middleware is not None
-        assert hasattr(middleware, 'allow_origins')
-        assert hasattr(middleware, 'allow_methods')
+        assert hasattr(middleware, "allow_origins")
+        assert hasattr(middleware, "allow_methods")
 
 
 class TestAPIModels:
@@ -162,10 +169,10 @@ class TestAPIModels:
                 "name": "test_gemm",
                 "gemm_M": 64,
                 "gemm_K": 32,
-                "gemm_P": 16
-            }
+                "gemm_P": 16,
+            },
         }
-        
+
         request = SimulationRequest(**config_dict)
         assert request.name == "test_simulation"
         assert request.accelerator_type == "balanced"
@@ -180,15 +187,15 @@ class TestAPIModels:
             "results": {
                 "execution_time": 0.5,
                 "power_consumption": 10.2,
-                "accuracy": 0.99
+                "accuracy": 0.99,
             },
             "metrics": {
                 "throughput": 1000,
                 "latency": 0.001,
-                "energy_efficiency": 0.95
-            }
+                "energy_efficiency": 0.95,
+            },
         }
-        
+
         response = SimulationResponse(**response_data)
         assert response.simulation_id == "sim-123"
         assert response.status == "completed"
@@ -200,12 +207,9 @@ class TestAPIModels:
         request_data = {
             "message": "Optimize my workload",
             "agent_type": "optimization",
-            "context": {
-                "workload_type": "gemm",
-                "target_metric": "performance"
-            }
+            "context": {"workload_type": "gemm", "target_metric": "performance"},
         }
-        
+
         request = AgentRequest(**request_data)
         assert request.message == "Optimize my workload"
         assert request.agent_type == "optimization"
@@ -219,11 +223,11 @@ class TestAPIModels:
             "suggestions": [
                 "Increase array rows to 32",
                 "Use float16 precision",
-                "Enable sparsity"
+                "Enable sparsity",
             ],
-            "confidence": 0.95
+            "confidence": 0.95,
         }
-        
+
         response = AgentResponse(**response_data)
         assert response.response == "I recommend increasing array size"
         assert response.agent_type == "optimization"
@@ -237,9 +241,9 @@ class TestAPIModels:
             "modality": "CT",
             "analysis_type": "segmentation",
             "patient_id": "patient-123",
-            "study_id": "study-456"
+            "study_id": "study-456",
         }
-        
+
         request = MedicalRequest(**request_data)
         assert request.image_data == "base64encodedimage"
         assert request.modality == "CT"
@@ -253,15 +257,15 @@ class TestAPIModels:
             "results": {
                 "segmentation_mask": "base64mask",
                 "confidence_scores": [0.9, 0.8, 0.95],
-                "detected_regions": 3
+                "detected_regions": 3,
             },
             "compliance": {
                 "hipaa_compliant": True,
                 "phi_removed": True,
-                "audit_trail": "audit-123"
-            }
+                "audit_trail": "audit-123",
+            },
         }
-        
+
         response = MedicalResponse(**response_data)
         assert response.analysis_id == "analysis-789"
         assert response.results["detected_regions"] == 3
@@ -276,10 +280,10 @@ class TestAPIModels:
             "components": {
                 "database": "healthy",
                 "cache": "healthy",
-                "ai_agents": "healthy"
-            }
+                "ai_agents": "healthy",
+            },
         }
-        
+
         response = HealthResponse(**health_data)
         assert response.status == "healthy"
         assert response.version == "1.0.0"
@@ -294,10 +298,10 @@ class TestAPIModels:
             "details": {
                 "field": "gemm_M",
                 "value": -1,
-                "constraint": "must be positive"
-            }
+                "constraint": "must be positive",
+            },
         }
-        
+
         response = ErrorResponse(**error_data)
         assert response.error == "Validation failed"
         assert response.code == "VALIDATION_ERROR"
@@ -309,14 +313,14 @@ class TestAPIModels:
         with pytest.raises(ValueError):
             SimulationRequest(
                 name="",  # Empty name should fail
-                accelerator_type="invalid_type"
+                accelerator_type="invalid_type",
             )
-        
+
         # Test invalid AgentRequest
         with pytest.raises(ValueError):
             AgentRequest(
                 message="",  # Empty message should fail
-                agent_type="invalid_agent"
+                agent_type="invalid_agent",
             )
 
 
@@ -331,26 +335,26 @@ class TestAPIRoutes:
         """Test health check endpoint."""
         client = TestClient(app)
         response = client.get("/api/v1/health")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "version" in data
 
-    @patch('open_accelerator.api.routes.SimulationEngine')
+    @patch("open_accelerator.api.routes.SimulationEngine")
     def test_simulation_run_endpoint(self, mock_engine):
         """Test simulation run endpoint."""
         client = TestClient(app)
-        
+
         # Mock simulation engine
         mock_engine.return_value.run_simulation.return_value = {
             "simulation_id": "sim-123",
             "status": "completed",
             "results": {"execution_time": 0.5},
-            "metrics": {"throughput": 1000}
+            "metrics": {"throughput": 1000},
         }
-        
+
         request_data = {
             "name": "test_simulation",
             "accelerator_type": "balanced",
@@ -360,85 +364,85 @@ class TestAPIRoutes:
                 "name": "test_gemm",
                 "gemm_M": 64,
                 "gemm_K": 32,
-                "gemm_P": 16
-            }
+                "gemm_P": 16,
+            },
         }
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "admin"}
-            
+
             response = client.post(
                 "/api/v1/simulation/run",
                 json=request_data,
-                headers={"Authorization": "Bearer test-token"}
+                headers={"Authorization": "Bearer test-token"},
             )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["simulation_id"] == "sim-123"
             assert data["status"] == "completed"
 
-    @patch('open_accelerator.ai.agents.OptimizationAgent')
+    @patch("open_accelerator.ai.agents.OptimizationAgent")
     def test_agent_chat_endpoint(self, mock_agent):
         """Test agent chat endpoint."""
         client = TestClient(app)
-        
+
         # Mock agent response
         mock_agent.return_value.process_message.return_value = {
             "response": "I recommend increasing array size",
             "agent_type": "optimization",
             "suggestions": ["Increase array rows"],
-            "confidence": 0.95
+            "confidence": 0.95,
         }
-        
+
         request_data = {
             "message": "Optimize my workload",
             "agent_type": "optimization",
-            "context": {"workload_type": "gemm"}
+            "context": {"workload_type": "gemm"},
         }
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "user"}
-            
+
             response = client.post(
                 "/api/v1/agents/chat",
                 json=request_data,
-                headers={"Authorization": "Bearer test-token"}
+                headers={"Authorization": "Bearer test-token"},
             )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["response"] == "I recommend increasing array size"
             assert data["agent_type"] == "optimization"
 
-    @patch('open_accelerator.medical.workflows.MedicalAnalyzer')
+    @patch("open_accelerator.medical.workflows.MedicalAnalyzer")
     def test_medical_analyze_endpoint(self, mock_analyzer):
         """Test medical analysis endpoint."""
         client = TestClient(app)
-        
+
         # Mock medical analyzer
         mock_analyzer.return_value.analyze.return_value = {
             "analysis_id": "analysis-789",
             "results": {"detected_regions": 3},
-            "compliance": {"hipaa_compliant": True}
+            "compliance": {"hipaa_compliant": True},
         }
-        
+
         request_data = {
             "image_data": "base64encodedimage",
             "modality": "CT",
             "analysis_type": "segmentation",
-            "patient_id": "patient-123"
+            "patient_id": "patient-123",
         }
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "medical_staff"}
-            
+
             response = client.post(
                 "/api/v1/medical/analyze",
                 json=request_data,
-                headers={"Authorization": "Bearer test-token"}
+                headers={"Authorization": "Bearer test-token"},
             )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["analysis_id"] == "analysis-789"
@@ -447,21 +451,21 @@ class TestAPIRoutes:
     def test_simulation_list_endpoint(self):
         """Test simulation list endpoint."""
         client = TestClient(app)
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "user"}
-            
-            with patch('open_accelerator.api.routes.SimulationEngine') as mock_engine:
+
+            with patch("open_accelerator.api.routes.SimulationEngine") as mock_engine:
                 mock_engine.return_value.list_simulations.return_value = [
                     {"simulation_id": "sim-1", "status": "completed"},
-                    {"simulation_id": "sim-2", "status": "running"}
+                    {"simulation_id": "sim-2", "status": "running"},
                 ]
-                
+
                 response = client.get(
                     "/api/v1/simulation/list",
-                    headers={"Authorization": "Bearer test-token"}
+                    headers={"Authorization": "Bearer test-token"},
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert len(data) == 2
@@ -470,39 +474,39 @@ class TestAPIRoutes:
     def test_unauthorized_access(self):
         """Test unauthorized access to protected endpoints."""
         client = TestClient(app)
-        
+
         # Test without token
         response = client.post("/api/v1/simulation/run", json={})
         assert response.status_code == 401
-        
+
         # Test with invalid token
         response = client.post(
             "/api/v1/simulation/run",
             json={},
-            headers={"Authorization": "Bearer invalid-token"}
+            headers={"Authorization": "Bearer invalid-token"},
         )
         assert response.status_code == 401
 
     def test_input_validation_errors(self):
         """Test input validation errors."""
         client = TestClient(app)
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "admin"}
-            
+
             # Test invalid simulation request
             response = client.post(
                 "/api/v1/simulation/run",
                 json={"invalid": "data"},
-                headers={"Authorization": "Bearer test-token"}
+                headers={"Authorization": "Bearer test-token"},
             )
             assert response.status_code == 422
-            
+
             # Test invalid agent request
             response = client.post(
                 "/api/v1/agents/chat",
                 json={"invalid": "data"},
-                headers={"Authorization": "Bearer test-token"}
+                headers={"Authorization": "Bearer test-token"},
             )
             assert response.status_code == 422
 
@@ -513,25 +517,25 @@ class TestAPIIntegration:
     def test_full_simulation_workflow(self):
         """Test complete simulation workflow."""
         client = TestClient(app)
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "admin"}
-            
-            with patch('open_accelerator.api.routes.SimulationEngine') as mock_engine:
+
+            with patch("open_accelerator.api.routes.SimulationEngine") as mock_engine:
                 # Mock simulation engine responses
                 mock_engine.return_value.run_simulation.return_value = {
                     "simulation_id": "sim-123",
                     "status": "completed",
                     "results": {"execution_time": 0.5},
-                    "metrics": {"throughput": 1000}
+                    "metrics": {"throughput": 1000},
                 }
-                
+
                 mock_engine.return_value.get_simulation.return_value = {
                     "simulation_id": "sim-123",
                     "status": "completed",
-                    "results": {"execution_time": 0.5}
+                    "results": {"execution_time": 0.5},
                 }
-                
+
                 # Step 1: Run simulation
                 request_data = {
                     "name": "test_simulation",
@@ -542,59 +546,56 @@ class TestAPIIntegration:
                         "name": "test_gemm",
                         "gemm_M": 64,
                         "gemm_K": 32,
-                        "gemm_P": 16
-                    }
+                        "gemm_P": 16,
+                    },
                 }
-                
+
                 response = client.post(
                     "/api/v1/simulation/run",
                     json=request_data,
-                    headers={"Authorization": "Bearer test-token"}
+                    headers={"Authorization": "Bearer test-token"},
                 )
-                
+
                 assert response.status_code == 200
                 simulation_id = response.json()["simulation_id"]
-                
+
                 # Step 2: Get simulation status
                 response = client.get(
                     f"/api/v1/simulation/{simulation_id}",
-                    headers={"Authorization": "Bearer test-token"}
+                    headers={"Authorization": "Bearer test-token"},
                 )
-                
+
                 assert response.status_code == 200
                 assert response.json()["status"] == "completed"
 
     def test_agent_optimization_workflow(self):
         """Test agent optimization workflow."""
         client = TestClient(app)
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "user"}
-            
-            with patch('open_accelerator.ai.agents.OptimizationAgent') as mock_agent:
+
+            with patch("open_accelerator.ai.agents.OptimizationAgent") as mock_agent:
                 mock_agent.return_value.process_message.return_value = {
                     "response": "Optimization recommendations",
                     "agent_type": "optimization",
                     "suggestions": ["Increase array size", "Use sparsity"],
-                    "confidence": 0.9
+                    "confidence": 0.9,
                 }
-                
+
                 # Step 1: Get optimization suggestions
                 request_data = {
                     "message": "How can I optimize my GEMM workload?",
                     "agent_type": "optimization",
-                    "context": {
-                        "workload_type": "gemm",
-                        "current_performance": 0.8
-                    }
+                    "context": {"workload_type": "gemm", "current_performance": 0.8},
                 }
-                
+
                 response = client.post(
                     "/api/v1/agents/chat",
                     json=request_data,
-                    headers={"Authorization": "Bearer test-token"}
+                    headers={"Authorization": "Bearer test-token"},
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["agent_type"] == "optimization"
@@ -603,40 +604,42 @@ class TestAPIIntegration:
     def test_medical_compliance_workflow(self):
         """Test medical compliance workflow."""
         client = TestClient(app)
-        
-        with patch('open_accelerator.api.routes.get_current_user') as mock_auth:
+
+        with patch("open_accelerator.api.routes.get_current_user") as mock_auth:
             mock_auth.return_value = {"user_id": "test", "role": "medical_staff"}
-            
-            with patch('open_accelerator.medical.workflows.MedicalAnalyzer') as mock_analyzer:
+
+            with patch(
+                "open_accelerator.medical.workflows.MedicalAnalyzer"
+            ) as mock_analyzer:
                 mock_analyzer.return_value.analyze.return_value = {
                     "analysis_id": "analysis-789",
                     "results": {
                         "segmentation_mask": "base64mask",
-                        "confidence_scores": [0.9, 0.8, 0.95]
+                        "confidence_scores": [0.9, 0.8, 0.95],
                     },
                     "compliance": {
                         "hipaa_compliant": True,
                         "phi_removed": True,
-                        "audit_trail": "audit-123"
-                    }
+                        "audit_trail": "audit-123",
+                    },
                 }
-                
+
                 # Medical analysis request
                 request_data = {
                     "image_data": "base64encodedimage",
                     "modality": "CT",
                     "analysis_type": "segmentation",
                     "patient_id": "patient-123",
-                    "study_id": "study-456"
+                    "study_id": "study-456",
                 }
-                
+
                 response = client.post(
                     "/api/v1/medical/analyze",
                     json=request_data,
-                    headers={"Authorization": "Bearer test-token"}
+                    headers={"Authorization": "Bearer test-token"},
                 )
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["compliance"]["hipaa_compliant"] is True
-                assert data["compliance"]["phi_removed"] is True 
+                assert data["compliance"]["phi_removed"] is True

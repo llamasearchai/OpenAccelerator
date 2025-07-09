@@ -460,23 +460,22 @@ class SystemPowerManager:
         if self.current_cycle > 0:
             alpha = 0.01  # Exponential moving average factor
             self.system_metrics.average_power_w = (
-                (1 - alpha) * self.system_metrics.average_power_w + 
-                alpha * total_power
-            )
+                1 - alpha
+            ) * self.system_metrics.average_power_w + alpha * total_power
 
     def _update_thermal_model(self) -> None:
         """Update thermal model based on current power consumption."""
         # Simple thermal model - in reality this would be more complex
         ambient_temp = 25.0  # Celsius
         thermal_resistance = 0.1  # K/W
-        
+
         # Calculate temperature rise
         temp_rise = self.system_metrics.total_power_w * thermal_resistance
         current_temp = ambient_temp + temp_rise
-        
+
         # Update system metrics
         self.system_metrics.temperature_c = current_temp
-        
+
         # Check for thermal throttling
         if current_temp > self.config.thermal_limit_c:
             self.thermal_throttling_active = True
@@ -503,46 +502,45 @@ class SystemPowerManager:
 
 class ThermalModel:
     """Simple thermal model for temperature simulation."""
-    
+
     def __init__(self):
         self.ambient_temperature = 25.0  # Celsius
         self.thermal_resistance = 0.1  # K/W
         self.thermal_capacitance = 100.0  # J/K
         self.current_temperature = self.ambient_temperature
-        
+
     def update_temperature(self, power_w: float, dt: float = 1e-9) -> float:
         """Update temperature based on power consumption."""
         # Simple RC thermal model
         temp_rise = power_w * self.thermal_resistance
         target_temp = self.ambient_temperature + temp_rise
-        
+
         # Exponential approach to target temperature
         time_constant = self.thermal_resistance * self.thermal_capacitance
         alpha = dt / time_constant
-        
+
         self.current_temperature = (
-            (1 - alpha) * self.current_temperature + 
-            alpha * target_temp
-        )
-        
+            1 - alpha
+        ) * self.current_temperature + alpha * target_temp
+
         return self.current_temperature
 
 
 class WorkloadPredictor:
     """Workload predictor for power management."""
-    
+
     def __init__(self):
         self.activity_history = []
         self.prediction_horizon = 100  # cycles
-        
+
     def predict_activity(self, current_activity: float) -> float:
         """Predict future activity based on history."""
         self.activity_history.append(current_activity)
-        
+
         # Keep only recent history
         if len(self.activity_history) > self.prediction_horizon:
             self.activity_history.pop(0)
-            
+
         # Simple moving average prediction
         if len(self.activity_history) >= 10:
             return sum(self.activity_history[-10:]) / 10
@@ -552,13 +550,15 @@ class WorkloadPredictor:
 
 class DVFSController:
     """Dynamic Voltage and Frequency Scaling controller."""
-    
+
     def __init__(self, power_config: PowerConfig):
         self.config = power_config
         self.current_voltage = VoltageLevel.NOMINAL
         self.current_frequency = FrequencyLevel.NOMINAL
-        
-    def adjust_dvfs(self, utilization: float, temperature: float) -> tuple[VoltageLevel, FrequencyLevel]:
+
+    def adjust_dvfs(
+        self, utilization: float, temperature: float
+    ) -> tuple[VoltageLevel, FrequencyLevel]:
         """Adjust DVFS based on utilization and temperature."""
         # Simple policy: reduce voltage/frequency if temperature is high
         if temperature > self.config.thermal_limit_c * 0.9:
@@ -573,8 +573,8 @@ class DVFSController:
         else:
             voltage = VoltageLevel.LOW
             frequency = FrequencyLevel.LOW
-            
+
         self.current_voltage = voltage
         self.current_frequency = frequency
-        
+
         return voltage, frequency

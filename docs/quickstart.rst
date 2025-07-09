@@ -20,10 +20,10 @@ Basic Usage
 
     from open_accelerator import Accelerator, WorkloadManager
     from open_accelerator.core import SystemConfig
-    
+
     # Initialize with default configuration
     accelerator = Accelerator()
-    
+
     # Or with custom configuration
     config = SystemConfig(
         pe_array_size=(128, 128),
@@ -43,10 +43,10 @@ Basic Usage
         matrix_b_shape=(1024, 1024),
         precision="fp16"
     )
-    
+
     # Run the workload
     result = accelerator.run(workload)
-    
+
     # Access performance metrics
     print(f"Execution time: {result.execution_time}ms")
     print(f"Throughput: {result.throughput} GOPS")
@@ -64,7 +64,7 @@ Example API requests:
 .. code-block:: python
 
     import requests
-    
+
     # Submit a workload via API
     response = requests.post("http://localhost:8000/workloads/submit", json={
         "type": "gemm",
@@ -72,9 +72,9 @@ Example API requests:
         "matrix_b_shape": [1024, 1024],
         "precision": "fp16"
     })
-    
+
     workload_id = response.json()["workload_id"]
-    
+
     # Check workload status
     status = requests.get(f"http://localhost:8000/workloads/{workload_id}/status")
     print(status.json())
@@ -87,17 +87,17 @@ For medical applications with HIPAA compliance:
 .. code-block:: python
 
     from open_accelerator.medical import MedicalWorkload, ComplianceManager
-    
+
     # Enable compliance mode
     compliance = ComplianceManager(hipaa_mode=True)
-    
+
     # Create medical workload
     medical_workload = MedicalWorkload(
         model_type="medical_imaging",
         data_encryption=True,
         audit_logging=True
     )
-    
+
     # Run with compliance validation
     result = accelerator.run(medical_workload, compliance=compliance)
 
@@ -110,20 +110,20 @@ Integrate with OpenAI Agents SDK:
 
     from open_accelerator.ai import AgentManager
     from openai import OpenAI
-    
+
     # Initialize agent manager
     agent_manager = AgentManager(
         openai_client=OpenAI(api_key="your-api-key"),
         accelerator=accelerator
     )
-    
+
     # Create AI agent for workload optimization
     optimizer_agent = agent_manager.create_agent(
         name="workload_optimizer",
         instructions="Optimize workload parameters for best performance",
         tools=["performance_analyzer", "memory_optimizer"]
     )
-    
+
     # Let agent optimize workload
     optimized_workload = optimizer_agent.optimize(workload)
     result = accelerator.run(optimized_workload)
@@ -136,16 +136,16 @@ Monitor performance in real-time:
 .. code-block:: python
 
     from open_accelerator.benchmarks import PerformanceMonitor
-    
+
     # Create performance monitor
     monitor = PerformanceMonitor(accelerator)
-    
+
     # Start monitoring
     monitor.start()
-    
+
     # Run workload with monitoring
     result = accelerator.run(workload)
-    
+
     # Get detailed metrics
     metrics = monitor.get_metrics()
     print(f"Memory utilization: {metrics.memory_utilization}%")
@@ -160,7 +160,7 @@ Run OpenAccelerator in Docker:
 
     # Pull and run the container
     docker run -p 8000:8000 nikjois/openaccelerator:latest
-    
+
     # Or use docker-compose
     git clone https://github.com/nikjois/OpenAccelerator.git
     cd OpenAccelerator
@@ -175,7 +175,7 @@ System Configuration
 .. code-block:: python
 
     from open_accelerator.core import SystemConfig
-    
+
     # High-performance configuration
     high_perf_config = SystemConfig(
         pe_array_size=(512, 512),
@@ -187,7 +187,7 @@ System Configuration
         precision="fp16",
         power_management=True
     )
-    
+
     # Low-power configuration
     low_power_config = SystemConfig(
         pe_array_size=(128, 128),
@@ -213,7 +213,7 @@ Workload Configuration
         batch_size=32,
         precision="fp16"
     )
-    
+
     # Transformer workload for NLP
     transformer_workload = WorkloadManager.create_transformer_workload(
         sequence_length=512,
@@ -232,12 +232,12 @@ Run comprehensive tests:
 
     # Run all tests
     pytest tests/ -v
-    
+
     # Run specific test categories
     pytest tests/test_accelerator.py -v
     pytest tests/test_medical.py -v
     pytest tests/test_benchmarks.py -v
-    
+
     # Run performance tests
     pytest tests/test_performance.py -v --benchmark-only
 
@@ -264,4 +264,4 @@ Support
 
 * Documentation: https://openaccelerator.readthedocs.io/
 * Issues: https://github.com/nikjois/OpenAccelerator/issues
-* Email: nikjois@llamasearch.ai 
+* Email: nikjois@llamasearch.ai

@@ -8,24 +8,26 @@ Author: Nik Jois <nikjois@llamasearch.ai>
 Version: 1.0.0
 """
 
-import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 # Get the directory where this script is located
 SCRIPT_DIR = Path(__file__).parent.absolute()
 CLI_SCRIPT = SCRIPT_DIR / "scripts" / "accelerator_cli.py"
 
+
 def main():
     """Main entry point for the CLI wrapper."""
-    
+
     # Check if the CLI script exists
     if not CLI_SCRIPT.exists():
         print(f"[ERROR] CLI script not found: {CLI_SCRIPT}")
-        print(f"[INFO] Please ensure you're running this from the OpenAccelerator directory")
+        print(
+            "[INFO] Please ensure you're running this from the OpenAccelerator directory"
+        )
         sys.exit(1)
-    
+
     # Pass all arguments to the actual CLI script
     try:
         cmd = [sys.executable, str(CLI_SCRIPT)] + sys.argv[1:]
@@ -38,5 +40,6 @@ def main():
         print(f"[ERROR] Failed to run CLI: {e}")
         sys.exit(1)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

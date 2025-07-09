@@ -63,7 +63,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         pytest -n auto --cov=open_accelerator --cov-report=xml --cov-report=html --cov-fail-under=90
-        
+
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
-      
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -116,7 +116,7 @@ jobs:
   docker:
     needs: [test, build]
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -152,7 +152,7 @@ jobs:
     needs: [test, build]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -182,7 +182,7 @@ jobs:
     needs: [test, build, docker]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -208,7 +208,7 @@ jobs:
     needs: [test, build, docker, create-release]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -221,4 +221,4 @@ jobs:
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@v1.8.10
       with:
-        password: ${{ secrets.PYPI_API_TOKEN }} 
+        password: ${{ secrets.PYPI_API_TOKEN }}

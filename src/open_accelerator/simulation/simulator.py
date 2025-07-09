@@ -5,18 +5,13 @@ Provides comprehensive simulation capabilities with workload management,
 performance analysis, and result generation.
 """
 
-import json
 import logging
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
 
-from ..analysis.performance_analysis import PerformanceAnalyzer
 from ..utils.config import AcceleratorConfig
 from ..workloads.base import BaseWorkload
 
@@ -86,45 +81,51 @@ class SimulationResult:
 class Simulator:
     """
     Simplified simulator that works with existing components.
-    
+
     This is a minimal implementation that provides the interface expected
     by the CLI while we build out the full simulation infrastructure.
     """
-    
+
     _instance_counter = 0
 
     def __init__(self, config: AcceleratorConfig):
         """Initialize simulator with accelerator configuration."""
         self.config = config
         Simulator._instance_counter += 1
-        self.simulation_id = f"sim_{int(time.time() * 1000)}_{Simulator._instance_counter}"
+        self.simulation_id = (
+            f"sim_{int(time.time() * 1000)}_{Simulator._instance_counter}"
+        )
         logger.info(f"Simulator initialized with config: {config}")
 
-    def run(self, workload: BaseWorkload, cycles: Optional[int] = None) -> dict[str, Any]:
+    def run(
+        self, workload: BaseWorkload, cycles: Optional[int] = None
+    ) -> dict[str, Any]:
         """
         Run simulation with the given workload.
-        
+
         Args:
             workload: The workload to execute
             cycles: Maximum number of cycles to simulate (optional)
-        
+
         Returns a dictionary compatible with PerformanceAnalyzer expectations.
         """
         logger.info(f"Starting simulation with workload: {workload}")
-        
+
         # Simulate some basic execution
         start_time = time.time()
-        
+
         # Use provided cycles or default
         simulation_cycles = cycles if cycles is not None else 1000
-        
+
         # Mock simulation results for now
         # In a real implementation, this would execute the workload on the accelerator
         mock_results = {
             "success": True,
             "results": {
                 "total_cycles": simulation_cycles,
-                "total_mac_operations": min(5000, simulation_cycles * 5),  # Scale with cycles
+                "total_mac_operations": min(
+                    5000, simulation_cycles * 5
+                ),  # Scale with cycles
                 "output_matrix": np.random.rand(4, 4),
                 "pe_activity_map_over_time": np.random.rand(4, 4) * 0.8,
             },
@@ -141,7 +142,7 @@ class Simulator:
                 "utilization": {
                     "pe_utilization": 0.8,
                     "memory_utilization": 0.6,
-                }
+                },
             },
             "simulation_results": {
                 "execution_time": 0.0,  # Will be updated after calculation
@@ -154,23 +155,23 @@ class Simulator:
             "output_matrix": np.random.rand(4, 4),
             "pe_activity_map_over_time": np.random.rand(4, 4) * 0.8,
         }
-        
+
         execution_time = time.time() - start_time
-        
+
         # Update execution_time in the results
         mock_results["simulation_results"]["execution_time"] = execution_time
-        
+
         logger.info(f"Simulation completed in {execution_time:.2f} seconds")
-        
+
         return mock_results
 
 
 # Legacy compatibility classes (simplified)
 class SimulationOrchestrator:
     """Legacy orchestrator - simplified for compatibility."""
-    
+
     _orchestrator_counter = 0
-    
+
     def __init__(self, config: SimulationConfig | None = None):
         self.config = config or SimulationConfig()
         SimulationOrchestrator._orchestrator_counter += 1
@@ -186,11 +187,11 @@ class SimulationOrchestrator:
         """Run a single simulation - simplified implementation."""
         sim_name = simulation_name or f"{workload}_{int(time.time())}"
         logger.info(f"Running simulation: {sim_name}")
-        
+
         # Use the simplified Simulator
         simulator = Simulator(accelerator_config)
         results = simulator.run(workload)
-        
+
         # Create a basic SimulationResult
         return SimulationResult(
             simulation_id=self.simulation_id,
@@ -221,16 +222,15 @@ def run_quick_simulation(
 
 
 def run_comparison_study(
-    workloads: list[BaseWorkload], 
-    accelerator_configs: list[AcceleratorConfig]
+    workloads: list[BaseWorkload], accelerator_configs: list[AcceleratorConfig]
 ) -> list[SimulationResult]:
     """Run comparison study across multiple workloads and configs."""
     results = []
     orchestrator = SimulationOrchestrator()
-    
+
     for config in accelerator_configs:
         for workload in workloads:
             result = orchestrator.run_single_simulation(config, workload)
             results.append(result)
-    
+
     return results

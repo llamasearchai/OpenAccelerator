@@ -31,4 +31,4 @@ Static Analysis
 CI Pipeline
 -----------
 
-All tests run automatically on GitHub Actions across Python versions 3.8–3.11. 
+All tests run automatically on GitHub Actions across Python versions 3.8–3.11.

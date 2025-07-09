@@ -39,4 +39,4 @@ Mount source code for live reload:
 
 .. code-block:: bash
 
-   docker run -it -p 8000:8000 -v $PWD:/code openaccelerator:latest 
+   docker run -it -p 8000:8000 -v $PWD:/code openaccelerator:latest

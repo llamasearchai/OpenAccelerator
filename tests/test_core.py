@@ -4,16 +4,23 @@ Comprehensive tests for core modules.
 Tests accelerator, memory, systolic array, and processing elements for complete coverage.
 """
 
-import pytest
+from unittest.mock import patch
+
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
+import pytest
 
 from open_accelerator.core.accelerator import AcceleratorController, AcceleratorMetrics
 from open_accelerator.core.memory import MemoryBuffer, MemoryMetrics, MemoryState
-from open_accelerator.core.systolic_array import SystolicArray
-from open_accelerator.core.pe import ProcessingElement, PEState, PEMetrics
+from open_accelerator.core.pe import PEState, ProcessingElement
 from open_accelerator.core.processing_element import MACUnit, RegisterFile
-from open_accelerator.utils.config import AcceleratorConfig, ArrayConfig, MemoryConfig, WorkloadConfig, WorkloadType, DataType, PEConfig
+from open_accelerator.core.systolic_array import SystolicArray
+from open_accelerator.utils.config import (
+    AcceleratorConfig,
+    ArrayConfig,
+    DataType,
+    MemoryConfig,
+    PEConfig,
+)
 
 
 class TestAcceleratorController:
@@ -23,9 +30,7 @@ class TestAcceleratorController:
     def accelerator_config(self):
         """Test accelerator configuration."""
         return AcceleratorConfig(
-            name="test_accelerator",
-            array=ArrayConfig(rows=8, cols=8),
-            debug_mode=True
+            name="test_accelerator", array=ArrayConfig(rows=8, cols=8), debug_mode=True
         )
 
     @pytest.fixture
@@ -55,15 +60,15 @@ class TestAcceleratorController:
         assert metrics.pe_utilization == 0.0
         assert metrics.average_power_watts == 0.0
 
-    @patch('open_accelerator.core.accelerator.time.time')
+    @patch("open_accelerator.core.accelerator.time.time")
     def test_accelerator_simulation_control(self, mock_time, test_accelerator):
         """Test simulation control methods."""
         mock_time.return_value = 1000.0
-        
+
         # Test start simulation
         test_accelerator.simulation_start_time = 1000.0
         test_accelerator.is_running = True
-        
+
         assert test_accelerator.simulation_start_time == 1000.0
         assert test_accelerator.is_running is True
 
@@ -83,11 +88,7 @@ class TestMemoryBuffer:
     @pytest.fixture
     def memory_config(self):
         """Test memory configuration."""
-        return MemoryConfig(
-            buffer_size=1024,
-            bandwidth=16,
-            latency=1
-        )
+        return MemoryConfig(buffer_size=1024, bandwidth=16, latency=1)
 
     @pytest.fixture
     def memory_buffer(self, memory_config):
@@ -107,17 +108,19 @@ class TestMemoryBuffer:
         # Test write operation
         data = np.random.rand(10, 10)
         memory_buffer.data.append(data)
-        
+
         assert len(memory_buffer.data) == 1
-        
+
         # Test read operation
         read_data = memory_buffer.data[0]
         assert np.array_equal(data, read_data)
 
     def test_memory_buffer_medical_mode(self, memory_config):
         """Test memory buffer medical mode features."""
-        medical_buffer = MemoryBuffer("medical_buffer", memory_config, medical_mode=True)
-        
+        medical_buffer = MemoryBuffer(
+            "medical_buffer", memory_config, medical_mode=True
+        )
+
         assert medical_buffer.enable_ecc is True
         assert medical_buffer.enable_integrity_checks is True
         assert medical_buffer.redundant_storage is True
@@ -136,22 +139,29 @@ class TestMemoryBuffer:
         memory_buffer.metrics.total_reads = 100
         memory_buffer.metrics.total_writes = 50
         memory_buffer.current_cycle = 10
-        
+
         # Calculate bandwidth utilization
-        total_accesses = memory_buffer.metrics.total_reads + memory_buffer.metrics.total_writes
-        utilization = min(total_accesses / (memory_buffer.bandwidth * memory_buffer.current_cycle), 1.0)
-        
+        total_accesses = (
+            memory_buffer.metrics.total_reads + memory_buffer.metrics.total_writes
+        )
+        utilization = min(
+            total_accesses / (memory_buffer.bandwidth * memory_buffer.current_cycle),
+            1.0,
+        )
+
         assert 0.0 <= utilization <= 1.0
 
     def test_memory_error_detection(self, memory_config):
         """Test memory error detection."""
-        medical_buffer = MemoryBuffer("medical_buffer", memory_config, medical_mode=True)
-        
+        medical_buffer = MemoryBuffer(
+            "medical_buffer", memory_config, medical_mode=True
+        )
+
         # Test that medical mode features are enabled
         assert medical_buffer.enable_ecc is True
         assert medical_buffer.enable_integrity_checks is True
         assert medical_buffer.redundant_storage is True
-        
+
         # Test that medical mode buffer has proper configuration
         assert medical_buffer.medical_mode is True
 
@@ -162,9 +172,7 @@ class TestSystolicArray:
     @pytest.fixture
     def array_config(self):
         """Test array configuration."""
-        return AcceleratorConfig(
-            array=ArrayConfig(rows=4, cols=4, frequency=1e9)
-        )
+        return AcceleratorConfig(array=ArrayConfig(rows=4, cols=4, frequency=1e9))
 
     @pytest.fixture
     def systolic_array(self, array_config):
@@ -190,9 +198,9 @@ class TestSystolicArray:
     def test_dataflow_configuration(self, systolic_array):
         """Test dataflow configuration."""
         # Test that dataflow is properly configured
-        assert hasattr(systolic_array, 'dataflow')
-        assert hasattr(systolic_array, 'flow_direction_a')
-        assert hasattr(systolic_array, 'flow_direction_b')
+        assert hasattr(systolic_array, "dataflow")
+        assert hasattr(systolic_array, "flow_direction_a")
+        assert hasattr(systolic_array, "flow_direction_b")
 
     def test_memory_integration(self, systolic_array):
         """Test memory integration."""
@@ -200,21 +208,21 @@ class TestSystolicArray:
 
     def test_performance_metrics(self, systolic_array):
         """Test performance metrics collection."""
-        assert hasattr(systolic_array, 'metrics')
+        assert hasattr(systolic_array, "metrics")
         assert systolic_array.cycle_count == 0
 
     def test_thermal_modeling(self, array_config):
         """Test thermal modeling."""
         array_config.enable_thermal_modeling = True
         systolic_array = SystolicArray(array_config)
-        
+
         assert systolic_array.thermal_model is not None
 
     def test_power_modeling(self, array_config):
         """Test power modeling."""
         array_config.enable_power_modeling = True
         systolic_array = SystolicArray(array_config)
-        
+
         assert systolic_array.power_model is not None
 
 
@@ -225,18 +233,14 @@ class TestProcessingElement:
     def pe_config(self):
         """Test PE configuration."""
         return PEConfig(
-            enable_sparsity=True,
-            sparsity_threshold=1e-6,
-            power_gating=True
+            enable_sparsity=True, sparsity_threshold=1e-6, power_gating=True
         )
 
     @pytest.fixture
     def processing_element(self, pe_config):
         """Test processing element instance."""
         return ProcessingElement(
-            pe_id=(0, 0),
-            config=pe_config,
-            data_type=DataType.FLOAT32
+            pe_id=(0, 0), config=pe_config, data_type=DataType.FLOAT32
         )
 
     def test_pe_initialization(self, processing_element):
@@ -254,7 +258,7 @@ class TestProcessingElement:
     def test_pe_input_loading(self, processing_element):
         """Test input loading."""
         processing_element.load_inputs(2.5, 3.0)
-        
+
         assert processing_element.next_in_reg_a == 2.5
         assert processing_element.next_in_reg_b == 3.0
 
@@ -262,10 +266,10 @@ class TestProcessingElement:
         """Test cycle execution."""
         # Load inputs
         processing_element.load_inputs(2.5, 3.0)
-        
+
         # Execute cycle
         result = processing_element.cycle()
-        
+
         # Check that MAC was performed
         assert result is True
         assert processing_element.state == PEState.COMPUTING
@@ -274,10 +278,10 @@ class TestProcessingElement:
         """Test sparsity detection."""
         # Load sparse inputs (below threshold)
         processing_element.load_inputs(1e-8, 3.0)
-        
+
         # Execute cycle
         result = processing_element.cycle()
-        
+
         # Should detect sparsity and skip computation
         assert result is False
         assert processing_element.metrics.sparsity_detected > 0
@@ -286,7 +290,7 @@ class TestProcessingElement:
         """Test power gating."""
         processing_element.power_gate(True)
         assert processing_element.state == PEState.POWER_GATED
-        
+
         processing_element.power_gate(False)
         assert processing_element.state == PEState.IDLE
 
@@ -295,9 +299,9 @@ class TestProcessingElement:
         # Execute some operations
         processing_element.load_inputs(2.5, 3.0)
         processing_element.cycle()
-        
+
         metrics = processing_element.get_metrics_summary()
-        
+
         assert "pe_id" in metrics
         assert "utilization" in metrics
         assert "total_operations" in metrics
@@ -306,8 +310,8 @@ class TestProcessingElement:
     def test_pe_error_handling(self, processing_element):
         """Test error handling."""
         # Test with invalid input
-        processing_element.load_inputs(float('inf'), 3.0)
-        
+        processing_element.load_inputs(float("inf"), 3.0)
+
         # Should handle error gracefully
         processing_element.cycle()
         assert processing_element.state == PEState.ERROR
@@ -317,10 +321,10 @@ class TestProcessingElement:
         # Execute some operations
         processing_element.load_inputs(2.5, 3.0)
         processing_element.cycle()
-        
+
         # Reset
         processing_element.reset()
-        
+
         assert processing_element.state == PEState.IDLE
         assert processing_element.accumulator == 0.0
         assert processing_element.in_reg_a is None
@@ -345,7 +349,7 @@ class TestMACUnit:
         """Test multiply-accumulate operation."""
         result = mac_unit.multiply_accumulate(2.5, 3.0, 1.5)
         expected = 2.5 * 3.0 + 1.5
-        
+
         assert abs(result - expected) < 1e-6
         assert mac_unit.operations_count == 1
         assert mac_unit.energy_consumed > 0
@@ -354,7 +358,7 @@ class TestMACUnit:
         """Test MAC unit reset."""
         mac_unit.multiply_accumulate(2.5, 3.0, 1.5)
         mac_unit.reset()
-        
+
         assert mac_unit.operations_count == 0
         assert mac_unit.energy_consumed == 0.0
 
@@ -381,7 +385,7 @@ class TestRegisterFile:
         register_file.write(5, 42)
         assert register_file.registers[5] == 42
         assert register_file.write_count == 1
-        
+
         # Test read
         value = register_file.read(5)
         assert value == 42
@@ -392,7 +396,7 @@ class TestRegisterFile:
         # Test write out of bounds
         with pytest.raises(IndexError):
             register_file.write(20, 42)
-        
+
         # Test read out of bounds
         with pytest.raises(IndexError):
             register_file.read(20)
@@ -401,9 +405,9 @@ class TestRegisterFile:
         """Test register file reset."""
         register_file.write(5, 42)
         register_file.read(5)
-        
+
         register_file.reset()
-        
+
         assert register_file.registers[5] == 0
         assert register_file.read_count == 0
         assert register_file.write_count == 0
@@ -419,7 +423,7 @@ class TestCoreIntegration:
             array=ArrayConfig(rows=4, cols=4),
             debug_mode=True,
             enable_thermal_modeling=True,
-            enable_power_modeling=True
+            enable_power_modeling=True,
         )
 
     @pytest.fixture
@@ -439,7 +443,7 @@ class TestCoreIntegration:
         # Test that components can communicate
         systolic_array = integrated_system.systolic_array
         memory_hierarchy = integrated_system.memory_hierarchy
-        
+
         assert systolic_array.memory_hierarchy is not None
         assert memory_hierarchy is not None
 
@@ -447,15 +451,15 @@ class TestCoreIntegration:
         """Test performance monitoring."""
         # Test that metrics are collected
         metrics = AcceleratorMetrics()
-        assert hasattr(metrics, 'total_cycles')
-        assert hasattr(metrics, 'pe_utilization')
-        assert hasattr(metrics, 'average_power_watts')
+        assert hasattr(metrics, "total_cycles")
+        assert hasattr(metrics, "pe_utilization")
+        assert hasattr(metrics, "average_power_watts")
 
     def test_medical_mode_features(self, integrated_config):
         """Test medical mode features."""
         integrated_config.medical.enable_medical_mode = True
         system = AcceleratorController(integrated_config)
-        
+
         # Check that medical mode features are enabled
         assert system.config.medical.enable_medical_mode is True
         assert system.reliability_manager is not None
@@ -464,10 +468,10 @@ class TestCoreIntegration:
         """Test error recovery mechanisms."""
         # Test that system can handle errors gracefully
         reliability_manager = integrated_system.reliability_manager
-        
+
         # Simulate error injection
-        with patch.object(reliability_manager, 'inject_fault') as mock_inject:
+        with patch.object(reliability_manager, "inject_fault") as mock_inject:
             mock_inject.return_value = True
-            
+
             # System should continue operating
-            assert integrated_system.is_running is False  # Not started yet 
+            assert integrated_system.is_running is False  # Not started yet

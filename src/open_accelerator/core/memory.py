@@ -9,11 +9,11 @@ Features:
 """
 
 import logging
+import time
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
-import time
 
 from ..utils.config import AcceleratorConfig, MemoryConfig, MemoryType
 
@@ -605,39 +605,41 @@ class MemoryHierarchy:
         # Process up to a certain number of requests per cycle to avoid blocking
         max_requests_per_cycle = 4
         processed_count = 0
-        
+
         while self.request_queue and processed_count < max_requests_per_cycle:
             request = self.request_queue.popleft()
             processed_count += 1
-            
+
             # Process request based on type
-            if request['type'] == 'read':
-                data, latency = self.read_request(request['address'], request['size'])
+            if request["type"] == "read":
+                data, latency = self.read_request(request["address"], request["size"])
                 # Store result for retrieval
-                if 'callback' in request:
-                    request['callback'](data, latency)
-                elif 'request_id' in request:
-                    self.outstanding_requests[request['request_id']] = {
-                        'type': 'read',
-                        'data': data,
-                        'latency': latency,
-                        'completed': True
+                if "callback" in request:
+                    request["callback"](data, latency)
+                elif "request_id" in request:
+                    self.outstanding_requests[request["request_id"]] = {
+                        "type": "read",
+                        "data": data,
+                        "latency": latency,
+                        "completed": True,
                     }
-            elif request['type'] == 'write':
-                success, latency = self.write_request(request['address'], request['data'])
+            elif request["type"] == "write":
+                success, latency = self.write_request(
+                    request["address"], request["data"]
+                )
                 # Store result for retrieval
-                if 'callback' in request:
-                    request['callback'](success, latency)
-                elif 'request_id' in request:
-                    self.outstanding_requests[request['request_id']] = {
-                        'type': 'write',
-                        'success': success,
-                        'latency': latency,
-                        'completed': True
+                if "callback" in request:
+                    request["callback"](success, latency)
+                elif "request_id" in request:
+                    self.outstanding_requests[request["request_id"]] = {
+                        "type": "write",
+                        "success": success,
+                        "latency": latency,
+                        "completed": True,
                     }
             else:
                 logger.warning(f"Unknown request type: {request['type']}")
-        
+
         # Clean up completed requests that are too old
         self._cleanup_old_requests()
 
@@ -646,24 +648,24 @@ class MemoryHierarchy:
         # Remove completed requests that are too old to avoid memory buildup
         current_time = time.time()
         max_age_seconds = 60.0  # Keep requests for 1 minute
-        
+
         # Collect request IDs to remove
         requests_to_remove = []
         for request_id, request_info in self.outstanding_requests.items():
-            if request_info.get('completed', False):
+            if request_info.get("completed", False):
                 # Check if request has timestamp and is old enough
-                if 'timestamp' in request_info:
-                    age = current_time - request_info['timestamp']
+                if "timestamp" in request_info:
+                    age = current_time - request_info["timestamp"]
                     if age > max_age_seconds:
                         requests_to_remove.append(request_id)
                 else:
                     # If no timestamp, remove after some cycles
                     requests_to_remove.append(request_id)
-        
+
         # Remove old requests
         for request_id in requests_to_remove:
             del self.outstanding_requests[request_id]
-        
+
         if requests_to_remove:
             logger.debug(f"Cleaned up {len(requests_to_remove)} old memory requests")
 

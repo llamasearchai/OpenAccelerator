@@ -9,17 +9,16 @@ Features:
 """
 
 import logging
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union, Sequence
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
 from ..core.memory import MemoryHierarchy
-from ..utils.config import AcceleratorConfig, DataflowType, DataType
-from .pe import PEMetrics, PEState, ProcessingElement
+from ..utils.config import AcceleratorConfig, DataflowType
+from .pe import PEState, ProcessingElement
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +28,11 @@ USE_NUMPY_FAST_PATH = True
 
 class ThermalModel:
     """Basic thermal model for temperature estimation."""
+
     def __init__(self, rows: int, cols: int):
         self.rows = rows
         self.cols = cols
-        
+
     def update(self, power_map: np.ndarray) -> np.ndarray:
         """Update thermal model."""
         # Simple model: return uniform temperature based on power
@@ -41,12 +41,15 @@ class ThermalModel:
 
 class PowerModel:
     """Basic power model for power estimation."""
+
     def __init__(self, config):
         self.config = config
+
 
 @dataclass
 class ArrayMetrics:
     """Systolic array performance metrics."""
+
     total_cycles: int = 0
     active_pes: int = 0
     total_operations: int = 0
@@ -55,6 +58,7 @@ class ArrayMetrics:
     thermal_events: int = 0
     memory_stalls: int = 0
     utilization_map: Optional[np.ndarray] = None
+
 
 class SystolicArray:
     """
@@ -96,13 +100,21 @@ class SystolicArray:
         self.outputs_b = np.zeros((self.rows, self.cols), dtype=object)
 
         # Thermal and power modeling
-        self.thermal_model = ThermalModel(self.rows, self.cols) if config.enable_thermal_modeling else None
+        self.thermal_model = (
+            ThermalModel(self.rows, self.cols)
+            if config.enable_thermal_modeling
+            else None
+        )
         self.power_model = PowerModel(config) if config.enable_power_modeling else None
 
         # Thread pool for parallel PE operations
-        self.thread_pool = ThreadPoolExecutor(max_workers=min(32, self.rows * self.cols))
+        self.thread_pool = ThreadPoolExecutor(
+            max_workers=min(32, self.rows * self.cols)
+        )
 
-        logger.info(f"Initialized {self.rows}×{self.cols} systolic array with {self.dataflow.value} dataflow")
+        logger.info(
+            f"Initialized {self.rows}×{self.cols} systolic array with {self.dataflow.value} dataflow"
+        )
 
     def _initialize_pe_grid(self) -> None:
         """Initialize the grid of processing elements."""
@@ -112,7 +124,7 @@ class SystolicArray:
                 pe = ProcessingElement(
                     pe_id=(row, col),
                     config=self.config.array.pe_config,
-                    data_type=self.config.data_type
+                    data_type=self.config.data_type,
                 )
                 pe_row.append(pe)
             self.pes.append(pe_row)
@@ -132,22 +144,24 @@ class SystolicArray:
         """Configure for Output Stationary dataflow."""
         # In OS, each PE accumulates one output element
         # Data flows: A (horizontal), B (vertical)
-        self.flow_direction_a = 'horizontal'  # A flows left-to-right
-        self.flow_direction_b = 'vertical'    # B flows top-to-bottom
+        self.flow_direction_a = "horizontal"  # A flows left-to-right
+        self.flow_direction_b = "vertical"  # B flows top-to-bottom
 
         logger.debug("Configured Output Stationary dataflow")
 
     def _setup_weight_stationary(self) -> None:
         """Configure for Weight Stationary dataflow."""
         # In WS, weights stay in PEs, inputs flow through
-        self.flow_direction_weights = 'stationary'
-        self.flow_direction_inputs = 'diagonal'
+        self.flow_direction_weights = "stationary"
+        self.flow_direction_inputs = "diagonal"
 
         logger.debug("Configured Weight Stationary dataflow")
 
-    def cycle(self,
-              input_data: Dict[str, np.ndarray],
-              control_signals: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def cycle(
+        self,
+        input_data: Dict[str, np.ndarray],
+        control_signals: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Execute one clock cycle of the systolic array.
 
@@ -184,27 +198,33 @@ class SystolicArray:
         # Update array-level metrics
         self._update_array_metrics(cycle_metrics)
 
-        logger.debug(f"Cycle {self.cycle_count} completed in {time.time() - cycle_start_time:.4f}s")
+        logger.debug(
+            f"Cycle {self.cycle_count} completed in {time.time() - cycle_start_time:.4f}s"
+        )
 
         return {
-            'cycle': self.cycle_count,
-            'metrics': cycle_metrics,
-            'pe_states': self._get_pe_states(),
-            'outputs': self._collect_outputs()
+            "cycle": self.cycle_count,
+            "metrics": cycle_metrics,
+            "pe_states": self._get_pe_states(),
+            "outputs": self._collect_outputs(),
         }
 
     def _cycle_output_stationary(self, input_data: Dict[str, np.ndarray]) -> None:
         """Execute Output Stationary dataflow cycle with vectorised propagation."""
         # Extract edge inputs
-        edge_inputs_a = input_data.get('edge_a', [None] * self.rows)
-        edge_inputs_b = input_data.get('edge_b', [None] * self.cols)
+        edge_inputs_a = input_data.get("edge_a", [None] * self.rows)
+        edge_inputs_b = input_data.get("edge_b", [None] * self.cols)
 
         if USE_NUMPY_FAST_PATH:
             self._cycle_output_stationary_vectorised(edge_inputs_a, edge_inputs_b)
         else:
             self._cycle_output_stationary_fallback(edge_inputs_a, edge_inputs_b)
 
-    def _cycle_output_stationary_vectorised(self, edge_inputs_a: Union[List, np.ndarray], edge_inputs_b: Union[List, np.ndarray]) -> None:
+    def _cycle_output_stationary_vectorised(
+        self,
+        edge_inputs_a: Union[List, np.ndarray],
+        edge_inputs_b: Union[List, np.ndarray],
+    ) -> None:
         """Vectorised Output Stationary dataflow using NumPy operations."""
         # Collect all current outputs for propagation using vectorised operations
         for row in range(self.rows):
@@ -226,11 +246,14 @@ class SystolicArray:
         for row in range(self.rows):
             for col in range(self.cols):
                 self.pes[row][col].load_inputs(
-                    self.inputs_a[row, col], 
-                    self.inputs_b[row, col]
+                    self.inputs_a[row, col], self.inputs_b[row, col]
                 )
 
-    def _cycle_output_stationary_fallback(self, edge_inputs_a: Union[List, np.ndarray], edge_inputs_b: Union[List, np.ndarray]) -> None:
+    def _cycle_output_stationary_fallback(
+        self,
+        edge_inputs_a: Union[List, np.ndarray],
+        edge_inputs_b: Union[List, np.ndarray],
+    ) -> None:
         """Fallback Output Stationary dataflow using traditional for-loops for readability."""
         # Propagate data through array
         # First, collect all current outputs for propagation
@@ -247,10 +270,14 @@ class SystolicArray:
         for row in range(self.rows):
             for col in range(self.cols):
                 # Input A comes from left (or edge)
-                input_a = edge_inputs_a[row] if col == 0 else propagation_a[row][col-1]
+                input_a = (
+                    edge_inputs_a[row] if col == 0 else propagation_a[row][col - 1]
+                )
 
                 # Input B comes from top (or edge)
-                input_b = edge_inputs_b[col] if row == 0 else propagation_b[row-1][col]
+                input_b = (
+                    edge_inputs_b[col] if row == 0 else propagation_b[row - 1][col]
+                )
 
                 self.pes[row][col].load_inputs(input_a, input_b)
 
@@ -259,24 +286,24 @@ class SystolicArray:
         # Implementation for WS dataflow
         # Weights are pre-loaded and stay in PEs
         # Inputs flow diagonally through the array
-        
+
         # Extract diagonal inputs for WS dataflow
-        diagonal_inputs = input_data.get('diagonal_inputs', [])
-        
+        diagonal_inputs = input_data.get("diagonal_inputs", [])
+
         # In WS, weights are stationary in PEs, inputs move diagonally
         # We need to manage the diagonal propagation of inputs
-        
+
         # For simplicity, assume inputs enter from the top-left and flow diagonally
         # Each PE processes its weight against the flowing input
-        
+
         # Create input propagation matrix for diagonal flow
         input_propagation = np.zeros((self.rows, self.cols), dtype=object)
-        
+
         # Fill diagonal inputs starting from top-left
         for i, input_val in enumerate(diagonal_inputs):
             if i < min(self.rows, self.cols):
                 input_propagation[i, i] = input_val
-        
+
         # Process each PE with diagonal input propagation
         for row in range(self.rows):
             for col in range(self.cols):
@@ -290,14 +317,16 @@ class SystolicArray:
                         input_val = diagonal_inputs[diag_offset]
                     else:
                         input_val = None
-                
+
                 # Load input to PE (weight is already loaded and stationary)
                 if input_val is not None:
-                    self.pes[row][col].load_inputs(input_val, None)  # Only input, weight is stationary
-        
+                    self.pes[row][col].load_inputs(
+                        input_val, None
+                    )  # Only input, weight is stationary
+
         # Update diagonal input buffer for next cycle
         # Shift inputs diagonally down and right
-        if hasattr(self, 'diagonal_buffer'):
+        if hasattr(self, "diagonal_buffer"):
             self.diagonal_buffer = self.diagonal_buffer[1:] + [None]
         else:
             self.diagonal_buffer = diagonal_inputs[1:] + [None]
@@ -354,16 +383,18 @@ class SystolicArray:
         # Check for thermal violations
         if np.max(temp_map) > 85.0:  # 85°C threshold
             self.metrics.thermal_events += 1
-            logger.warning(f"Thermal event detected: max temp = {np.max(temp_map):.1f}°C")
+            logger.warning(
+                f"Thermal event detected: max temp = {np.max(temp_map):.1f}°C"
+            )
 
     def _collect_cycle_metrics(self) -> Dict[str, Any]:
         """Collect metrics for current cycle."""
         metrics = {
-            'cycle': self.cycle_count,
-            'active_pes': self.metrics.active_pes,
-            'total_operations': 0,
-            'total_energy': 0.0,
-            'pe_utilization': 0.0,
+            "cycle": self.cycle_count,
+            "active_pes": self.metrics.active_pes,
+            "total_operations": 0,
+            "total_energy": 0.0,
+            "pe_utilization": 0.0,
         }
 
         total_ops = 0
@@ -378,22 +409,22 @@ class SystolicArray:
                 if pe.state == PEState.COMPUTING:
                     active_count += 1
 
-        metrics['total_operations'] = total_ops
-        metrics['total_energy'] = total_energy
-        metrics['pe_utilization'] = active_count / (self.rows * self.cols)
+        metrics["total_operations"] = total_ops
+        metrics["total_energy"] = total_energy
+        metrics["pe_utilization"] = active_count / (self.rows * self.cols)
 
         return metrics
 
     def _update_array_metrics(self, cycle_metrics: Dict[str, Any]) -> None:
         """Update array-level metrics."""
         self.metrics.total_cycles = self.cycle_count
-        self.metrics.total_operations += cycle_metrics['total_operations']
-        self.metrics.total_energy += cycle_metrics['total_energy']
-        
+        self.metrics.total_operations += cycle_metrics["total_operations"]
+        self.metrics.total_energy += cycle_metrics["total_energy"]
+
         # Update utilization map
         if self.metrics.utilization_map is None:
             self.metrics.utilization_map = np.zeros((self.rows, self.cols))
-        
+
         # Update utilization for this cycle
         for row in range(self.rows):
             for col in range(self.cols):
@@ -407,27 +438,31 @@ class SystolicArray:
             row_states = []
             for col in range(self.cols):
                 pe = self.pes[row][col]
-                row_states.append({
-                    'pe_id': pe.pe_id,
-                    'state': pe.state.value if hasattr(pe.state, 'value') else str(pe.state),
-                    'accumulator': pe.accumulator,
-                    'operations': pe.metrics.total_operations
-                })
+                row_states.append(
+                    {
+                        "pe_id": pe.pe_id,
+                        "state": pe.state.value
+                        if hasattr(pe.state, "value")
+                        else str(pe.state),
+                        "accumulator": pe.accumulator,
+                        "operations": pe.metrics.total_operations,
+                    }
+                )
             states.append(row_states)
         return states
 
     def _collect_outputs(self) -> Dict[str, Any]:
         """Collect outputs from PEs."""
         outputs = {}
-        
+
         # Collect accumulator values (for OS dataflow)
         if self.dataflow == DataflowType.OUTPUT_STATIONARY:
             result_matrix = np.zeros((self.rows, self.cols))
             for row in range(self.rows):
                 for col in range(self.cols):
                     result_matrix[row, col] = self.pes[row][col].accumulator
-            outputs['result_matrix'] = result_matrix
-        
+            outputs["result_matrix"] = result_matrix
+
         return outputs
 
     def get_results(self) -> np.ndarray:
@@ -445,7 +480,7 @@ class SystolicArray:
                 for col in range(self.cols):
                     results.append(self.pes[row][col].accumulator)
             return np.array(results).reshape(self.rows, self.cols)
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get comprehensive array metrics."""
         # Calculate utilization map if not already done
@@ -453,7 +488,7 @@ class SystolicArray:
             utilization_map = self.metrics.utilization_map / self.cycle_count
         else:
             utilization_map = np.zeros((self.rows, self.cols))
-        
+
         return {
             "total_cycles": self.metrics.total_cycles,
             "total_operations": self.metrics.total_operations,
@@ -463,7 +498,9 @@ class SystolicArray:
             "thermal_events": self.metrics.thermal_events,
             "memory_stalls": self.metrics.memory_stalls,
             "utilization_map": utilization_map,
-            "average_utilization": np.mean(utilization_map) if utilization_map.size > 0 else 0.0,
+            "average_utilization": np.mean(utilization_map)
+            if utilization_map.size > 0
+            else 0.0,
         }
 
     def get_array_metrics(self) -> ArrayMetrics:
@@ -475,13 +512,13 @@ class SystolicArray:
         for row in range(self.rows):
             for col in range(self.cols):
                 self.pes[row][col].reset()
-        
+
         self.metrics = ArrayMetrics()
         self.cycle_count = 0
-        
+
         logger.info("Systolic array reset completed")
 
     def __del__(self) -> None:
         """Cleanup thread pool."""
-        if hasattr(self, 'thread_pool'):
+        if hasattr(self, "thread_pool"):
             self.thread_pool.shutdown(wait=True)
