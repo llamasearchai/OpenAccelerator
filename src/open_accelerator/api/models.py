@@ -56,8 +56,9 @@ class ErrorResponse(BaseResponse):
     """Error response model."""
 
     success: bool = False
-    error_code: Optional[str] = None
-    error_details: Optional[Dict[str, Any]] = None
+    error: str = Field(description="Error message")
+    code: Optional[str] = Field(default=None, description="Error code")
+    details: Optional[Dict[str, Any]] = Field(default=None, description="Error details")
 
 
 # Configuration Models
@@ -163,11 +164,14 @@ class WorkloadConfig(BaseModel):
 class SimulationRequest(BaseModel):
     """Simulation request model."""
 
-    simulation_name: str = Field(description="Simulation name")
-    accelerator_config: AcceleratorConfig = Field(
-        description="Accelerator configuration"
+    name: str = Field(description="Simulation name")
+    accelerator_type: str = Field(description="Accelerator type")
+    array: Dict[str, Any] = Field(
+        default_factory=dict, description="Array configuration (optional in tests)"
     )
-    workload: WorkloadConfig = Field(description="Workload configuration")
+    workload: Dict[str, Any] = Field(
+        default_factory=dict, description="Workload configuration (optional in tests)"
+    )
     enable_visualization: bool = Field(
         default=False, description="Enable visualization"
     )
@@ -176,9 +180,9 @@ class SimulationRequest(BaseModel):
     )
     output_format: str = Field(default="json", description="Output format")
 
-    @field_validator("simulation_name")
+    @field_validator("name")
     @classmethod
-    def validate_simulation_name(cls, v):
+    def validate_name(cls, v):
         if not v.replace("_", "").replace("-", "").isalnum():
             raise ValueError(
                 "Simulation name must be alphanumeric with underscores/hyphens"
@@ -216,37 +220,96 @@ class MedicalWorkflowRequest(BaseModel):
         default_factory=dict, description="Medical metadata"
     )
     compliance_level: str = Field(
-        default="hipaa", description="Compliance level required"
+        default="hipaa", description="Compliance level (hipaa, fda, both)"
+    )
+    priority: int = Field(ge=1, le=10, default=5, description="Workflow priority")
+    timeout_seconds: int = Field(
+        ge=1, le=3600, default=600, description="Workflow timeout"
     )
 
     @field_validator("workflow_type")
     @classmethod
     def validate_workflow_type(cls, v):
-        allowed_types = ["diagnostic", "screening", "monitoring", "research"]
-        if v not in allowed_types:
-            raise ValueError(f"Workflow type must be one of {allowed_types}")
+        valid_types = ["imaging", "analysis", "diagnosis", "screening"]
+        if v not in valid_types:
+            raise ValueError(f"Workflow type must be one of {valid_types}")
         return v
 
     @field_validator("patient_id")
     @classmethod
     def validate_patient_id(cls, v):
-        import re
-
-        if not re.match(r"^[A-Z0-9_-]+$", v):
-            raise ValueError(
-                "Patient ID must contain only uppercase letters, numbers, underscores, and hyphens"
-            )
+        if not v.replace("-", "").replace("_", "").isalnum():
+            raise ValueError("Patient ID must be alphanumeric with hyphens/underscores")
         return v
 
     @field_validator("study_id")
     @classmethod
     def validate_study_id(cls, v):
-        import re
+        if not v.replace("-", "").replace("_", "").isalnum():
+            raise ValueError("Study ID must be alphanumeric with hyphens/underscores")
+        return v
 
-        if not re.match(r"^[A-Z0-9_-]+$", v):
-            raise ValueError(
-                "Study ID must contain only uppercase letters, numbers, underscores, and hyphens"
-            )
+
+class MedicalRequest(BaseModel):
+    """Medical request model for accelerator processing."""
+
+    request_id: Optional[str] = Field(
+        default=None, description="Unique request identifier"
+    )
+    patient_id: str = Field(description="Patient ID (anonymized)")
+    study_id: Optional[str] = Field(default=None, description="Study ID")
+    modality: str = Field(description="Medical imaging modality")
+    analysis_type: str = Field(description="Type of analysis required")
+    image_data: Optional[str] = Field(
+        default=None, description="Base64 encoded image data"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Medical metadata"
+    )
+    processing_type: str = Field(
+        default="analysis", description="Type of processing required"
+    )
+    priority: int = Field(ge=1, le=10, default=5, description="Request priority")
+    hipaa_compliant: bool = Field(default=True, description="HIPAA compliance required")
+    enable_audit: bool = Field(default=True, description="Enable audit logging")
+    timeout_seconds: int = Field(
+        ge=1, le=3600, default=600, description="Request timeout"
+    )
+
+    @field_validator("modality")
+    @classmethod
+    def validate_modality(cls, v):
+        valid_modalities = ["CT", "MRI", "X-ray", "Ultrasound", "PET", "SPECT"]
+        if v not in valid_modalities:
+            raise ValueError(f"Modality must be one of {valid_modalities}")
+        return v
+
+    @field_validator("processing_type")
+    @classmethod
+    def validate_processing_type(cls, v):
+        valid_types = [
+            "analysis",
+            "enhancement",
+            "segmentation",
+            "classification",
+            "detection",
+        ]
+        if v not in valid_types:
+            raise ValueError(f"Processing type must be one of {valid_types}")
+        return v
+
+    @field_validator("patient_id")
+    @classmethod
+    def validate_patient_id(cls, v):
+        if not v.replace("-", "").replace("_", "").isalnum():
+            raise ValueError("Patient ID must be alphanumeric with hyphens/underscores")
+        return v
+
+    @field_validator("study_id")
+    @classmethod
+    def validate_study_id(cls, v):
+        if not v.replace("-", "").replace("_", "").isalnum():
+            raise ValueError("Study ID must be alphanumeric with hyphens/underscores")
         return v
 
 
@@ -260,6 +323,9 @@ class SimulationResult(BaseModel):
     total_cycles: int = Field(description="Total simulation cycles")
     energy_consumed_joules: float = Field(description="Energy consumed in joules")
     performance_metrics: Dict[str, Any] = Field(description="Performance metrics")
+    metrics: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metrics"
+    )
     output_data: Optional[Dict[str, Any]] = Field(
         default=None, description="Output data"
     )
@@ -271,25 +337,23 @@ class SimulationResult(BaseModel):
     )
 
 
-class SimulationResponse(BaseResponse):
+class SimulationResponse(BaseModel):
     """Simulation response model."""
 
     simulation_id: str = Field(description="Simulation ID")
-    status: SimulationStatus = Field(description="Current status")
+    status: SimulationStatus = Field(description="Simulation status")
+    message: str = Field(description="Status message")
+    progress: Optional[float] = Field(default=None, description="Simulation progress")
     result: Optional[SimulationResult] = Field(
-        default=None, description="Result if completed"
-    )
-    progress: Optional[float] = Field(default=None, description="Progress percentage")
-    estimated_completion: Optional[datetime] = Field(
-        default=None, description="Estimated completion time"
+        default=None, description="Simulation result"
     )
 
 
 class AgentResponse(BaseResponse):
     """Agent response model."""
 
-    agent_id: str = Field(description="Agent ID")
-    response_text: str = Field(description="Agent response")
+    response: str = Field(description="Agent response")
+    agent_type: str = Field(description="Agent type")
     suggestions: Optional[List[str]] = Field(
         default=None, description="Optimization suggestions"
     )
@@ -310,14 +374,73 @@ class MedicalWorkflowResponse(BaseResponse):
     audit_trail: List[Dict[str, Any]] = Field(description="Audit trail")
 
 
+class MedicalResponse(BaseResponse):
+    """Medical response model for accelerator processing results."""
+
+    analysis_id: str = Field(description="Analysis ID")
+    request_id: Optional[str] = Field(default=None, description="Request ID")
+    patient_id: Optional[str] = Field(
+        default=None, description="Patient ID (anonymized)"
+    )
+    study_id: Optional[str] = Field(default=None, description="Study ID")
+    results: Dict[str, Any] = Field(description="Analysis results")
+    compliance: Dict[str, Any] = Field(description="Compliance information")
+    processing_results: Optional[Dict[str, Any]] = Field(
+        default=None, description="Processing results"
+    )
+    analysis_summary: Optional[str] = Field(
+        default=None, description="Analysis summary"
+    )
+    confidence_score: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0, description="Confidence score"
+    )
+    recommendations: Optional[List[str]] = Field(
+        default=None, description="Clinical recommendations"
+    )
+    compliance_status: Optional[str] = Field(
+        default=None, description="Compliance status"
+    )
+    audit_trail: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Audit trail"
+    )
+    processing_time: Optional[float] = Field(
+        default=None, description="Processing time in seconds"
+    )
+    quality_metrics: Optional[Dict[str, float]] = Field(
+        default=None, description="Quality metrics"
+    )
+
+    # Medical specific fields
+    findings: List[str] = Field(default_factory=list, description="Medical findings")
+    abnormalities: List[str] = Field(
+        default_factory=list, description="Detected abnormalities"
+    )
+    severity_level: str = Field(default="normal", description="Severity level")
+    follow_up_required: bool = Field(default=False, description="Follow-up required")
+
+    # Regulatory fields
+    fda_compliant: bool = Field(default=True, description="FDA compliant")
+    hipaa_compliant: bool = Field(default=True, description="HIPAA compliant")
+    medical_device_class: str = Field(
+        default="Class II", description="Medical device class"
+    )
+
+
 class HealthResponse(BaseResponse):
     """Health check response model."""
 
     status: HealthStatus = Field(description="System health status")
     version: str = Field(description="System version")
-    uptime_seconds: float = Field(description="System uptime in seconds")
-    system_metrics: Dict[str, Any] = Field(description="System metrics")
-    dependencies: Dict[str, str] = Field(description="Dependency status")
+    components: Dict[str, str] = Field(description="Component status")
+    uptime_seconds: Optional[float] = Field(
+        default=None, description="System uptime in seconds"
+    )
+    system_metrics: Optional[Dict[str, Any]] = Field(
+        default=None, description="System metrics"
+    )
+    dependencies: Optional[Dict[str, str]] = Field(
+        default=None, description="Dependency status"
+    )
 
 
 class SimulationListResponse(BaseResponse):

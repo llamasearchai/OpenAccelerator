@@ -81,6 +81,7 @@ dependencies = [
     # Data processing
     "pillow>=10.0.0",
     "pydicom>=2.4.0",
+    "nibabel>=5.2.0",
     "h5py>=3.8.0",
     "zarr>=2.14.0",
 

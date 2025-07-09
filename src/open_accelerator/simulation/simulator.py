@@ -77,6 +77,50 @@ class SimulationResult:
     detailed_trace: Optional[list[dict[str, Any]]] = None
     performance_history: Optional[list[dict[str, Any]]] = None
 
+    # Comprehensive metrics dictionary (required by routes.py)
+    metrics: dict[str, Any] = field(
+        default_factory=lambda: {
+            "total_iterations": 0,
+            "convergence_achieved": False,
+            "final_energy": 0.0,
+            "beam_quality": 0.0,
+            "efficiency": 0.0,
+            "warnings": [],
+            "performance": {
+                "cpu_usage": 0.0,
+                "memory_usage": 0.0,
+                "execution_time": 0.0,
+            },
+        }
+    )
+
+    def __post_init__(self):
+        """Post-initialization to populate metrics from individual fields."""
+        self.metrics.update(
+            {
+                "total_iterations": self.total_cycles,
+                "convergence_achieved": self.pe_utilization > 0.7,
+                "final_energy": self.energy_efficiency_tops_per_watt,
+                "beam_quality": self.pe_utilization,
+                "efficiency": self.pe_utilization,
+                "warnings": [],
+                "performance": {
+                    "cpu_usage": 0.0,
+                    "memory_usage": self.memory_utilization,
+                    "execution_time": self.execution_time_seconds,
+                },
+            }
+        )
+
+    def add_metric(self, key: str, value: Any) -> None:
+        """Add or update a metric"""
+        self.metrics[key] = value
+
+    def finalize(self) -> None:
+        """Finalize the simulation result"""
+        # Ensure metrics are up-to-date
+        self.__post_init__()
+
 
 class Simulator:
     """

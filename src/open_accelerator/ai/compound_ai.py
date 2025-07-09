@@ -5,6 +5,7 @@ This module implements a sophisticated multi-agent system using OpenAI's API for
 intelligent accelerator optimization, analysis, and medical compliance validation.
 """
 
+import asyncio
 import json
 import logging
 import uuid
@@ -23,7 +24,21 @@ except ImportError:
 
 from ..utils.config import AcceleratorConfig
 from ..workloads.base import BaseWorkload
-from .model_registry import ModelConfig, ModelRegistry
+from .agents import (
+    AgentConfig,
+    AgentStatus,
+    AnalysisAgent,
+    MedicalComplianceAgent,
+    OptimizationAgent,
+)
+from .model_registry import (
+    ModelCapabilities,
+    ModelConfig,
+    ModelFamily,
+    ModelRegistry,
+    TaskType,
+)
+from .multimodal_processor import MultimodalProcessor
 from .reasoning_chains import ChainOfThought, ReasoningChain, ReflectiveReasoning
 
 logger = logging.getLogger(__name__)
@@ -37,6 +52,47 @@ class ComponentType(Enum):
     ANALYZER = "analyzer"
     OPTIMIZER = "optimizer"
     VALIDATOR = "validator"
+
+
+@dataclass
+class CompoundAIConfig:
+    """Configuration for Compound AI System"""
+
+    max_agents: int = 10
+    max_reasoning_chains: int = 5
+    enable_caching: bool = True
+    cache_ttl: int = 3600
+    max_concurrent_missions: int = 20
+    mission_timeout: int = 300
+    retry_attempts: int = 3
+    enable_logging: bool = True
+    optimization_agent: Optional[AgentConfig] = None
+    analysis_agent: Optional[AgentConfig] = None
+    medical_agent: Optional[AgentConfig] = None
+
+    def __post_init__(self):
+        """Initialize default agent configs if not provided"""
+        if self.optimization_agent is None:
+            self.optimization_agent = AgentConfig(
+                model="gpt-4", temperature=0.7, max_tokens=2000
+            )
+        if self.analysis_agent is None:
+            self.analysis_agent = AgentConfig(
+                model="gpt-4", temperature=0.7, max_tokens=2000
+            )
+        if self.medical_agent is None:
+            self.medical_agent = AgentConfig(
+                model="gpt-4", temperature=0.3, max_tokens=2000
+            )
+
+    def validate(self) -> None:
+        """Validate configuration parameters"""
+        if self.max_agents <= 0:
+            raise ValueError("max_agents must be positive")
+        if self.max_reasoning_chains <= 0:
+            raise ValueError("max_reasoning_chains must be positive")
+        if self.cache_ttl < 0:
+            raise ValueError("cache_ttl must be non-negative")
 
 
 @dataclass
@@ -60,79 +116,6 @@ class SystemMetrics:
     # Component metrics
     active_components: int = 0
     failed_components: int = 0
-
-
-class AIComponent:
-    """Base class for AI components in the compound system."""
-
-    def __init__(
-        self, component_id: str, component_type: ComponentType, config: Dict[str, Any]
-    ):
-        """Initialize AI component."""
-        self.component_id = component_id
-        self.component_type = component_type
-        self.config = config
-        self.status = "initialized"
-        self.metrics = {
-            "requests_processed": 0,
-            "success_rate": 0.0,
-            "average_response_time": 0.0,
-            "last_activity": datetime.now(),
-        }
-        self.dependencies: List[str] = []
-        self.capabilities: List[str] = []
-
-        logger.info(f"AI component {component_id} initialized")
-
-    def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a request through this component."""
-        start_time = datetime.now()
-
-        try:
-            # Update metrics
-            self.metrics["requests_processed"] += 1
-            self.metrics["last_activity"] = datetime.now()
-
-            # Process the request (to be implemented by subclasses)
-            result = self._process_internal(request)
-
-            # Update success metrics
-            processing_time = (datetime.now() - start_time).total_seconds()
-            self.metrics["average_response_time"] = (
-                self.metrics["average_response_time"] + processing_time
-            ) / 2
-
-            return {
-                "component_id": self.component_id,
-                "status": "success",
-                "result": result,
-                "processing_time": processing_time,
-            }
-
-        except Exception as e:
-            logger.error(
-                f"Component {self.component_id} failed to process request: {e}"
-            )
-            return {
-                "component_id": self.component_id,
-                "status": "error",
-                "error": str(e),
-                "processing_time": (datetime.now() - start_time).total_seconds(),
-            }
-
-    def _process_internal(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Internal processing method to be implemented by subclasses."""
-        return {"message": "Base component processed request"}
-
-    def get_status(self) -> Dict[str, Any]:
-        """Get component status and metrics."""
-        return {
-            "component_id": self.component_id,
-            "component_type": self.component_type.value,
-            "status": self.status,
-            "metrics": self.metrics,
-            "capabilities": self.capabilities,
-        }
 
 
 @dataclass
@@ -226,43 +209,215 @@ class AgentResponse:
 
 
 class CompoundAISystem:
-    """Sophisticated compound AI system with OpenAI integration."""
+    """A compound AI system that integrates multiple specialized agents with full attribute support."""
 
-    def __init__(self, config: Dict[str, Any]):
-        """Initialize compound AI system."""
+    def __init__(self, config: CompoundAIConfig):
+        """Initialize the compound AI system with all required attributes."""
+        # Initialize configuration
         self.config = config
-        self.model_registry = ModelRegistry(config.get("openai_api_key"))
+        if hasattr(self.config, "validate") and callable(self.config.validate):
+            self.config.validate()
+
+        # Initialize all required attributes
         self.agents: Dict[str, "EnhancedAgent"] = {}
-        self.reasoning_chains: Dict[str, ReasoningChain] = {}
-        self.active_missions: Dict[str, AgentMission] = {}
+        self.reasoning_chains: Dict[str, "ReasoningChain"] = {}
+        self.active_missions: Dict[str, "AgentMission"] = {}
 
-        # Initialize reasoning chains
-        self._initialize_reasoning_chains()
+        # Initialize legacy agent support
+        self.optimization_agent = OptimizationAgent(config.optimization_agent)
+        self.analysis_agent = AnalysisAgent(config.analysis_agent)
+        self.medical_agent = MedicalComplianceAgent(config.medical_agent)
 
-        # Initialize agents
-        self._initialize_agents()
+        # Initialize core components
+        self.model_registry = ModelRegistry()
+        self.multimodal_processor = MultimodalProcessor(self.model_registry)
 
-        # Performance tracking
-        self.performance_metrics = {
-            "total_requests": 0,
-            "successful_requests": 0,
-            "average_response_time": 0.0,
-            "accuracy_scores": [],
-            "confidence_scores": [],
+        # Initialize system state
+        self.components = {
+            "optimization": self.optimization_agent,
+            "analysis": self.analysis_agent,
+            "medical": self.medical_agent,
         }
+
+        # Initialize comprehensive metrics
+        self.metrics = {
+            "total_missions": 0,
+            "successful_missions": 0,
+            "failed_missions": 0,
+            "average_response_time": 0.0,
+            "total_processing_time": 0.0,
+            "active_agents": 0,
+            "cache_hit_rate": 0.0,
+            "system_uptime": 0.0,
+            "last_activity": datetime.utcnow(),
+            "performance": {
+                "cpu_usage": 0.0,
+                "memory_usage": 0.0,
+                "execution_time": 0.0,
+            },
+        }
+
+        # Initialize cache
+        self._cache: Dict[str, Any] = {}
+        self._cache_timestamps: Dict[str, datetime] = {}
+
+        # Initialize system locks and state
+        self._lock = asyncio.Lock()
+        self._initialized = False
+        self._shutdown = False
+
+        # Set up logging
+        self.logger = logging.getLogger(self.__class__.__name__)
+        if self.config.enable_logging:
+            self._setup_logging()
+
+        # Initialize status
+        self.status = AgentStatus.INITIALIZING
+
+        # Initialize components
+        self._initialize_components()
+
+    def _setup_logging(self) -> None:
+        """Configure logging for the system"""
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+
+    def _initialize_components(self) -> None:
+        """Initialize all system components"""
+        try:
+            # Initialize reasoning chains
+            self._initialize_reasoning_chains()
+
+            # Initialize agents
+            self._initialize_agents()
+
+            # Update status
+            self.status = AgentStatus.READY
+            self._initialized = True
+
+            self.logger.info("CompoundAISystem initialized successfully")
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize CompoundAISystem: {e}")
+            self.status = AgentStatus.ERROR
+            raise
+
+    async def initialize(self) -> None:
+        """Initialize the compound AI system asynchronously"""
+        if self._initialized:
+            return
+
+        self.logger.info("Initializing Compound AI System...")
+
+        async with self._lock:
+            if self._initialized:
+                return
+
+            try:
+                # Initialize all components
+                await self._initialize_async_components()
+
+                # Mark as initialized
+                self._initialized = True
+                self.status = AgentStatus.READY
+
+                self.logger.info("Compound AI System initialized successfully")
+
+            except Exception as e:
+                self.logger.error(f"Failed to initialize Compound AI System: {e}")
+                self.status = AgentStatus.ERROR
+                raise
+
+    async def _initialize_async_components(self) -> None:
+        """Initialize components that require async setup"""
+        # Initialize model registry
+        await self._initialize_model_registry()
+
+        # Initialize multimodal processor
+        await self._initialize_multimodal_processor()
+
+        # Initialize default agents if not already done
+        if not hasattr(self, "agents") or not self.agents:
+            self._initialize_agents()
+
+    async def _initialize_model_registry(self) -> None:
+        """Initialize the model registry with available models"""
+        try:
+            # This would typically load model configurations from a database or API
+            # For now, we'll initialize with default models if method exists
+            if hasattr(self.model_registry, "register_default_models"):
+                self.model_registry.register_default_models()
+            else:
+                # Initialize with basic models
+                self.logger.info("Using basic model registry initialization")
+            self.logger.info("Model registry initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize model registry: {e}")
+            # Don't raise to allow graceful degradation
+            pass
+
+    async def _initialize_multimodal_processor(self) -> None:
+        """Initialize the multimodal processor"""
+        try:
+            # Initialize the processor with the model registry
+            await self.multimodal_processor.initialize()
+            self.logger.info("Multimodal processor initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize multimodal processor: {e}")
+            raise
+
+    def _get_model_config_with_fallback(self, preferred_model: str) -> ModelConfig:
+        """Get model config with fallback to available models."""
+        # Try to get the preferred model
+        config = self.model_registry.get_model_config(preferred_model)
+        if config is not None:
+            return config
+
+        # Try fallback models in order of preference
+        fallback_models = ["gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+        for model_name in fallback_models:
+            config = self.model_registry.get_model_config(model_name)
+            if config is not None:
+                logger.warning(
+                    f"Using fallback model {model_name} instead of {preferred_model}"
+                )
+                return config
+
+        # If no models are available, create a default configuration
+        logger.error("No models available in registry, creating default configuration")
+        return ModelConfig(
+            name="gpt-4-default",
+            family=ModelFamily.GPT4X,
+            description="Default fallback model configuration",
+            capabilities=ModelCapabilities(
+                max_tokens=128_000,
+                supports_multimodal=True,
+                supports_image=True,
+                cost_tier="standard",
+                quality_tier="standard",
+            ),
+            optimal_tasks=[
+                TaskType.REASONING,
+                TaskType.ANALYSIS,
+                TaskType.GENERAL_PURPOSE,
+            ],
+        )
 
     def _initialize_reasoning_chains(self):
         """Initialize reasoning chain modules."""
         # Chain of thought for complex analysis
         self.reasoning_chains["chain_of_thought"] = ChainOfThought(
-            model_config=self.model_registry.get_model_config("gpt-4"),
-            domain="accelerator_optimization",
+            model_config=self._get_model_config_with_fallback("gpt-4"),
         )
 
         # Reflective reasoning for quality assurance
         self.reasoning_chains["reflective"] = ReflectiveReasoning(
-            model_config=self.model_registry.get_model_config("gpt-4"),
-            reflection_depth=2,
+            model_config=self._get_model_config_with_fallback("gpt-4"),
         )
 
     def _initialize_agents(self):
@@ -273,7 +428,7 @@ class CompoundAISystem:
             capabilities=AgentCapabilities(
                 orchestration=True, delegation=True, synthesis=True, analysis=True
             ),
-            model_config=self.model_registry.get_model_config("gpt-4"),
+            model_config=self._get_model_config_with_fallback("gpt-4"),
             system_prompt=self._get_orchestrator_prompt(),
         )
 
@@ -286,7 +441,7 @@ class CompoundAISystem:
                 hardware_design=True,
                 analysis=True,
             ),
-            model_config=self.model_registry.get_model_config("gpt-4"),
+            model_config=self._get_model_config_with_fallback("gpt-4"),
             system_prompt=self._get_optimization_prompt(),
         )
 
@@ -299,7 +454,7 @@ class CompoundAISystem:
                 verification=True,
                 data_visualization=True,
             ),
-            model_config=self.model_registry.get_model_config("gpt-4"),
+            model_config=self._get_model_config_with_fallback("gpt-4"),
             system_prompt=self._get_analysis_prompt(),
         )
 
@@ -313,7 +468,7 @@ class CompoundAISystem:
                 validation=True,
                 medical_devices=True,
             ),
-            model_config=self.model_registry.get_model_config("gpt-4"),
+            model_config=self._get_model_config_with_fallback("gpt-4"),
             system_prompt=self._get_medical_compliance_prompt(),
         )
 
@@ -326,7 +481,7 @@ class CompoundAISystem:
                 verification=True,
                 testing=True,
             ),
-            model_config=self.model_registry.get_model_config("gpt-4"),
+            model_config=self._get_model_config_with_fallback("gpt-4"),
             system_prompt=self._get_code_generation_prompt(),
         )
 
@@ -763,14 +918,54 @@ config = AcceleratorConfig(
 
     async def _create_test_cases(self, functionality: str) -> List[Dict[str, Any]]:
         """Create test cases for functionality."""
-        test_cases = [
-            {
-                "name": f"test_{functionality}_basic",
-                "description": f"Basic test for {functionality}",
-                "input": "test_input",
-                "expected_output": "expected_result",
-            }
-        ]
+        test_cases = []
+
+        if functionality == "performance":
+            test_cases.extend(
+                [
+                    {
+                        "name": "throughput_test",
+                        "description": "Test system throughput under load",
+                        "input": {"workload": "gemm", "size": 1024},
+                        "expected": {"ops_per_second": ">1000"},
+                    },
+                    {
+                        "name": "latency_test",
+                        "description": "Test system latency",
+                        "input": {"workload": "gemm", "size": 64},
+                        "expected": {"latency_ms": "<100"},
+                    },
+                ]
+            )
+        elif functionality == "power":
+            test_cases.extend(
+                [
+                    {
+                        "name": "power_efficiency_test",
+                        "description": "Test power efficiency",
+                        "input": {"workload": "gemm", "power_limit": 50},
+                        "expected": {"efficiency": ">0.8"},
+                    },
+                ]
+            )
+        elif functionality == "medical":
+            test_cases.extend(
+                [
+                    {
+                        "name": "hipaa_compliance_test",
+                        "description": "Test HIPAA compliance",
+                        "input": {"data": "medical_data", "mode": "secure"},
+                        "expected": {"compliant": True},
+                    },
+                    {
+                        "name": "medical_safety_test",
+                        "description": "Test medical safety requirements",
+                        "input": {"device": "medical_ai", "safety_level": "high"},
+                        "expected": {"safety_validated": True},
+                    },
+                ]
+            )
+
         return test_cases
 
 
@@ -805,7 +1000,7 @@ class EnhancedAgent:
         self.function_registry[name] = {"function": func, "description": description}
 
     async def process_complex_request(
-        self, request: str, context: Dict[str, Any] = None
+        self, request: str, context: Optional[Dict[str, Any]] = None
     ) -> AgentResponse:
         """Process a complex request with reasoning and reflection."""
         start_time = datetime.now()
@@ -868,3 +1063,79 @@ class EnhancedAgent:
         )
 
         return response
+
+
+def create_compound_ai_system(
+    optimization_agent, analysis_agent, medical_agent
+) -> "CompoundAISystem":
+    """
+    Create a compound AI system with the given configuration.
+
+    Args:
+        config: Configuration dictionary for the AI system
+
+    Returns:
+        CompoundAISystem: Configured compound AI system instance
+    """
+    # Add default values if not provided
+    default_config = {
+        "api_key": "default_key",
+        "max_agents": 5,
+        "enable_reasoning": True,
+        "enable_reflection": True,
+        "reflection_depth": 2,
+        "quality_threshold": 0.8,
+        "timeout_seconds": 300,
+    }
+
+    # Merge with provided config
+    merged_config = {**default_config, **config}
+
+    return CompoundAISystem(merged_config)
+
+
+async def execute_compound_workflow(
+    system: CompoundAISystem,
+    workflow_type: str,
+    workflow_config: Dict[str, Any],
+    context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Execute a compound AI workflow using the provided system.
+
+    Args:
+        system: The compound AI system to use
+        workflow_type: Type of workflow to execute
+        workflow_config: Configuration for the workflow
+        context: Optional context for the workflow
+
+    Returns:
+        Dict containing workflow results
+    """
+    # AgentMission is defined in this file
+
+    # Create mission from workflow configuration
+    mission = AgentMission(
+        mission_type=workflow_type,
+        objectives=workflow_config.get("objectives", []),
+        constraints=workflow_config.get("constraints", []),
+        success_criteria=workflow_config.get("success_criteria", []),
+        user_requirements=workflow_config.get("requirements", {}),
+        max_iterations=workflow_config.get("max_iterations", 3),
+        timeout_seconds=workflow_config.get("timeout_seconds", 300),
+        quality_threshold=workflow_config.get("quality_threshold", 0.8),
+        enable_reflection=workflow_config.get("enable_reflection", True),
+        reflection_depth=workflow_config.get("reflection_depth", 2),
+        enable_distillation=workflow_config.get("enable_distillation", True),
+    )
+
+    # Execute mission
+    results = await system.execute_mission(mission)
+
+    # Add workflow metadata
+    results["workflow_type"] = workflow_type
+    results["workflow_config"] = workflow_config
+    results["context"] = context
+    results["execution_timestamp"] = datetime.now().isoformat()
+
+    return results

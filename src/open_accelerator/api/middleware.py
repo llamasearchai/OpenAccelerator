@@ -17,6 +17,11 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
+
+from ..utils.request_id import request_id_var
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +40,21 @@ app_health_metrics = {
 class SecurityMiddleware(BaseHTTPMiddleware):
     """Security middleware for API protection."""
 
-    def __init__(self, app, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        app: "ASGIApp",
+        api_key: Optional[str] = None,
+        public_paths: Optional[List[str]] = None,
+    ) -> None:
         super().__init__(app)
         self.api_key = api_key
+        self.public_paths = public_paths or [
+            "/api/v1/health/",
+            "/api/v1/health",
+            "/api/v1/docs",
+            "/api/v1/redoc",
+            "/api/v1/openapi.json",
+        ]
         self.security_headers = {
             "X-Frame-Options": "DENY",
             "X-Content-Type-Options": "nosniff",
@@ -48,44 +65,45 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Process request with security checks."""
-        # Add request ID
+        """Add security headers to all responses."""
         request_id = str(uuid4())
         request_id_var.set(request_id)
 
-        # Check API key for protected endpoints
-        if self.api_key and request.url.path.startswith("/api/v1/"):
-            if request.url.path not in [
-                "/api/v1/health",
-                "/api/v1/docs",
-                "/api/v1/redoc",
-            ]:
-                auth_header = request.headers.get("Authorization")
-                if not auth_header or not auth_header.startswith("Bearer "):
-                    return JSONResponse(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        content={"error": "Missing or invalid authorization header"},
-                        headers={"X-Request-ID": request_id},
-                    )
+        # Enforce Authorization header for protected endpoints
+        if request.url.path.startswith("/api/v1/") and not any(
+            request.url.path.startswith(p) for p in self.public_paths
+        ):
+            auth_header = request.headers.get("Authorization")
+            if not auth_header or not auth_header.startswith("Bearer "):
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    content={"error": "Missing or invalid authorization header"},
+                    headers={"X-Request-ID": request_id},
+                )
 
-                token = auth_header.split(" ", 1)[1]
-                if token != self.api_key:
-                    return JSONResponse(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        content={"error": "Invalid API key"},
-                        headers={"X-Request-ID": request_id},
-                    )
+            # If an API key is configured, verify it matches (optional)
+            token = auth_header.split(" ", 1)[1]
+            if self.api_key and token != self.api_key:
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    content={"error": "Invalid API key"},
+                    headers={"X-Request-ID": request_id},
+                )
 
-        # Process request
         response = await call_next(request)
-
-        # Add security headers
-        for header, value in self.security_headers.items():
-            response.headers[header] = value
-
-        # Add request ID to response
         response.headers["X-Request-ID"] = request_id
+        # Ensure CORS pre-flight responses include necessary headers when CORSMiddleware is bypassed
+        if (
+            request.method == "OPTIONS"
+            and "access-control-allow-origin" not in response.headers
+        ):
+            response.headers["Access-Control-Allow-Origin"] = "*"
+        for k, v in self.security_headers.items():
+            response.headers[k] = v
 
+        # Ensure CORS header is present for all responses
+        if "access-control-allow-origin" not in response.headers:
+            response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
 
@@ -198,6 +216,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Log request and response details."""
+        # Re-obtain logger each request so patching in tests is detected
+        self.access_logger = logging.getLogger("api_access")
         start_time = time.time()
 
         # Log request

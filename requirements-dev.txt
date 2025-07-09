@@ -1,0 +1,39 @@
+# Development requirements - includes production requirements
+-r requirements.txt
+
+# Development and debugging tools
+ipython==8.18.1
+jupyter==1.0.0
+notebook==7.0.6
+jupyterlab==4.0.9
+
+# Code quality and linting
+pre-commit==3.6.0
+bandit==1.7.5
+safety==2.3.4
+ruff==0.1.8
+
+# Testing and coverage
+coverage==7.3.4
+pytest-html==4.1.1
+pytest-benchmark==4.0.0
+faker==21.0.0
+
+# Performance profiling
+py-spy==0.3.14
+memory-profiler==0.61.0
+line-profiler==4.1.1
+
+# Documentation tools
+mkdocs==1.5.3
+mkdocs-material==9.5.2
+mkdocs-mermaid2-plugin==1.1.1
+
+# Development utilities
+watchdog==3.0.0
+python-dotenv==1.0.0
+environs==10.3.0
+
+# Type checking
+types-requests==2.31.0.10
+types-psutil==5.9.5.17

@@ -7,12 +7,24 @@ Handles multimodal inputs (text, image, audio) using appropriate OpenAI models.
 import json
 import os
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
 # DSPy imports disabled to prevent conflicts with OpenAI
 # import dspy
 # from dspy import InputField, OutputField, Predict, Signature
+
+
+class ModalityType(Enum):
+    """Types of modalities supported by the multimodal processor."""
+
+    TEXT = "text"
+    IMAGE = "image"
+    AUDIO = "audio"
+    VIDEO = "video"
+    DOCUMENT = "document"
+    MULTIMODAL = "multimodal"  # Combined multiple modalities
 
 
 # Simple replacements for dspy components
@@ -106,6 +118,14 @@ class MultimodalProcessor:
         self.model_registry = model_registry
         self.processing_history: list[dict[str, Any]] = []
 
+        # Define supported modalities
+        self.supported_modalities = {
+            ModalityType.TEXT,
+            ModalityType.IMAGE,
+            ModalityType.AUDIO,
+            ModalityType.MULTIMODAL,
+        }
+
         # Get optimal models for different modalities
         self.multimodal_model = model_registry.get_optimal_model(
             TaskType.MULTIMODAL, quality_preference="high"
@@ -123,6 +143,26 @@ class MultimodalProcessor:
         self.multimodal_processor = Predict(MultimodalSignature)
         self.image_analyzer = Predict(ImageAnalysisSignature)
         self.audio_processor = Predict(AudioProcessingSignature)
+
+        # Initialization state
+        self._initialized = False
+
+    async def initialize(self) -> None:
+        """Initialize the multimodal processor asynchronously."""
+        if self._initialized:
+            return
+
+        try:
+            # Perform any async initialization tasks here
+            # For now, just mark as initialized
+            self._initialized = True
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize multimodal processor: {e}")
+
+    def is_initialized(self) -> bool:
+        """Check if the processor is initialized."""
+        return self._initialized
 
     def process_multimodal_input(
         self,
@@ -456,8 +496,38 @@ class MultimodalProcessor:
     def get_supported_formats(self) -> dict[str, list[str]]:
         """Get supported file formats for each modality."""
         return {
-            "image": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"],
-            "audio": [".mp3", ".wav", ".m4a", ".ogg", ".flac"],
-            "video": [".mp4", ".avi", ".mov", ".mkv"],  # Future support
-            "document": [".pdf", ".docx", ".txt", ".md"],  # Future support
+            "image": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
+            "audio": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
+            "video": [".mp4", ".avi", ".mov", ".wmv", ".mkv", ".flv"],
+            "document": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".html"],
         }
+
+
+def create_multimodal_processor(
+    model_registry: Optional[ModelRegistry] = None,
+    api_key: Optional[str] = None,
+    **kwargs,
+) -> MultimodalProcessor:
+    """
+    Create a multimodal processor instance.
+
+    Args:
+        model_registry: Optional model registry instance
+        api_key: Optional OpenAI API key
+        **kwargs: Additional configuration parameters
+
+    Returns:
+        MultimodalProcessor: Configured multimodal processor instance
+    """
+    # Create model registry if not provided
+    if model_registry is None:
+        if api_key is None:
+            import os
+
+            api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+        model_registry = ModelRegistry(api_key=api_key)
+
+    # Create and return the processor
+    processor = MultimodalProcessor(model_registry)
+
+    return processor

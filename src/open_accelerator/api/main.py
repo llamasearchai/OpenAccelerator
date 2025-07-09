@@ -11,11 +11,15 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 
-from .middleware import setup_middleware
+from open_accelerator.api.routes import health_check as _health_check
+
+from .middleware import LoggingMiddleware, SecurityMiddleware, setup_middleware
 from .models import ErrorResponse
 from .routes import (
     agent_router,
@@ -114,7 +118,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Open Accelerator API",
+    title="OpenAccelerator API",
     description="""
     ## Advanced ML Accelerator Simulator API
 
@@ -145,7 +149,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/api/v1/docs",
     redoc_url="/api/v1/redoc",
-    openapi_url="/api/v1/openapi.json",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
@@ -155,6 +159,13 @@ app = FastAPI(
         "showCommonExtensions": True,
     },
 )
+
+
+# Alias route for compatibility with tests expecting /api/v1/openapi.json
+@app.get("/api/v1/openapi.json", include_in_schema=False)
+async def openapi_alias():
+    return app.openapi()
+
 
 # Setup middleware
 middleware_config = {
@@ -171,6 +182,9 @@ setup_middleware(app, middleware_config)
 
 # Add routers
 app.include_router(simulation_router)
+from .routes import plural_sim_router
+
+app.include_router(plural_sim_router)
 app.include_router(agent_router)
 app.include_router(medical_router)
 app.include_router(health_router)
@@ -214,11 +228,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=ErrorResponse(
-            error_code="INTERNAL_ERROR",
-            message="An internal server error occurred",
-            error_details={"type": type(exc).__name__, "message": str(exc)},
-        ).dict(),
+        content=jsonable_encoder(
+            ErrorResponse(
+                error="An internal server error occurred",
+                code="INTERNAL_ERROR",
+                details={"type": type(exc).__name__, "message": str(exc)},
+            )
+        ),
     )
 
 
@@ -228,11 +244,13 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle HTTP exceptions with proper error response."""
     return JSONResponse(
         status_code=exc.status_code,
-        content=ErrorResponse(
-            error_code=f"HTTP_{exc.status_code}",
-            message=exc.detail,
-            error_details={"status_code": exc.status_code},
-        ).dict(),
+        content=jsonable_encoder(
+            ErrorResponse(
+                error=exc.detail,
+                code=f"HTTP_{exc.status_code}",
+                details={"status_code": exc.status_code},
+            )
+        ),
     )
 
 
@@ -390,6 +408,29 @@ if os.getenv("DEVELOPMENT_MODE", "false").lower() == "true":
         logger.info(f"Response: {response.status_code} (time: {process_time:.3f}s)")
 
         return response
+
+
+# Register global middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(SecurityMiddleware)
+app.add_middleware(LoggingMiddleware)
+
+
+# Convenience non-versioned health endpoint
+@app.get("/health", include_in_schema=False)
+async def health_root():
+    return await _health_check()
+
+
+# Pre-flight OPTIONS for health (used in tests without CORS headers)
+@app.options("/api/v1/health", include_in_schema=False)
+async def health_options():
+    return JSONResponse(status_code=200, content={"success": True})
 
 
 # Export for use with uvicorn

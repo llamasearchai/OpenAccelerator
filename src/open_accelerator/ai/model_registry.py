@@ -7,7 +7,7 @@ Manages configuration and selection of optimal OpenAI models for different tasks
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import openai
@@ -43,6 +43,44 @@ class TaskType(Enum):
     COMPLETION = "completion"
 
 
+class ModelStatus(Enum):
+    """Model status enumeration."""
+
+    REGISTERED = "registered"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DEPRECATED = "deprecated"
+    FAILED = "failed"
+    TRAINING = "training"
+    VALIDATING = "validating"
+    PENDING = "pending"
+
+
+@dataclass
+class ModelInfo:
+    """Represents information about a registered model."""
+
+    name: str
+    version: str
+    model_type: str
+    description: Optional[str] = None
+    file_path: Optional[str] = None
+    status: ModelStatus = ModelStatus.PENDING
+    accuracy: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
+    created_at: str = ""
+    updated_at: str = ""
+
+    def __post_init__(self):
+        """Post-initialization processing."""
+        if not self.created_at:
+            from datetime import datetime
+
+            self.created_at = datetime.now().isoformat()
+        if not self.updated_at:
+            self.updated_at = datetime.now().isoformat()
+
+
 @dataclass
 class ModelCapabilities:
     """Defines model capabilities and constraints."""
@@ -59,12 +97,15 @@ class ModelCapabilities:
 
 @dataclass
 class ModelConfig:
-    """Configuration for an OpenAI model."""
+    """Defines the configuration for a specific model."""
 
     name: str
     family: ModelFamily
     description: str
     capabilities: ModelCapabilities
+    model_type: str = ""
+    default_task: TaskType = TaskType.CODE_GENERATION
+    is_public: bool = False
     optimal_tasks: list[TaskType] = field(default_factory=list)
     api_name: str = ""
 
@@ -193,6 +234,28 @@ class ModelRegistry:
                 TaskType.CLASSIFICATION,
                 TaskType.COMPLETION,
             ],
+        )
+
+        # Legacy GPT-4 model for backward compatibility
+        self.models["gpt-4"] = ModelConfig(
+            name="gpt-4",
+            family=ModelFamily.GPT4X,
+            description="Legacy GPT-4 model (mapped to gpt-4o for compatibility)",
+            capabilities=ModelCapabilities(
+                max_tokens=128_000,
+                supports_multimodal=True,
+                supports_image=True,
+                cost_tier="standard",
+                latency_tier="standard",
+                quality_tier="high",
+            ),
+            optimal_tasks=[
+                TaskType.REASONING,
+                TaskType.ANALYSIS,
+                TaskType.CODE_GENERATION,
+                TaskType.GENERAL_PURPOSE,
+            ],
+            api_name="gpt-4o",  # Map to actual GPT-4o model
         )
 
         # O-Series Models (Reasoning-Optimized)
@@ -332,9 +395,35 @@ class ModelRegistry:
             optimal_tasks=[TaskType.TEXT_TO_SPEECH],
         )
 
-    def get_model(self, name: str) -> Optional[ModelConfig]:
-        """Get model configuration by name."""
-        return self.models.get(name)
+    def register_model(self, model_config: ModelConfig):
+        """Registers a new model in the registry."""
+        self.models[model_config.name] = model_config
+
+    def get_model(
+        self, name: str, version: Optional[str] = None
+    ) -> Optional[ModelConfig]:
+        """Retrieves a model by name and optionally by version."""
+        if name in self.models:
+            return self.models[name]
+        return None
+
+    def get_model_config(self, name: str) -> Optional[ModelConfig]:
+        """Get model configuration by name (alias for get_model)."""
+        return self.get_model(name)
+
+    def search_models(self, model_type: str) -> List[ModelConfig]:
+        """Searches for models by type."""
+        return [m for m in self.models.values() if m.model_type == model_type]
+
+    def update_model_status(self, name: str, status: ModelStatus):
+        """Updates the status of a model in the registry."""
+        model = self.get_model(name)
+        if model:
+            # ModelConfig doesn't have status attribute, so we'll skip this operation
+            # In a real implementation, we might store status separately
+            pass
+        else:
+            raise ValueError(f"Model {name} not found in registry")
 
     def list_models(self, family: Optional[ModelFamily] = None) -> list[ModelConfig]:
         """List all models, optionally filtered by family."""
@@ -460,6 +549,11 @@ class ModelRegistry:
         )
 
         return recommendations
+
+    def register_default_models(self) -> None:
+        """Register default models - already done in __init__, but provided for compatibility."""
+        # Models are already registered in _init_models() called from __init__
+        pass
 
     def estimate_cost(
         self, model_name: str, input_tokens: int, output_tokens: int

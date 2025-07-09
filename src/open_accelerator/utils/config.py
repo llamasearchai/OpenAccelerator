@@ -139,11 +139,18 @@ class PowerConfig:
 class MedicalConfig:
     """Configuration for medical AI features."""
 
+    name: str = "default_medical_config"
     enable_medical_mode: bool = False
     dicom_support: bool = True
     nifti_support: bool = True
     phi_compliance: bool = True
     fda_validation: bool = False
+
+    # Additional parameters expected by tests
+    hipaa_compliance: bool = False
+    fda_compliance: bool = False
+    audit_logging: bool = False
+    encryption_enabled: bool = False
 
     # Medical imaging parameters
     default_modality: str = "CT"
@@ -757,3 +764,44 @@ def apply_env_overrides(config: AcceleratorConfig) -> AcceleratorConfig:
 
     logger.info("Applied environment variable overrides")
     return config
+
+
+# -----------------------------------------------------------------------------
+# AI configuration (stub for tests)
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class AIConfig:
+    """Simple AI configuration used in unit tests."""
+
+    model_name: str = "gpt-4o"
+    temperature: float = 0.1
+    max_tokens: int = 1024
+    top_p: float = 1.0
+    frequency_penalty: float = 0.0
+    presence_penalty: float = 0.0
+    enable_optimization_agent: bool = True
+    enable_analysis_agent: bool = True
+    enable_medical_compliance_agent: bool = True
+    enable_multimodal_processing: bool = True
+    enable_reasoning_chains: bool = True
+
+
+@dataclass
+class CompoundAIConfig:
+    optimization_agent: "AIConfig"
+    analysis_agent: "AIConfig"
+    medical_agent: "AIConfig"
+    enable_logging: bool = True
+
+    def validate(self) -> None:
+        """Validate compound AI configuration for presence of agent configs."""
+        if (
+            self.optimization_agent is None
+            or self.analysis_agent is None
+            or self.medical_agent is None
+        ):
+            raise ValueError(
+                "CompoundAIConfig requires optimization, analysis, and medical agent configurations"
+            )
