@@ -10,8 +10,8 @@ Licensed under the Apache License, Version 2.0
 
 # Version information
 __version__ = "1.0.1"
-__author__ = "Nik Jois"
-__email__ = "nikjois@llamasearch.ai"
+__author__ = "LlamaFarms Team"
+__email__ = "team@llamafarms.ai"
 __license__ = "Apache-2.0"
 
 # Core imports with error handling

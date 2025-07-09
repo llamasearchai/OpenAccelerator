@@ -448,15 +448,15 @@ class TestConfigurationValidation:
     def test_author_information_consistency(self):
         """Test author information consistency."""
         # Check package info
-        assert open_accelerator.__author__ == "Nik Jois"
-        assert open_accelerator.__email__ == "nikjois@llamasearch.ai"
+        assert open_accelerator.__author__ == "LlamaFarms Team"
+        assert open_accelerator.__email__ == "team@llamafarms.ai"
 
         # Check pyproject.toml
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         if pyproject_path.exists():
             content = pyproject_path.read_text()
-            assert "Nik Jois" in content
-            assert "nikjois@llamasearch.ai" in content
+            assert "LlamaFarms Team" in content
+            assert "team@llamafarms.ai" in content
 
 
 if __name__ == "__main__":

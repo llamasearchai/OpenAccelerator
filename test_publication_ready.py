@@ -335,8 +335,8 @@ def test_build_system():
         print_test("Package metadata", has_version and has_author and has_email)
 
         if has_author and has_email:
-            author_correct = open_accelerator.__author__ == "Nik Jois"
-            email_correct = open_accelerator.__email__ == "nikjois@llamasearch.ai"
+            author_correct = open_accelerator.__author__ == "LlamaFarms Team"
+            email_correct = open_accelerator.__email__ == "team@llamafarms.ai"
             print_test("Author information", author_correct and email_correct)
 
         return True
