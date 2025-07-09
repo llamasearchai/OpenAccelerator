@@ -1,0 +1,5 @@
+[console_scripts]
+openaccel = open_accelerator.cli.commands:main
+openaccel-benchmark = open_accelerator.benchmarks.runner:main
+openaccel-medical = open_accelerator.medical.cli:main
+openaccel-serve = open_accelerator.api.main:serve

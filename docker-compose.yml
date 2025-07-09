@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  openaccelerator:
+    build: .
+    container_name: openaccel_dev
+    volumes:
+      - .:/app
+      - ~/.ssh:/home/researcher/.ssh:ro
+    ports:
+      - "8888:8888"  # Jupyter
+      - "8050:8050"  # Dash
+      - "6006:6006"  # TensorBoard
+    environment:
+      - PYTHONPATH=/app/src
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        echo 'Starting OpenAccelerator Development Environment...' &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
+        bash
+      "
+
+  benchmark:
+    build: .
+    container_name: openaccel_benchmark
+    volumes:
+      - .:/app
+      - ./benchmarks/results:/app/benchmarks/results
+    environment:
+      - PYTHONPATH=/app/src
+    profiles:
+      - benchmark
+    command: python -m open_accelerator.benchmark.runner

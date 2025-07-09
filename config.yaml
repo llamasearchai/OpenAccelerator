@@ -1,0 +1,43 @@
+accelerator_type: edge
+array:
+  cols: 8
+  frequency: 500000000.0
+  rows: 8
+  voltage: 1.0
+data_type: int8
+debug_mode: false
+enable_logging: true
+input_buffer:
+  bandwidth: 8
+  buffer_size: 512
+  latency: 1
+max_cycles: 1000000
+medical:
+  default_modality: CT
+  dicom_support: true
+  enable_medical_mode: false
+  fda_validation: false
+  max_image_size:
+  - 512
+  - 512
+  nifti_support: true
+  phi_compliance: true
+  supported_modalities:
+  - CT
+  - MRI
+  - X-Ray
+  - Ultrasound
+name: EdgeAccelerator
+output_buffer:
+  bandwidth: 8
+  buffer_size: 256
+  latency: 1
+power:
+  enable_dvfs: true
+  enable_power_gating: true
+  operating_temperature: 85.0
+  thermal_design_power: 10.0
+weight_buffer:
+  bandwidth: 8
+  buffer_size: 512
+  latency: 1

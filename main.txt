@@ -1,0 +1,1840 @@
+Okay, this is an extensive request. I will construct the "Open Accelerator" simulator program with a focus on an Output Stationary (OS) systolic array for General Matrix Multiplication (GEMM). The program will be modular, configurable, include tests, and follow Python best practices. It will be Mac compatible (as it's Python with common libraries).
+
+Here's the structure and content of the "Open Accelerator" project:
+
+Project Directory Structure:
+
+open-accelerator/
+├── pyproject.toml
+├── README.md
+├── LICENSE
+├── .gitignore
+├── examples/
+│   └── run_gemm_simulation.py
+├── src/
+│   └── open_accelerator/
+│       ├── __init__.py
+│       ├── accelerator.py
+│       ├── pe.py
+│       ├── systolic_array.py
+│       ├── memory.py
+│       ├── control_os.py
+│       ├── simulation.py
+│       ├── workloads.py
+│       ├── analysis.py
+│       ├── visualization.py
+│       └── utils.py
+└── tests/
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_pe.py
+    ├── test_memory.py
+    ├── test_systolic_array_os.py
+    ├── test_workloads.py
+    └── test_integration_gemm.py
+
+
+Now, let's populate each file.
+
+1. pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-accelerator"
+version = "0.1.0"
+authors = [
+  { name="AI Language Model", email="placeholder@example.com" },
+]
+description = "A configurable ML accelerator simulator for autonomous driving applications."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Emulators",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "numpy>=1.20",
+    "matplotlib>=3.3",
+    "pytest>=6.2", # For running tests, can be in a dev group
+]
+
+[project.scripts]
+openaccel_sim = "open_accelerator.cli:main" # Placeholder for a future CLI
+
+[project.urls]
+"Homepage" = "https://github.com/example/open-accelerator" # Placeholder URL
+"Bug Tracker" = "https://github.com/example/open-accelerator/issues" # Placeholder URL
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Toml
+IGNORE_WHEN_COPYING_END
+
+2. README.md
+
+# Open Accelerator
+
+Open Accelerator is a Python-based simulator for exploring the architecture of machine learning accelerators, with a focus on systolic arrays. This project is designed to model and analyze the performance of various accelerator configurations for ML workloads, particularly those relevant to autonomous driving applications.
+
+## Features
+
+*   **Systolic Array Simulation:** Models a 2D systolic array of Processing Elements (PEs).
+*   **Configurable Architecture:**
+    *   Array dimensions (rows, columns).
+    *   PE properties (e.g., MAC latency - currently 1 cycle).
+*   **Dataflow Modeling:** Currently supports Output Stationary (OS) dataflow for GEMM.
+*   **Cycle-Accurate Simulation:** Tracks operations on a cycle-by-cycle basis.
+*   **Memory Modeling:** Abstract input/output buffers for the array.
+*   **Workload Support:** Includes a General Matrix Multiplication (GEMM) microbenchmark.
+*   **Performance Analysis:** Collects metrics like total cycles, MAC operations, and PE utilization.
+*   **Visualization:** Basic visualization of PE utilization.
+*   **Modular Design:** Built with extensibility in mind for new PEs, dataflows, and memory models.
+*   **Tested:** Includes unit and integration tests using Pytest.
+
+## Installation
+
+It's recommended to use a virtual environment.
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Markdown
+IGNORE_WHEN_COPYING_END
+
+Clone the repository and install the package in editable mode:
+
+git clone https://github.com/yourusername/open-accelerator.git # Replace with your repo URL
+cd open-accelerator
+pip install -e .
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Bash
+IGNORE_WHEN_COPYING_END
+
+To install dependencies for development (including pytest):
+
+pip install -e ".[dev]" # Assuming you define a [project.optional-dependencies] group for dev
+# For now, pytest is in main dependencies for simplicity of this example.
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Bash
+IGNORE_WHEN_COPYING_END
+Usage
+
+An example script is provided in examples/run_gemm_simulation.py.
+
+# From examples/run_gemm_simulation.py
+from open_accelerator.utils import AcceleratorConfig, WorkloadConfig
+from open_accelerator.workloads import GEMMWorkload
+from open_accelerator.simulation import Simulator
+from open_accelerator.analysis import PerformanceMetrics, analyze_simulation_results
+from open_accelerator.visualization import plot_pe_utilization_heatmap
+
+# 1. Define Accelerator Configuration
+# For OS GEMM C[M,P] = A[M,K] * B[K,P], array_rows=M, array_cols=P
+M, K, P = 4, 3, 5
+accel_config = AcceleratorConfig(
+    array_rows=M,
+    array_cols=P,
+    pe_mac_latency=1,
+    input_buffer_size=M * K * 2, # Example size
+    weight_buffer_size=K * P * 2, # Example size (for A and B matrices in OS)
+    output_buffer_size=M * P * 2 # Example size
+)
+
+# 2. Define Workload
+workload_config = WorkloadConfig(gemm_M=M, gemm_K=K, gemm_P=P)
+workload = GEMMWorkload(workload_config)
+workload.generate_data()
+
+# 3. Initialize and Run Simulator
+simulator = Simulator(accel_config, workload)
+simulation_stats = simulator.run()
+
+# 4. Analyze Results
+metrics = analyze_simulation_results(simulation_stats, accel_config, workload)
+
+print(f"Simulation Complete.")
+print(f"  Total Cycles: {metrics.total_cycles}")
+print(f"  Total MAC Operations: {metrics.total_mac_operations}")
+print(f"  Overall PE Utilization: {metrics.average_pe_utilization:.2%}")
+print(f"  Achieved MACs/Cycle: {metrics.macs_per_cycle:.2f}")
+
+# 5. Visualize Results (optional)
+# This will save a plot to 'pe_utilization_heatmap.png'
+if metrics.pe_activity_map is not None:
+    plot_pe_utilization_heatmap(
+        metrics.pe_activity_map,
+        accel_config.array_rows,
+        accel_config.array_cols,
+        "PE Utilization Heatmap (OS GEMM)"
+    )
+    print("PE utilization heatmap saved to pe_utilization_heatmap.png")
+
+# Verify correctness (optional, for debugging/testing)
+import numpy as np
+expected_C = np.dot(workload.matrix_A, workload.matrix_B)
+if np.allclose(simulation_stats['output_matrix'], expected_C):
+    print("Output matrix matches NumPy dot product: CORRECT")
+else:
+    print("Output matrix MISMATCH with NumPy dot product: ERROR")
+    # print("Simulator output C:\n", simulation_stats['output_matrix'])
+    # print("Expected C:\n", expected_C)
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+To run the example:
+
+python examples/run_gemm_simulation.py
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Bash
+IGNORE_WHEN_COPYING_END
+Running Tests
+
+Ensure Pytest is installed (pip install pytest). From the root directory:
+
+pytest
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Bash
+IGNORE_WHEN_COPYING_END
+Project Structure
+
+src/open_accelerator/: Main source code.
+
+accelerator.py: Orchestrates accelerator components.
+
+pe.py: Processing Element definition.
+
+systolic_array.py: Systolic array logic.
+
+memory.py: Memory buffer models.
+
+control_os.py: Output Stationary dataflow control.
+
+simulation.py: Cycle-accurate simulation engine.
+
+workloads.py: Workload definitions (e.g., GEMM).
+
+analysis.py: Performance metrics calculation.
+
+visualization.py: Result visualization.
+
+utils.py: Configuration classes and utilities.
+
+tests/: Unit and integration tests.
+
+examples/: Usage examples.
+
+Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+Adhere to PEP 8 style guidelines. Use a linter like Flake8.
+
+Write clear, well-documented code with type hints.
+
+Ensure all tests pass before submitting a pull request.
+
+Write new tests for new features or bug fixes.
+
+License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+**3. `LICENSE`** (MIT License)
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
+
+MIT License
+
+Copyright (c) 2024 AI Language Model
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+**4. `.gitignore`**
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
+Python
+
+pycache/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+.env
+
+MacOS
+
+.DS_Store
+
+Pytest
+
+.pytest_cache/
+.coverage
+
+Matplotlib
+
+*.png
+*.pdf
+
+**5. `src/open_accelerator/__init__.py`**
+
+```python
+from .accelerator import Accelerator
+from .pe import ProcessingElement
+from .systolic_array import SystolicArray
+from .memory import Buffer
+from .control_os import OutputStationaryController
+from .simulation import Simulator
+from .workloads import GEMMWorkload, WorkloadConfig
+from .utils import AcceleratorConfig
+from .analysis import PerformanceMetrics, analyze_simulation_results
+from .visualization import plot_pe_utilization_heatmap
+
+__version__ = "0.1.0"
+
+__all__ = [
+    "Accelerator",
+    "ProcessingElement",
+    "SystolicArray",
+    "Buffer",
+    "OutputStationaryController",
+    "Simulator",
+    "GEMMWorkload",
+    "WorkloadConfig",
+    "AcceleratorConfig",
+    "PerformanceMetrics",
+    "analyze_simulation_results",
+    "plot_pe_utilization_heatmap",
+    "__version__",
+]
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
+
+6. src/open_accelerator/utils.py
+
+from dataclasses import dataclass, field
+from typing import Optional, List, Any
+import numpy as np
+
+@dataclass
+class AcceleratorConfig:
+    """Configuration for the accelerator."""
+    array_rows: int
+    array_cols: int
+    pe_mac_latency: int = 1  # Latency of a single MAC operation in cycles
+    # Buffer sizes in number of elements (e.g., float32 values)
+    input_buffer_size: int = 1024
+    weight_buffer_size: int = 1024 # In OS, this holds one of the input matrices
+    output_buffer_size: int = 1024
+    # Bandwidth in elements per cycle
+    input_buffer_bandwidth: int = 16
+    weight_buffer_bandwidth: int = 16
+    output_buffer_bandwidth: int = 16
+    data_type: type = np.float32 # Default data type for simulation
+
+@dataclass
+class WorkloadConfig:
+    """Configuration for the workload."""
+    # For GEMM: C[M,P] = A[M,K] * B[K,P]
+    gemm_M: Optional[int] = None
+    gemm_K: Optional[int] = None
+    gemm_P: Optional[int] = None
+    # Add other workload-specific parameters here
+
+@dataclass
+class PEState:
+    """Represents the internal state of a PE at a given cycle for OS."""
+    pe_id: tuple[int, int]
+    accumulator: Any = 0.0
+    # Inputs received by PE in current cycle, to be used in next
+    input_a: Optional[Any] = None # From top/left for A
+    input_b: Optional[Any] = None # From top/left for B
+    # Outputs to be passed to neighbors in next cycle
+    output_a: Optional[Any] = None # To bottom/right for A
+    output_b: Optional[Any] = None # To bottom/right for B
+    is_computing: bool = False
+    mac_ops_done: int = 0
+
+    def reset(self):
+        self.accumulator = 0.0
+        self.input_a = None
+        self.input_b = None
+        self.output_a = None
+        self.output_b = None
+        self.is_computing = False
+        # mac_ops_done is cumulative, not reset per cycle unless it's a new operation
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+7. src/open_accelerator/pe.py
+
+from typing import Any, Optional
+from .utils import PEState # Assuming PEState is defined if needed for more complex PEs
+
+class ProcessingElement:
+    """
+    A single Processing Element (PE) in the systolic array.
+    For Output Stationary, it accumulates partial products.
+    """
+    def __init__(self, pe_id: tuple[int, int], mac_latency: int = 1, data_type: type = float):
+        self.pe_id = pe_id  # (row, col)
+        self.mac_latency = mac_latency # Currently simplified to 1 cycle effect
+        self.data_type = data_type
+
+        self.accumulator: Any = self.data_type(0)
+
+        # Inputs for the current cycle's computation
+        self.current_input_a: Optional[Any] = None
+        self.current_input_b: Optional[Any] = None
+
+        # Values to be passed to neighbors in the *next* cycle
+        # These are the inputs received by this PE in the *current* cycle
+        self.propagate_a: Optional[Any] = None
+        self.propagate_b: Optional[Any] = None
+
+        self.is_computing_this_cycle: bool = False
+        self.total_mac_ops: int = 0
+
+    def load_inputs(self, input_a: Optional[Any], input_b: Optional[Any]):
+        """
+        Load inputs that will be used for computation in the current/next cycle
+        and prepare them for propagation.
+        """
+        self.current_input_a = input_a
+        self.current_input_b = input_b
+
+        # What this PE received is what it will propagate
+        self.propagate_a = input_a
+        self.propagate_b = input_b
+
+    def cycle(self):
+        """
+        Perform one cycle of PE operation for Output Stationary.
+        Assumes inputs (current_input_a, current_input_b) were loaded by SystolicArray.
+        """
+        self.is_computing_this_cycle = False
+        if self.current_input_a is not None and self.current_input_b is not None:
+            # Perform MAC operation
+            product = self.current_input_a * self.current_input_b
+            self.accumulator += product
+            self.is_computing_this_cycle = True
+            self.total_mac_ops += 1
+
+        # Clear current inputs after use for this cycle
+        # self.current_input_a = None # SystolicArray will provide new ones next cycle
+        # self.current_input_b = None
+
+    def get_output_for_propagation(self) -> tuple[Optional[Any], Optional[Any]]:
+        """
+        Returns the values to be propagated to neighbors.
+        Call this *after* load_inputs and *before* cycle if propagation happens before computation
+        or *after* cycle if propagation happens after computation for the current values.
+        In classic systolic arrays, propagation and computation happen "concurrently" from
+        the perspective of data arriving and data leaving in a cycle.
+        Here, propagate_a/b are set by load_inputs and represent what *was* received.
+        """
+        return self.propagate_a, self.propagate_b
+
+    def get_final_result(self) -> Any:
+        return self.accumulator
+
+    def reset(self):
+        self.accumulator = self.data_type(0)
+        self.current_input_a = None
+        self.current_input_b = None
+        self.propagate_a = None
+        self.propagate_b = None
+        self.is_computing_this_cycle = False
+        self.total_mac_ops = 0
+
+    def get_activity(self) -> bool:
+        return self.is_computing_this_cycle
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+8. src/open_accelerator/memory.py
+
+from collections import deque
+from typing import List, Any, Optional, Deque
+
+class Buffer:
+    """
+    A simple FIFO buffer model for on-chip memory.
+    Simulates capacity, bandwidth, and latency (simplified).
+    """
+    def __init__(self, buffer_id: str, size: int, bandwidth: int = 1, data_type: type = float):
+        self.buffer_id = buffer_id
+        self.capacity = size
+        self.bandwidth = bandwidth  # Elements per cycle
+        self.data_type = data_type
+        self.queue: Deque[Any] = deque()
+
+        self.stats_reads: int = 0
+        self.stats_writes: int = 0
+        self.stats_stalls_read: int = 0 # Stalled due to empty
+        self.stats_stalls_write: int = 0 # Stalled due to full
+
+    def __len__(self) -> int:
+        return len(self.queue)
+
+    def is_empty(self) -> bool:
+        return len(self.queue) == 0
+
+    def is_full(self) -> bool:
+        return len(self.queue) >= self.capacity
+
+    def write(self, data_elements: List[Any]) -> int:
+        """
+        Tries to write multiple elements to the buffer.
+        Returns the number of elements successfully written in this cycle.
+        """
+        written_count = 0
+        for i in range(min(len(data_elements), self.bandwidth)):
+            if not self.is_full():
+                self.queue.append(data_elements[i])
+                written_count += 1
+                self.stats_writes += 1
+            else:
+                self.stats_stalls_write += 1 # Stalled for the remaining elements
+                break
+        return written_count
+
+    def read(self, num_elements: int) -> List[Any]:
+        """
+        Tries to read multiple elements from the buffer.
+        Returns a list of elements successfully read in this cycle.
+        """
+        read_elements: List[Any] = []
+        for _ in range(min(num_elements, self.bandwidth)):
+            if not self.is_empty():
+                read_elements.append(self.queue.popleft())
+                self.stats_reads += 1
+            else:
+                self.stats_stalls_read += 1 # Stalled trying to read
+                break
+        return read_elements
+
+    def peek(self, num_elements: int) -> List[Any]:
+        """
+        Peeks at elements without removing them. Limited by bandwidth.
+        """
+        peeked_elements: List[Any] = []
+        count = 0
+        for i in range(min(num_elements, self.bandwidth, len(self.queue))):
+            peeked_elements.append(self.queue[i])
+            count +=1
+        return peeked_elements
+
+
+    def get_stats(self) -> dict:
+        return {
+            "reads": self.stats_reads,
+            "writes": self.stats_writes,
+            "stalls_read_empty": self.stats_stalls_read,
+            "stalls_write_full": self.stats_stalls_write,
+            "current_fill_level": len(self.queue)
+        }
+
+    def reset(self):
+        self.queue.clear()
+        self.stats_reads = 0
+        self.stats_writes = 0
+        self.stats_stalls_read = 0
+        self.stats_stalls_write = 0
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+9. src/open_accelerator/systolic_array.py
+
+from typing import List, Tuple, Optional, Any
+import numpy as np
+from .pe import ProcessingElement
+from .utils import AcceleratorConfig
+
+class SystolicArray:
+    """
+    Manages the grid of PEs and data propagation for Output Stationary.
+    """
+    def __init__(self, config: AcceleratorConfig):
+        self.rows = config.array_rows
+        self.cols = config.array_cols
+        self.config = config
+
+        self.pes: List[List[ProcessingElement]] = []
+        for r in range(self.rows):
+            row_pes = []
+            for c in range(self.cols):
+                row_pes.append(
+                    ProcessingElement(
+                        pe_id=(r, c),
+                        mac_latency=config.pe_mac_latency,
+                        data_type=config.data_type
+                    )
+                )
+            self.pes.append(row_pes)
+
+        # Buffers for data coming from neighbors in the current cycle
+        # These will be the inputs to PEs for their computation in this cycle
+        self.pe_inputs_a = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_inputs_b = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+
+        # Buffers for data to be passed to neighbors in the *next* cycle
+        # These are set by PEs after their computation or by edge inputs
+        self.pe_outputs_a = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_outputs_b = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+
+        self.pe_activity_log: List[List[List[bool]]] = [] # Log PE activity per cycle
+
+    def cycle(self, edge_inputs_a: List[Optional[Any]], edge_inputs_b: List[Optional[Any]]):
+        """
+        Simulates one clock cycle of the array's operation for OS.
+        edge_inputs_a: List of A values for the first column PEs (indexed by row).
+        edge_inputs_b: List of B values for the first row PEs (indexed by col).
+        """
+        current_cycle_activity = [[False for _ in range(self.cols)] for _ in range(self.rows)]
+
+        # 1. Propagate data: Determine inputs for each PE for *this* cycle's computation
+        for r in range(self.rows):
+            for c in range(self.cols):
+                # Input A comes from left neighbor (or edge if c==0)
+                if c == 0:
+                    self.pe_inputs_a[r][c] = edge_inputs_a[r]
+                else:
+                    self.pe_inputs_a[r][c] = self.pe_outputs_a[r][c-1] # Output from left PE in prev stage
+
+                # Input B comes from top neighbor (or edge if r==0)
+                if r == 0:
+                    self.pe_inputs_b[r][c] = edge_inputs_b[c]
+                else:
+                    self.pe_inputs_b[r][c] = self.pe_outputs_b[r-1][c] # Output from top PE in prev stage
+
+        # 2. PEs compute and determine their next outputs
+        for r in range(self.rows):
+            for c in range(self.cols):
+                pe = self.pes[r][c]
+                # Load inputs that were propagated/injected in step 1
+                pe.load_inputs(self.pe_inputs_a[r][c], self.pe_inputs_b[r][c])
+                # PE performs computation
+                pe.cycle()
+                current_cycle_activity[r][c] = pe.get_activity()
+                # Get values PE will propagate (these are the inputs it just received)
+                self.pe_outputs_a[r][c], self.pe_outputs_b[r][c] = pe.get_output_for_propagation()
+
+        self.pe_activity_log.append(current_cycle_activity)
+
+    def get_results(self) -> np.ndarray:
+        """Retrieves the final computed results (accumulators) from all PEs."""
+        results = np.zeros((self.rows, self.cols), dtype=self.config.data_type)
+        for r in range(self.rows):
+            for c in range(self.cols):
+                results[r, c] = self.pes[r][c].get_final_result()
+        return results
+
+    def get_total_mac_operations(self) -> int:
+        total_macs = 0
+        for r in range(self.rows):
+            for c in range(self.cols):
+                total_macs += self.pes[r][c].total_mac_ops
+        return total_macs
+
+    def reset(self):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                self.pes[r][c].reset()
+
+        self.pe_inputs_a = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_inputs_b = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_outputs_a = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_outputs_b = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.pe_activity_log = []
+
+    def get_pe_activity_map_over_time(self) -> np.ndarray:
+        """
+        Returns a 2D array [rows, cols] where each element is the
+        fraction of total simulation cycles that PE was active.
+        Assumes pe_activity_log stores boolean activity per cycle.
+        """
+        if not self.pe_activity_log:
+            return np.zeros((self.rows, self.cols), dtype=float)
+
+        num_cycles = len(self.pe_activity_log)
+        activity_sum = np.zeros((self.rows, self.cols), dtype=int)
+
+        for cycle_log in self.pe_activity_log:
+            for r in range(self.rows):
+                for c in range(self.cols):
+                    if cycle_log[r][c]:
+                        activity_sum[r, c] += 1
+
+        return activity_sum / num_cycles if num_cycles > 0 else np.zeros((self.rows, self.cols))
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+10. src/open_accelerator/control_os.py (Output Stationary Controller)
+
+from typing import List, Optional, Any, Tuple
+import numpy as np
+from .utils import AcceleratorConfig, WorkloadConfig
+from .workloads import GEMMWorkload # For type hinting
+from .memory import Buffer
+
+class OutputStationaryController:
+    """
+    Manages data feeding for Output Stationary GEMM.
+    C[M,P] = A[M,K] * B[K,P]
+    Array size is assumed to be M_pe x P_pe (config.array_rows x config.array_cols)
+    For simplicity, assume M_pe = M and P_pe = P.
+    """
+    def __init__(self, accel_config: AcceleratorConfig, workload: GEMMWorkload,
+                 input_a_buffer: Buffer, input_b_buffer: Buffer): # Output buffer managed by accelerator
+        self.accel_config = accel_config
+        self.workload = workload
+        self.M = workload.config.gemm_M
+        self.K = workload.config.gemm_K
+        self.P = workload.config.gemm_P
+
+        if self.M != accel_config.array_rows or self.P != accel_config.array_cols:
+            raise ValueError("For this simple OS controller, matrix dimensions M, P must match array_rows, array_cols.")
+
+        self.input_a_buffer = input_a_buffer # Should contain matrix A (M x K)
+        self.input_b_buffer = input_b_buffer # Should contain matrix B (K x P)
+
+        # Pre-skew and load data into buffers if not already done by workload
+        # For OS, A streams row-wise, B streams col-wise (conceptually)
+        # The buffers will serve data in the order required by skewing.
+        self._prepare_skewed_inputs()
+
+        self.current_cycle = 0
+        self.max_cycles_for_input_injection = self.M + self.P + self.K - 2 # Cycle when last inputs are needed
+                                                                            # for M-1,P-1,K-1 element calculation
+
+    def _prepare_skewed_inputs(self):
+        """
+        Prepares linear streams of A and B data that, when read sequentially,
+        provide the correctly skewed inputs for the systolic array.
+        This is a simplified approach: buffers are filled with all necessary data.
+        A more advanced controller would manage this from larger memory.
+        """
+        # Matrix A (M x K), Matrix B (K x P)
+        matrix_A = self.workload.matrix_A.astype(self.accel_config.data_type)
+        matrix_B = self.workload.matrix_B.astype(self.accel_config.data_type)
+
+        # For each cycle, determine what needs to be injected.
+        # Max cycles for inputs: (M-1) + (P-1) + (K-1) = M+P+K-3
+        # Max k_val = K-1
+        # Max r_val = M-1
+        # Max c_val = P-1
+        # Injection cycle for A_rc at PE(r,0) is r+k_val.
+        # Injection cycle for B_kc at PE(0,c) is c+k_val.
+
+        # This controller assumes buffers are pre-filled by Accelerator class based on workload.
+        # Let's verify:
+        # Expected size for A in buffer (M*K), for B (K*P)
+        # For simplicity, we assume the buffers are loaded elsewhere and we just read.
+        # The challenge is to organize the reads from a flat buffer to provide skewed data.
+        # A better approach: The controller has access to matrix_A and matrix_B directly
+        # and "generates" the skewed streams cycle by cycle.
+
+        # Store the matrices directly for easier access
+        self.matrix_A_data = matrix_A
+        self.matrix_B_data = matrix_B
+
+        # No actual pre-filling of buffers here; data is pulled on demand.
+        # The buffers `input_a_buffer` and `input_b_buffer` are more like interfaces
+        # to larger storage in this simplified context.
+        # Or, we assume these buffers are "global" buffers and we stream from them.
+        # The current Buffer class is a FIFO. For OS, we need non-FIFO access or
+        # carefully pre-loaded FIFOs for each input row/column of PEs.
+
+        # Let's simplify: this controller will generate the edge inputs directly from matrices.
+        # The `input_a_buffer` and `input_b_buffer` arguments are then conceptual.
+
+    def get_inputs_for_cycle(self, cycle: int) -> Tuple[List[Optional[Any]], List[Optional[Any]]]:
+        """
+        Generates the list of inputs for the systolic array edges for the current cycle.
+        Returns:
+            - edge_inputs_a: List of A values for PE[r][0] inputs. Length M.
+            - edge_inputs_b: List of B values for PE[0][c] inputs. Length P.
+        """
+        edge_inputs_a = [None] * self.M
+        edge_inputs_b = [None] * self.P
+
+        # A_ik is injected at PE(i,0) at cycle i+k
+        # B_kj is injected at PE(0,j) at cycle j+k
+        for r_pe in range(self.M): # PE row, corresponds to M dimension of A and C
+            # Find k such that r_pe + k = cycle
+            k_val_for_a = cycle - r_pe
+            if 0 <= k_val_for_a < self.K:
+                edge_inputs_a[r_pe] = self.matrix_A_data[r_pe, k_val_for_a]
+
+        for c_pe in range(self.P): # PE col, corresponds to P dimension of B and C
+            # Find k such that c_pe + k = cycle
+            k_val_for_b = cycle - c_pe
+            if 0 <= k_val_for_b < self.K:
+                edge_inputs_b[c_pe] = self.matrix_B_data[k_val_for_b, c_pe]
+
+        return edge_inputs_a, edge_inputs_b
+
+    def is_computation_done(self, current_cycle: int) -> bool:
+        """
+        Determines if all necessary inputs have been injected and computations have propagated.
+        The last MAC happens at cycle (M-1) + (P-1) + (K-1).
+        If MAC latency is 1, result is available in PE then.
+        So, simulation needs to run up to this cycle.
+        """
+        # Last input A_M-1,K-1 injected at cycle (M-1) + (K-1)
+        # Last input B_K-1,P-1 injected at cycle (P-1) + (K-1)
+        # Last computation for C_M-1,P-1 uses A_M-1,K-1 and B_K-1,P-1
+        # These meet at PE(M-1, P-1) at cycle (M-1) + (P-1) + (K-1)
+        # This cycle index is 0-based.
+        required_computation_cycles = (self.M - 1) + (self.P - 1) + (self.K - 1)
+
+        # Add PE MAC latency (assumed 1, so computation finishes in same cycle data arrives)
+        # If mac_latency > 1, this needs adjustment.
+        # The check is if current_cycle has passed the point where the last computation is done.
+        return current_cycle > required_computation_cycles
+
+    def reset(self, new_workload: Optional[GEMMWorkload] = None):
+        if new_workload:
+            self.workload = new_workload
+            self.M = new_workload.config.gemm_M
+            self.K = new_workload.config.gemm_K
+            self.P = new_workload.config.gemm_P
+            if self.M != self.accel_config.array_rows or self.P != self.accel_config.array_cols:
+                 raise ValueError("OS controller: Matrix dimensions M, P must match array_rows, array_cols.")
+            self.matrix_A_data = self.workload.matrix_A.astype(self.accel_config.data_type)
+            self.matrix_B_data = self.workload.matrix_B.astype(self.accel_config.data_type)
+
+        self.current_cycle = 0
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+11. src/open_accelerator/accelerator.py
+
+import numpy as np
+from .utils import AcceleratorConfig
+from .systolic_array import SystolicArray
+from .memory import Buffer
+from .control_os import OutputStationaryController
+from .workloads import GEMMWorkload # For type hinting
+
+class Accelerator:
+    """
+    Orchestrates the accelerator components: SystolicArray, Memory, Controller.
+    """
+    def __init__(self, config: AcceleratorConfig, workload: GEMMWorkload): # Specific to GEMM for now
+        self.config = config
+        self.workload = workload
+
+        self.systolic_array = SystolicArray(config)
+
+        # These buffers are conceptual for OS controller using direct matrix access.
+        # In a more complex model, controller would read from these.
+        self.input_a_buffer = Buffer("input_A_buffer", config.input_buffer_size, config.input_buffer_bandwidth, config.data_type)
+        self.input_b_buffer = Buffer("input_B_buffer", config.weight_buffer_size, config.weight_buffer_bandwidth, config.data_type) # OS: B acts like weights
+        self.output_buffer = Buffer("output_C_buffer", config.output_buffer_size, config.output_buffer_bandwidth, config.data_type)
+
+        # Load initial data into buffers (simplified: controller has direct access)
+        # self._load_workload_to_buffers() # This step would be complex if buffers are strictly FIFOs for OS
+
+        # Instantiate the controller (OS specific for now)
+        if not isinstance(workload, GEMMWorkload):
+            raise TypeError("This Accelerator setup currently only supports GEMMWorkload with OSController.")
+
+        self.controller = OutputStationaryController(config, workload, self.input_a_buffer, self.input_b_buffer)
+
+        self.current_cycle = 0
+
+    # def _load_workload_to_buffers(self):
+    #     # For OS, matrix_A and matrix_B are inputs.
+    #     # This would be complex due to skewing if buffers are dumb FIFOs.
+    #     # The current OSController pulls data directly.
+    #     # If we were to use the Buffer objects:
+    #     # self.input_a_buffer.write(list(self.workload.matrix_A.flatten()))
+    #     # self.input_b_buffer.write(list(self.workload.matrix_B.flatten()))
+    #     pass
+
+
+    def cycle(self) -> bool:
+        """
+        Executes one cycle of the accelerator.
+        Returns True if computation is ongoing, False if done.
+        """
+        if self.controller.is_computation_done(self.current_cycle):
+            return False # Computation finished in a previous cycle
+
+        # 1. Controller gets data for array edges for this cycle
+        edge_a, edge_b = self.controller.get_inputs_for_cycle(self.current_cycle)
+
+        # 2. Systolic array cycles with these inputs
+        self.systolic_array.cycle(edge_a, edge_b)
+
+        # 3. Output handling (for OS, results stay in PEs until end)
+        # If results were streamed out, this is where it would happen.
+
+        self.current_cycle += 1
+        return not self.controller.is_computation_done(self.current_cycle -1)
+
+
+    def get_final_output(self) -> np.ndarray:
+        # For OS, results are in PEs. They could be drained to output_buffer.
+        # For simplicity, directly get from PEs.
+        return self.systolic_array.get_results()
+
+    def get_simulation_stats(self) -> dict:
+        pe_activity_map = self.systolic_array.get_pe_activity_map_over_time()
+        return {
+            "total_cycles": self.current_cycle,
+            "total_mac_operations": self.systolic_array.get_total_mac_operations(),
+            "output_matrix": self.get_final_output(),
+            "pe_activity_map_over_time": pe_activity_map, # Utilization per PE
+            "buffer_stats": {
+                "input_a": self.input_a_buffer.get_stats(),
+                "input_b": self.input_b_buffer.get_stats(),
+                "output_c": self.output_buffer.get_stats(),
+            }
+        }
+
+    def reset(self, new_workload: GEMMWorkload):
+        self.workload = new_workload
+        self.systolic_array.reset()
+        self.input_a_buffer.reset()
+        self.input_b_buffer.reset()
+        self.output_buffer.reset()
+        self.controller.reset(new_workload)
+        self.current_cycle = 0
+        # self._load_workload_to_buffers()
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+12. src/open_accelerator/workloads.py
+
+import numpy as np
+from .utils import WorkloadConfig, AcceleratorConfig # For data_type consistency
+
+class BaseWorkload:
+    def __init__(self, config: WorkloadConfig, accel_config: AcceleratorConfig):
+        self.config = config
+        self.accel_config = accel_config # To use its data_type
+
+    def generate_data(self):
+        raise NotImplementedError
+
+    def get_details(self) -> dict:
+        raise NotImplementedError
+
+class GEMMWorkload(BaseWorkload):
+    """
+    Workload for General Matrix Multiplication (GEMM): C = A * B.
+    A: M x K
+    B: K x P
+    C: M x P
+    """
+    def __init__(self, config: WorkloadConfig, accel_config: AcceleratorConfig):
+        super().__init__(config, accel_config)
+        if not all([config.gemm_M, config.gemm_K, config.gemm_P]):
+            raise ValueError("M, K, P dimensions must be specified for GEMMWorkload.")
+        self.M = config.gemm_M
+        self.K = config.gemm_K
+        self.P = config.gemm_P
+
+        self.matrix_A: np.ndarray = np.array([])
+        self.matrix_B: np.ndarray = np.array([])
+        self.expected_C: np.ndarray = np.array([]) # For verification
+
+    def generate_data(self, seed: int = 42):
+        """Generates random matrices A and B."""
+        rng = np.random.default_rng(seed)
+        self.matrix_A = rng.integers(0, 10, size=(self.M, self.K)).astype(self.accel_config.data_type)
+        self.matrix_B = rng.integers(0, 10, size=(self.K, self.P)).astype(self.accel_config.data_type)
+        # self.matrix_A = rng.random((self.M, self.K)).astype(self.accel_config.data_type)
+        # self.matrix_B = rng.random((self.K, self.P)).astype(self.accel_config.data_type)
+        self.expected_C = np.dot(self.matrix_A, self.matrix_B)
+
+    def get_details(self) -> dict:
+        return {
+            "type": "GEMM",
+            "M": self.M,
+            "K": self.K,
+            "P": self.P,
+            "A_shape": self.matrix_A.shape,
+            "B_shape": self.matrix_B.shape,
+        }
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+13. src/open_accelerator/simulation.py
+
+from .utils import AcceleratorConfig
+from .accelerator import Accelerator
+from .workloads import GEMMWorkload # Specific for now
+
+class Simulator:
+    """
+    Main simulation engine.
+    """
+    def __init__(self, accel_config: AcceleratorConfig, workload: GEMMWorkload): # Workload type specific for now
+        self.accel_config = accel_config
+        self.workload = workload # The workload instance, not config
+        self.accelerator = Accelerator(accel_config, workload)
+        self.current_cycle = 0
+        self.max_sim_cycles = 1_000_000 # Safety break
+
+    def run(self) -> dict:
+        """Runs the simulation until completion."""
+        print(f"Starting simulation for GEMM: M={self.workload.M}, K={self.workload.K}, P={self.workload.P}")
+        print(f"Array size: {self.accel_config.array_rows}x{self.accel_config.array_cols}")
+
+        self.current_cycle = 0
+        self.accelerator.reset(self.workload) # Ensure accelerator is reset with current workload
+
+        while self.current_cycle < self.max_sim_cycles:
+            if not self.accelerator.cycle(): # Accelerator.cycle returns False if done
+                # print(f"Accelerator indicated completion at cycle {self.current_cycle + 1}.")
+                break
+            self.current_cycle += 1
+            if self.current_cycle % 100 == 0 and self.current_cycle > 0:
+                 print(f"... cycle {self.current_cycle}")
+
+        if self.current_cycle >= self.max_sim_cycles:
+            print(f"Warning: Simulation reached max_sim_cycles ({self.max_sim_cycles}).")
+
+        print(f"Simulation finished at cycle {self.accelerator.current_cycle}.")
+        return self.accelerator.get_simulation_stats()
+
+    def step(self) -> bool:
+        """Executes a single simulation cycle. Returns True if ongoing."""
+        if self.accelerator.cycle():
+            self.current_cycle +=1
+            return True
+        return False
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+14. src/open_accelerator/analysis.py
+
+from dataclasses import dataclass
+from typing import Dict, Any, Optional
+import numpy as np
+from .utils import AcceleratorConfig
+from .workloads import GEMMWorkload
+
+@dataclass
+class PerformanceMetrics:
+    total_cycles: int
+    total_mac_operations: int
+    average_pe_utilization: float # Average across all PEs and all cycles
+    macs_per_cycle: float # Effective MACs per cycle (throughput)
+    theoretical_peak_macs: int # ArrayRows * ArrayCols
+    roofline_utilization: float # macs_per_cycle / theoretical_peak_macs
+    pe_activity_map: Optional[np.ndarray] = None # Per PE utilization over time
+
+def analyze_simulation_results(
+    simulation_stats: Dict[str, Any],
+    accel_config: AcceleratorConfig,
+    workload: GEMMWorkload # Assuming GEMM for now
+) -> PerformanceMetrics:
+    """
+    Calculates key performance metrics from simulation statistics.
+    """
+    total_cycles = simulation_stats["total_cycles"]
+    total_mac_operations = simulation_stats["total_mac_operations"]
+
+    # PE Utilization
+    # pe_activity_map_over_time is a 2D array [rows, cols] where each element
+    # is the fraction of total simulation cycles that PE was active.
+    pe_activity_map = simulation_stats.get("pe_activity_map_over_time")
+    average_pe_utilization = 0.0
+    if pe_activity_map is not None and total_cycles > 0 :
+        # Check if the map is valid (not all zeros if there was activity)
+        if np.any(pe_activity_map > 0) or total_mac_operations > 0:
+             average_pe_utilization = np.mean(pe_activity_map)
+        elif total_mac_operations == 0 and total_cycles > 0 : # No macs but cycles ran
+             average_pe_utilization = 0.0
+
+    # Theoretical MACs for GEMM
+    # M, K, P = workload.M, workload.K, workload.P
+    # theoretical_total_macs = M * K * P # This is total ops in workload, not per cycle
+
+    # MACs per cycle (overall system throughput)
+    macs_per_cycle = 0.0
+    if total_cycles > 0:
+        macs_per_cycle = total_mac_operations / total_cycles
+
+    theoretical_peak_macs_per_cycle = accel_config.array_rows * accel_config.array_cols
+
+    roofline_util = 0.0
+    if theoretical_peak_macs_per_cycle > 0:
+        roofline_util = macs_per_cycle / theoretical_peak_macs_per_cycle
+
+
+    return PerformanceMetrics(
+        total_cycles=total_cycles,
+        total_mac_operations=total_mac_operations,
+        average_pe_utilization=average_pe_utilization,
+        macs_per_cycle=macs_per_cycle,
+        theoretical_peak_macs=theoretical_peak_macs_per_cycle,
+        roofline_utilization=roofline_util,
+        pe_activity_map=pe_activity_map
+    )
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+15. src/open_accelerator/visualization.py
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+def plot_pe_utilization_heatmap(
+    pe_activity_map: np.ndarray,
+    array_rows: int,
+    array_cols: int,
+    title: str = "PE Utilization Heatmap",
+    output_filename: str = "pe_utilization_heatmap.png"
+):
+    """
+    Generates and saves a heatmap of PE utilization.
+    pe_activity_map: A 2D numpy array where each element is the utilization (0.0 to 1.0) of a PE.
+    """
+    if pe_activity_map is None or pe_activity_map.size == 0:
+        print("Visualization: PE activity map is empty or None. Skipping plot.")
+        return
+
+    fig, ax = plt.subplots(figsize=(array_cols * 0.8, array_rows * 0.8))
+
+    # Use a colormap that goes from a light color for 0 to a dark color for 1
+    # Example: 'Greys', 'Blues', 'Reds'
+    # Or create a custom one:
+    cmap = mcolors.LinearSegmentedColormap.from_list("custom_cmap", ["#ffffff", "#f0f0f0", "#add8e6", "#00008b"]) # White -> Light Grey -> Light Blue -> Dark Blue
+
+    # If all values are 0, imshow might behave strangely with normalization.
+    # Set vmin and vmax to ensure 0 is light and 1 is dark, even if data is all 0 or all 1.
+    cax = ax.imshow(pe_activity_map, cmap='viridis', interpolation='nearest', vmin=0.0, vmax=1.0)
+
+    ax.set_title(title)
+    ax.set_xlabel("PE Column Index")
+    ax.set_ylabel("PE Row Index")
+
+    # Set ticks to be at the center of PEs
+    ax.set_xticks(np.arange(array_cols))
+    ax.set_yticks(np.arange(array_rows))
+    ax.set_xticklabels(np.arange(array_cols))
+    ax.set_yticklabels(np.arange(array_rows))
+
+    # Add text annotations for utilization values
+    for r in range(array_rows):
+        for c in range(array_cols):
+            util_value = pe_activity_map[r, c]
+            text_color = "white" if util_value > 0.6 else "black" # Adjust threshold based on cmap
+            ax.text(c, r, f"{util_value:.2f}", ha="center", va="center", color=text_color, fontsize=8)
+
+    fig.colorbar(cax, label="PE Utilization (Fraction of Total Cycles Active)")
+    plt.tight_layout()
+
+    try:
+        plt.savefig(output_filename)
+        print(f"Visualization: Heatmap saved to {output_filename}")
+    except Exception as e:
+        print(f"Visualization: Error saving heatmap: {e}")
+    plt.close(fig) # Close the figure to free memory
+
+def plot_simple_bar_chart(
+    data: dict,
+    title: str = "Performance Metric",
+    xlabel: str = "Metric",
+    ylabel: str = "Value",
+    output_filename: str = "bar_chart.png"
+):
+    """Generates a simple bar chart from a dictionary of data."""
+    names = list(data.keys())
+    values = list(data.values())
+
+    fig, ax = plt.subplots()
+    ax.bar(names, values)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    try:
+        plt.savefig(output_filename)
+        print(f"Visualization: Bar chart saved to {output_filename}")
+    except Exception as e:
+        print(f"Visualization: Error saving bar chart: {e}")
+    plt.close(fig)
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+16. examples/run_gemm_simulation.py
+
+import numpy as np
+from open_accelerator.utils import AcceleratorConfig, WorkloadConfig
+from open_accelerator.workloads import GEMMWorkload
+from open_accelerator.simulation import Simulator
+from open_accelerator.analysis import analyze_simulation_results
+from open_accelerator.visualization import plot_pe_utilization_heatmap, plot_simple_bar_chart
+
+def main():
+    print("--- Open Accelerator: GEMM OS Simulation Example ---")
+
+    # 1. Define Accelerator Configuration
+    # For OS GEMM C[M,P] = A[M,K] * B[K,P], array_rows=M, array_cols=P
+    # Test Case 1: Small, square
+    # M, K, P = 3, 2, 3 # Array 3x3
+    # Test Case 2: Rectangular
+    M, K, P = 4, 3, 5 # Array 4x5
+    # Test Case 3: Larger K
+    # M, K, P = 2, 5, 3 # Array 2x3
+
+    print(f"\nConfiguration: M={M}, K={K}, P={P}")
+
+    accel_config = AcceleratorConfig(
+        array_rows=M, # For this OS impl, array_rows must be M
+        array_cols=P, # For this OS impl, array_cols must be P
+        pe_mac_latency=1,
+        input_buffer_size=M * K * 4, # Example size, not strictly used by current OS controller
+        weight_buffer_size=K * P * 4, # Example size
+        output_buffer_size=M * P * 4, # Example size
+        data_type=np.int32 # Or np.float32, ensure consistency
+    )
+
+    # 2. Define Workload
+    workload_config = WorkloadConfig(gemm_M=M, gemm_K=K, gemm_P=P)
+    workload = GEMMWorkload(workload_config, accel_config) # Pass accel_config for data_type
+    workload.generate_data(seed=123) # Use a seed for reproducibility
+
+    print(f"Matrix A ({workload.matrix_A.shape}):\n{workload.matrix_A}")
+    print(f"Matrix B ({workload.matrix_B.shape}):\n{workload.matrix_B}")
+
+    # 3. Initialize and Run Simulator
+    simulator = Simulator(accel_config, workload)
+    simulation_stats = simulator.run() # This is a dictionary of various stats
+
+    # 4. Analyze Results
+    metrics = analyze_simulation_results(simulation_stats, accel_config, workload)
+
+    print("\n--- Simulation Results ---")
+    print(f"  Total Cycles: {metrics.total_cycles}")
+    print(f"  Total MAC Operations: {metrics.total_mac_operations}")
+    print(f"  Theoretical MACs for workload: {M * K * P}")
+    print(f"  Overall PE Utilization (average over PEs and time): {metrics.average_pe_utilization:.2%}")
+    print(f"  Achieved MACs/Cycle (system throughput): {metrics.macs_per_cycle:.2f}")
+    print(f"  Peak Theoretical MACs/Cycle for array: {metrics.theoretical_peak_macs}")
+    print(f"  Roofline Utilization (Achieved/Peak): {metrics.roofline_utilization:.2%}")
+
+
+    # 5. Visualize Results (optional)
+    if metrics.pe_activity_map is not None:
+        plot_pe_utilization_heatmap(
+            metrics.pe_activity_map,
+            accel_config.array_rows,
+            accel_config.array_cols,
+            f"PE Utilization (OS GEMM: M={M},K={K},P={P})",
+            f"pe_utilization_M{M}_K{K}_P{P}.png"
+        )
+
+    bar_chart_data = {
+        "Total Cycles": metrics.total_cycles,
+        "Total MACs": metrics.total_mac_operations,
+        "MACs/Cycle": metrics.macs_per_cycle
+    }
+    plot_simple_bar_chart(bar_chart_data,
+                          f"Key Metrics (OS GEMM: M={M},K={K},P={P})",
+                          output_filename=f"key_metrics_M{M}_K{K}_P{P}.png")
+
+
+    # Verify correctness
+    sim_output_C = simulation_stats['output_matrix']
+    # print("\nSimulator Output C:\n", sim_output_C)
+    # print("Expected Output C (NumPy):\n", workload.expected_C)
+
+    if np.allclose(sim_output_C, workload.expected_C):
+        print("\nVerification: Output matrix matches NumPy dot product: CORRECT")
+    else:
+        print("\nVerification: Output matrix MISMATCH with NumPy dot product: ERROR")
+        # For detailed debugging:
+        # diff = sim_output_C - workload.expected_C
+        # print("Difference matrix:\n", diff)
+        # print("Indices of mismatch:", np.where(np.logical_not(np.isclose(sim_output_C, workload.expected_C))))
+
+    print("\n--- Example Run Finished ---")
+
+if __name__ == "__main__":
+    main()
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+17. tests/__init__.py (Empty)
+
+18. tests/conftest.py
+
+import pytest
+import numpy as np
+from open_accelerator.utils import AcceleratorConfig, WorkloadConfig
+from open_accelerator.workloads import GEMMWorkload
+
+@pytest.fixture
+def base_accel_config():
+    return AcceleratorConfig(
+        array_rows=2,
+        array_cols=2,
+        data_type=np.int32 # Using int for simpler exact comparisons in tests
+    )
+
+@pytest.fixture
+def gemm_workload_2x2x2(base_accel_config): # M=2, K=2, P=2
+    # Ensure accel_config matches M and P for current OS controller
+    accel_config_2x2 = AcceleratorConfig(array_rows=2, array_cols=2, data_type=base_accel_config.data_type)
+
+    workload_config = WorkloadConfig(gemm_M=2, gemm_K=2, gemm_P=2)
+    workload = GEMMWorkload(workload_config, accel_config_2x2)
+    # Use fixed data for predictable tests
+    workload.matrix_A = np.array([[1, 2], [3, 4]], dtype=accel_config_2x2.data_type)
+    workload.matrix_B = np.array([[5, 6], [7, 8]], dtype=accel_config_2x2.data_type)
+    workload.expected_C = np.dot(workload.matrix_A, workload.matrix_B)
+    return workload, accel_config_2x2
+
+@pytest.fixture
+def gemm_workload_3x1x2(base_accel_config): # M=3, K=1, P=2
+    accel_config_3x2 = AcceleratorConfig(array_rows=3, array_cols=2, data_type=base_accel_config.data_type)
+
+    workload_config = WorkloadConfig(gemm_M=3, gemm_K=1, gemm_P=2)
+    workload = GEMMWorkload(workload_config, accel_config_3x2)
+    workload.matrix_A = np.array([[1], [2], [3]], dtype=accel_config_3x2.data_type) # 3x1
+    workload.matrix_B = np.array([[10, 20]], dtype=accel_config_3x2.data_type)    # 1x2
+    workload.expected_C = np.dot(workload.matrix_A, workload.matrix_B) # Should be 3x2
+    return workload, accel_config_3x2
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+19. tests/test_pe.py
+
+import pytest
+import numpy as np
+from open_accelerator.pe import ProcessingElement
+
+def test_pe_creation():
+    pe = ProcessingElement(pe_id=(0,0), data_type=np.int32)
+    assert pe.pe_id == (0,0)
+    assert pe.accumulator == 0
+    assert pe.total_mac_ops == 0
+
+def test_pe_mac_operation(data_type=np.int32):
+    pe = ProcessingElement(pe_id=(0,0), data_type=data_type)
+
+    # Cycle 1
+    pe.load_inputs(data_type(2), data_type(3))
+    pe.cycle()
+    assert pe.accumulator == data_type(6)
+    assert pe.total_mac_ops == 1
+    assert pe.is_computing_this_cycle == True
+    prop_a, prop_b = pe.get_output_for_propagation()
+    assert prop_a == data_type(2)
+    assert prop_b == data_type(3)
+
+    # Cycle 2
+    pe.load_inputs(data_type(4), data_type(5))
+    pe.cycle()
+    assert pe.accumulator == data_type(6 + 20)
+    assert pe.total_mac_ops == 2
+    assert pe.is_computing_this_cycle == True
+    prop_a, prop_b = pe.get_output_for_propagation()
+    assert prop_a == data_type(4)
+    assert prop_b == data_type(5)
+
+    # Cycle 3: One input is None
+    pe.load_inputs(data_type(1), None)
+    pe.cycle()
+    assert pe.accumulator == data_type(26) # No change
+    assert pe.total_mac_ops == 2 # No change
+    assert pe.is_computing_this_cycle == False
+    prop_a, prop_b = pe.get_output_for_propagation()
+    assert prop_a == data_type(1)
+    assert prop_b is None
+
+def test_pe_reset(data_type=np.int32):
+    pe = ProcessingElement(pe_id=(0,0), data_type=data_type)
+    pe.load_inputs(data_type(2), data_type(3))
+    pe.cycle()
+    pe.reset()
+    assert pe.accumulator == 0
+    assert pe.total_mac_ops == 0
+    assert pe.current_input_a is None
+    assert pe.current_input_b is None
+    assert pe.propagate_a is None
+    assert pe.propagate_b is None
+    assert pe.is_computing_this_cycle == False
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+20. tests/test_memory.py
+
+import pytest
+from open_accelerator.memory import Buffer
+
+def test_buffer_creation():
+    buf = Buffer("test_buf", size=10, bandwidth=2)
+    assert buf.capacity == 10
+    assert buf.bandwidth == 2
+    assert len(buf) == 0
+    assert buf.is_empty()
+
+def test_buffer_write_read():
+    buf = Buffer("test_buf", size=5, bandwidth=2)
+
+    # Write 3 elements, bandwidth is 2, so 2 should be written
+    written = buf.write([1, 2, 3])
+    assert written == 2
+    assert len(buf) == 2
+    assert buf.queue == pytest.approx([1, 2]) # approx for deque comparison
+
+    # Write 2 more
+    written = buf.write([3, 4])
+    assert written == 2
+    assert len(buf) == 4
+    assert buf.queue == pytest.approx([1, 2, 3, 4])
+
+    # Try to write 2 more, buffer has space for 1
+    written = buf.write([5, 6])
+    assert written == 1
+    assert len(buf) == 5
+    assert buf.is_full()
+    assert buf.queue == pytest.approx([1, 2, 3, 4, 5])
+
+    # Try to write when full
+    written = buf.write([7])
+    assert written == 0
+    assert len(buf) == 5
+
+    # Read 3 elements, bandwidth 2
+    read_data = buf.read(3)
+    assert len(read_data) == 2
+    assert read_data == [1, 2]
+    assert len(buf) == 3
+
+    # Read remaining
+    read_data = buf.read(10) # Request more than available
+    assert len(read_data) == 2 # Bandwidth limited
+    assert read_data == [3,4] # Reads 3, 4
+    assert len(buf) == 1 # Remaining: 5
+
+    read_data = buf.read(1)
+    assert len(read_data) == 1
+    assert read_data == [5]
+    assert buf.is_empty()
+
+    # Read from empty
+    read_data = buf.read(1)
+    assert len(read_data) == 0
+    assert buf.is_empty()
+
+def test_buffer_peek():
+    buf = Buffer("test_buf", size=5, bandwidth=3)
+    buf.write([1,2,3,4,5]) # Writes 1,2,3 (bandwidth), then 4,5 (bandwidth)
+
+    # Peek 2 elements
+    peeked = buf.peek(2)
+    assert peeked == [1,2]
+    assert len(buf) == 5 # Peek doesn't remove
+
+    # Peek more than bandwidth
+    peeked = buf.peek(4)
+    assert peeked == [1,2,3] # Limited by bandwidth
+    assert len(buf) == 5
+
+    # Peek more than available
+    buf.read(3) # reads [1,2,3], remaining [4,5]
+    peeked = buf.peek(3)
+    assert peeked == [4,5] # Limited by available
+    assert len(buf) == 2
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+21. tests/test_systolic_array_os.py
+
+import pytest
+import numpy as np
+from open_accelerator.systolic_array import SystolicArray
+from open_accelerator.utils import AcceleratorConfig
+
+@pytest.fixture
+def os_array_2x2(base_accel_config): # Uses the 2x2 config from conftest
+    return SystolicArray(base_accel_config)
+
+def test_systolic_array_creation(os_array_2x2):
+    array = os_array_2x2
+    assert array.rows == 2
+    assert array.cols == 2
+    assert len(array.pes) == 2
+    assert len(array.pes[0]) == 2
+
+def test_systolic_array_os_cycle_single_element(os_array_2x2, base_accel_config):
+    array = os_array_2x2
+    dt = base_accel_config.data_type
+
+    # Cycle 0: Inject A00 into PE(0,0) from left, B00 into PE(0,0) from top
+    # A_ik is injected at PE(i,0) at cycle i+k. A00 means i=0, k=0. Cycle 0.
+    # B_kj is injected at PE(0,j) at cycle j+k. B00 means k=0, j=0. Cycle 0.
+    edge_a = [dt(2), None]  # A00 for PE(0,0), A1k later
+    edge_b = [dt(3), None]  # B00 for PE(0,0), Bk1 later
+    array.cycle(edge_a, edge_b)
+
+    # PE(0,0) should have computed 2*3=6
+    assert array.pes[0][0].accumulator == dt(6)
+    assert array.pes[0][0].is_computing_this_cycle == True
+    # PE(0,0) should pass A00 right, B00 down
+    assert array.pe_outputs_a[0][0] == dt(2) # A00 propagated by PE(0,0)
+    assert array.pe_outputs_b[0][0] == dt(3) # B00 propagated by PE(0,0)
+
+    # Other PEs should be idle
+    assert array.pes[0][1].accumulator == dt(0)
+    assert array.pes[0][1].is_computing_this_cycle == False
+    assert array.pes[1][0].accumulator == dt(0)
+    assert array.pes[1][1].accumulator == dt(0)
+
+    # Cycle 1:
+    # A00 moves to PE(0,1)'s input (from PE(0,0)'s output_a)
+    # B00 moves to PE(1,0)'s input (from PE(0,0)'s output_b)
+    # Inject A01 for PE(0,0) (k=1,i=0 -> cycle 1)
+    # Inject B10 for PE(0,0) (k=1,j=0 -> cycle 1)
+    # Inject A10 for PE(1,0) (k=0,i=1 -> cycle 1)
+    # Inject B01 for PE(0,1) (k=0,j=1 -> cycle 1)
+
+    # Inputs for cycle 1 for OS A[2,2]*B[2,2]
+    # A = [[A00, A01], [A10, A11]]
+    # B = [[B00, B01], [B10, B11]]
+    # Cycle 1:
+    # PE(0,0) gets A01, B10
+    # PE(0,1) gets A00 (from PE(0,0)), B01 (edge)
+    # PE(1,0) gets A10 (edge), B00 (from PE(0,0))
+    # PE(1,1) gets nothing useful yet.
+
+    edge_a_c1 = [dt(4), dt(5)] # A01 for PE(0,0), A10 for PE(1,0)
+    edge_b_c1 = [dt(6), dt(7)] # B10 for PE(0,0), B01 for PE(0,1)
+    array.cycle(edge_a_c1, edge_b_c1)
+
+    # PE(0,0) computed 2*3, now adds 4*6=24. Total 30.
+    assert array.pes[0][0].accumulator == dt(6 + 4*6) # 6 + 24 = 30
+    assert array.pes[0][0].is_computing_this_cycle == True
+    assert array.pe_outputs_a[0][0] == dt(4) # Propagates A01
+    assert array.pe_outputs_b[0][0] == dt(6) # Propagates B10
+
+    # PE(0,1) received A00=2 (from PE(0,0) left) and B01=7 (from edge_b_c1[1])
+    # PE(0,1) computes 2*7=14
+    assert array.pes[0][1].accumulator == dt(2*7) # 14
+    assert array.pes[0][1].is_computing_this_cycle == True
+    assert array.pe_outputs_a[0][1] == dt(2) # Propagates A00
+    assert array.pe_outputs_b[0][1] == dt(7) # Propagates B01
+
+    # PE(1,0) received A10=5 (from edge_a_c1[1]) and B00=3 (from PE(0,0) top)
+    # PE(1,0) computes 5*3=15
+    assert array.pes[1][0].accumulator == dt(5*3) # 15
+    assert array.pes[1][0].is_computing_this_cycle == True
+    assert array.pe_outputs_a[1][0] == dt(5) # Propagates A10
+    assert array.pe_outputs_b[1][0] == dt(3) # Propagates B00
+
+    # PE(1,1) received A1k (from PE(1,0) left), Bk1 (from PE(0,1) top)
+    # In cycle 1, PE(1,0) output_a is A10. PE(0,1) output_b is B01.
+    # So PE(1,1) inputs_a = A10=5, inputs_b = B01=7. Computes 5*7=35
+    assert array.pes[1][1].accumulator == dt(5*7) # 35
+    assert array.pes[1][1].is_computing_this_cycle == True
+
+def test_systolic_array_reset(os_array_2x2, base_accel_config):
+    array = os_array_2x2
+    dt = base_accel_config.data_type
+    edge_a = [dt(1), None]
+    edge_b = [dt(1), None]
+    array.cycle(edge_a, edge_b)
+    array.reset()
+
+    assert array.pes[0][0].accumulator == 0
+    assert array.pes[0][0].total_mac_ops == 0
+    assert len(array.pe_activity_log) == 0
+    for r in range(array.rows):
+        for c in range(array.cols):
+            assert array.pe_inputs_a[r][c] is None
+            assert array.pe_inputs_b[r][c] is None
+            assert array.pe_outputs_a[r][c] is None
+            assert array.pe_outputs_b[r][c] is None
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+22. tests/test_workloads.py
+
+import pytest
+import numpy as np
+from open_accelerator.workloads import GEMMWorkload, WorkloadConfig
+from open_accelerator.utils import AcceleratorConfig
+
+def test_gemm_workload_creation(base_accel_config):
+    workload_config = WorkloadConfig(gemm_M=2, gemm_K=3, gemm_P=4)
+    workload = GEMMWorkload(workload_config, base_accel_config)
+    assert workload.M == 2
+    assert workload.K == 3
+    assert workload.P == 4
+    assert workload.matrix_A.size == 0 # Not generated yet
+
+def test_gemm_workload_generate_data(base_accel_config):
+    workload_config = WorkloadConfig(gemm_M=2, gemm_K=3, gemm_P=4)
+    workload = GEMMWorkload(workload_config, base_accel_config)
+    workload.generate_data(seed=42)
+
+    assert workload.matrix_A.shape == (2, 3)
+    assert workload.matrix_B.shape == (3, 4)
+    assert workload.expected_C.shape == (2, 4)
+    assert workload.matrix_A.dtype == base_accel_config.data_type
+    assert workload.matrix_B.dtype == base_accel_config.data_type
+
+    # Check reproducibility with seed
+    workload2 = GEMMWorkload(workload_config, base_accel_config)
+    workload2.generate_data(seed=42)
+    assert np.array_equal(workload.matrix_A, workload2.matrix_A)
+    assert np.array_equal(workload.matrix_B, workload2.matrix_B)
+
+    # Check expected_C computation
+    manual_C = np.dot(workload.matrix_A, workload.matrix_B)
+    assert np.array_equal(workload.expected_C, manual_C)
+
+def test_gemm_workload_config_validation(base_accel_config):
+    with pytest.raises(ValueError):
+        WorkloadConfig(gemm_M=2, gemm_K=3) # Missing P
+        GEMMWorkload(WorkloadConfig(gemm_M=2, gemm_K=3), base_accel_config)
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+23. tests/test_integration_gemm.py
+
+import pytest
+import numpy as np
+from open_accelerator.simulation import Simulator
+from open_accelerator.utils import AcceleratorConfig, WorkloadConfig
+from open_accelerator.workloads import GEMMWorkload
+from open_accelerator.analysis import analyze_simulation_results
+
+def run_and_verify_gemm(workload: GEMMWorkload, accel_config: AcceleratorConfig):
+    simulator = Simulator(accel_config, workload)
+    sim_stats = simulator.run()
+
+    # Check output correctness
+    output_C = sim_stats["output_matrix"]
+    assert output_C.shape == workload.expected_C.shape
+    assert np.array_equal(output_C, workload.expected_C), \
+        f"Output mismatch.\nExpected:\n{workload.expected_C}\nGot:\n{output_C}"
+
+    # Check MAC operations: M*K*P for GEMM
+    assert sim_stats["total_mac_operations"] == workload.M * workload.K * workload.P
+
+    # Check cycle count for OS GEMM
+    # Last MAC for C[M-1, P-1] happens at cycle (M-1) + (P-1) + (K-1)
+    # Simulator runs one more cycle to detect completion.
+    # Total cycles = (M-1) + (P-1) + (K-1) + 1_for_last_mac_cycle_itself
+    # The current simulator.run() might count cycles differently, let's check its logic.
+    # Accelerator.cycle() increments its own current_cycle *after* doing work.
+    # Controller.is_computation_done checks current_cycle > required_computation_cycles.
+    # required_computation_cycles = (M-1) + (P-1) + (K-1).
+    # So if current_cycle = required_computation_cycles, it runs.
+    # If current_cycle = required_computation_cycles + 1, controller.is_computation_done is true.
+    # So simulation stops after running cycle indexed required_computation_cycles.
+    # Thus, accelerator.current_cycle (which is sim_stats["total_cycles"]) should be
+    # (M-1) + (P-1) + (K-1) + 1.
+    expected_cycles = (workload.M - 1) + (workload.P - 1) + (workload.K - 1) + 1
+    if workload.M ==0 or workload.P==0 or workload.K==0: # Edge cases if any dim is 0
+        expected_cycles = 1 # Or 0 depending on interpretation
+    elif workload.M*workload.K*workload.P == 0: # If any dim is zero, effectively no ops
+        expected_cycles = 1 # Minimal cycles to start and finish
+
+    # Handle case where K=0 (no MACs, should be 0 cycles of actual computation)
+    # The formula (M-1)+(P-1)+(K-1)+1 assumes M,K,P >= 1.
+    if workload.K == 0:
+        expected_cycles = 1 # Minimal cycle if K=0
+    elif workload.M == 0 or workload.P == 0:
+        expected_cycles = 1 # Minimal cycle if M or P = 0
+
+    assert sim_stats["total_cycles"] == expected_cycles, \
+        f"Cycle count mismatch. Expected {expected_cycles}, Got {sim_stats['total_cycles']}"
+
+    # Analyze performance metrics
+    metrics = analyze_simulation_results(sim_stats, accel_config, workload)
+    assert metrics.total_cycles == expected_cycles
+    assert metrics.total_mac_operations == workload.M * workload.K * workload.P
+
+    # PE utilization cannot be easily asserted to a fixed value without deep analysis
+    # but should be between 0 and 1.
+    assert 0.0 <= metrics.average_pe_utilization <= 1.0
+    if metrics.total_mac_operations > 0:
+         assert metrics.average_pe_utilization > 0.0 # Should not be 0 if ops happened
+
+    return sim_stats, metrics
+
+
+def test_gemm_2x2x2_integration(gemm_workload_2x2x2): # M=2, K=2, P=2
+    workload, accel_config = gemm_workload_2x2x2
+    run_and_verify_gemm(workload, accel_config)
+
+def test_gemm_3x1x2_integration(gemm_workload_3x1x2): # M=3, K=1, P=2
+    workload, accel_config = gemm_workload_3x1x2
+    run_and_verify_gemm(workload, accel_config)
+
+def test_gemm_1x1x1_integration(base_accel_config):
+    # Smallest possible GEMM
+    # Need to create specific accel_config if array dims must match M,P
+    accel_config_1x1 = AcceleratorConfig(array_rows=1, array_cols=1, data_type=base_accel_config.data_type)
+    workload_config = WorkloadConfig(gemm_M=1, gemm_K=1, gemm_P=1)
+    workload = GEMMWorkload(workload_config, accel_config_1x1)
+    workload.matrix_A = np.array([[5]], dtype=accel_config_1x1.data_type)
+    workload.matrix_B = np.array([[10]], dtype=accel_config_1x1.data_type)
+    workload.expected_C = np.dot(workload.matrix_A, workload.matrix_B)
+    run_and_verify_gemm(workload, accel_config_1x1)
+
+def test_gemm_larger_K_integration(base_accel_config):
+    # M=2, K=4, P=2
+    M, K, P = 2, 4, 2
+    accel_config_custom = AcceleratorConfig(array_rows=M, array_cols=P, data_type=base_accel_config.data_type)
+    workload_config = WorkloadConfig(gemm_M=M, gemm_K=K, gemm_P=P)
+    workload = GEMMWorkload(workload_config, accel_config_custom)
+    workload.generate_data(seed=11)
+    run_and_verify_gemm(workload, accel_config_custom)
+
+def test_gemm_zero_K_integration(base_accel_config):
+    M, K, P = 2, 0, 2 # K=0 dimension
+    # Matrix A will be 2x0, Matrix B will be 0x2. Dot product is 2x2 of zeros.
+    accel_config_custom = AcceleratorConfig(array_rows=M, array_cols=P, data_type=base_accel_config.data_type)
+    workload_config = WorkloadConfig(gemm_M=M, gemm_K=K, gemm_P=P)
+    workload = GEMMWorkload(workload_config, accel_config_custom)
+    workload.matrix_A = np.empty((M,K), dtype=accel_config_custom.data_type) # Shape (2,0)
+    workload.matrix_B = np.empty((K,P), dtype=accel_config_custom.data_type) # Shape (0,2)
+    workload.expected_C = np.dot(workload.matrix_A, workload.matrix_B) # Should be (2,2) array of zeros
+
+    sim_stats, metrics = run_and_verify_gemm(workload, accel_config_custom)
+    assert metrics.total_mac_operations == 0
+    assert np.all(sim_stats["output_matrix"] == 0)
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+Python
+IGNORE_WHEN_COPYING_END
+
+This completes the initial version of the "Open Accelerator" simulator. It focuses on Output Stationary GEMM, is configurable, includes basic analysis and visualization, and has a test suite. It's built with modularity for future extensions (e.g., other dataflows, more complex memory). To run it, save these files in the specified directory structure, install dependencies (pip install numpy matplotlib pytest), and then run python examples/run_gemm_simulation.py or pytest.
