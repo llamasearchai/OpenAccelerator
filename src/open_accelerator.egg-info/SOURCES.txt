@@ -48,6 +48,7 @@ src/open_accelerator/simulation/__init__.py
 src/open_accelerator/simulation/simulator.py
 src/open_accelerator/utils/__init__.py
 src/open_accelerator/utils/config.py
+src/open_accelerator/utils/request_id.py
 src/open_accelerator/workloads/__init__.py
 src/open_accelerator/workloads/base.py
 src/open_accelerator/workloads/gemm.py

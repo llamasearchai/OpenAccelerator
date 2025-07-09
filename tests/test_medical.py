@@ -4,10 +4,11 @@ Comprehensive tests for medical modules.
 Tests medical compliance, imaging, models, optimization, validation, and workflows.
 """
 
-import numpy as np
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import numpy as np
+import pytest
 
 from open_accelerator.medical.compliance import (
     AuditEvent,
@@ -608,10 +609,18 @@ class TestMedicalWorkflow:
         """Test workflow execution."""
         # Add mock steps
         steps = [
-            WorkflowStep("load_image", "Load DICOM image", parameters={"path": "/test/image.dcm"}),
-            WorkflowStep("preprocess", "Preprocess image", parameters={"normalize": True}),
-            WorkflowStep("segment", "Segment image", parameters={"model": "segmentation_model"}),
-            WorkflowStep("postprocess", "Postprocess segmentation", parameters={"smooth": True}),
+            WorkflowStep(
+                "load_image", "Load DICOM image", parameters={"path": "/test/image.dcm"}
+            ),
+            WorkflowStep(
+                "preprocess", "Preprocess image", parameters={"normalize": True}
+            ),
+            WorkflowStep(
+                "segment", "Segment image", parameters={"model": "segmentation_model"}
+            ),
+            WorkflowStep(
+                "postprocess", "Postprocess segmentation", parameters={"smooth": True}
+            ),
         ]
 
         for step in steps:
@@ -633,7 +642,13 @@ class TestMedicalWorkflow:
     def test_workflow_validation(self, medical_workflow):
         """Test workflow validation."""
         # Add a step to make the workflow valid
-        medical_workflow.add_step(WorkflowStep(name="input_validation", description="Validate input data", required=True))
+        medical_workflow.add_step(
+            WorkflowStep(
+                name="input_validation",
+                description="Validate input data",
+                required=True,
+            )
+        )
         validation_result = medical_workflow.validate()
         assert validation_result.is_valid is True
         assert validation_result.has_input_validation is True
@@ -711,18 +726,30 @@ class TestMedicalIntegration:
 
         # Add comprehensive steps
         steps = [
-            WorkflowStep("load_dicom", "Load DICOM image", parameters={"path": "/test/ct.dcm"}),
+            WorkflowStep(
+                "load_dicom", "Load DICOM image", parameters={"path": "/test/ct.dcm"}
+            ),
             WorkflowStep("phi_removal", "Remove PHI", parameters={"anonymize": True}),
-            WorkflowStep("preprocessing", "Preprocess CT", parameters={"normalize": True}),
             WorkflowStep(
-                "segmentation", "Segment organs", parameters={"model": "organ_segmentation"}
-            ),
-            WorkflowStep("validation", "Validate results", parameters={"clinical_review": True}),
-            WorkflowStep(
-                "compliance_check", "Check compliance", parameters={"hipaa": True, "fda": True}
+                "preprocessing", "Preprocess CT", parameters={"normalize": True}
             ),
             WorkflowStep(
-                "audit_log", "Log audit event", parameters={"event_type": "analysis_complete"}
+                "segmentation",
+                "Segment organs",
+                parameters={"model": "organ_segmentation"},
+            ),
+            WorkflowStep(
+                "validation", "Validate results", parameters={"clinical_review": True}
+            ),
+            WorkflowStep(
+                "compliance_check",
+                "Check compliance",
+                parameters={"hipaa": True, "fda": True},
+            ),
+            WorkflowStep(
+                "audit_log",
+                "Log audit event",
+                parameters={"event_type": "analysis_complete"},
             ),
         ]
 
@@ -757,6 +784,6 @@ class TestMedicalIntegration:
     def test_medical_validation_pipeline(self, medical_config):
         """Test the full medical validation pipeline."""
         mock_model = {"accuracy": 0.98}
-        validator = create_medical_validator(medical_config)
+        _ = create_medical_validator(medical_config)
         validation_result = validate_medical_model(mock_model, None)
         assert validation_result["model_validation"]["is_valid"] is True
