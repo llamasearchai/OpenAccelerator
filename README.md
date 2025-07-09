@@ -6,10 +6,10 @@
 [![Coverage](https://img.shields.io/badge/Coverage-55.12%25-orange.svg)](https://github.com/nikjois/OpenAccelerator)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://black.readthedocs.io)
 
-**Author**: [Nik Jois](mailto:nikjois@llamasearch.ai)  
-**Institution**: LlamaSearch AI Research  
-**Version**: 1.0.0  
-**License**: MIT  
+**Author**: [LlamaSearch AI Research](mailto:contact@llamasearch.ai)
+**Institution**: LlamaSearch AI Research
+**Version**: 1.0.0
+**License**: MIT
 
 ---
 
@@ -843,39 +843,22 @@ OpenAccelerator Enterprise Architecture
 
 ### Community Resources
 
-- **GitHub Repository**: [https://github.com/nikjois/OpenAccelerator](https://github.com/nikjois/OpenAccelerator)
-- **Documentation**: [https://nikjois.github.io/OpenAccelerator](https://nikjois.github.io/OpenAccelerator)
-- **PyPI Package**: [https://pypi.org/project/open-accelerator](https://pypi.org/project/open-accelerator)
+- **GitHub Repository**: https://github.com/llamasearchai/OpenAccelerator
+- **Documentation**: https://llamasearchai.github.io/OpenAccelerator
+- **PyPI Package**: https://pypi.org/project/open-accelerator
+- **Issues**: https://github.com/llamasearchai/OpenAccelerator/issues
+- **Discussions**: https://github.com/llamasearchai/OpenAccelerator/discussions
+- **Email**: contact@llamasearch.ai
 
-## License
+License
+=======
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for complete details.
+This project is licensed under the MIT License - see the `LICENSE <https://github.com/llamasearchai/OpenAccelerator/blob/main/LICENSE>`_ file for complete details.
 
-```
-MIT License
+Copyright (c) 2024 LlamaSearch AI Research
 
-Copyright (c) 2024 Nik Jois
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## Acknowledgments
+Acknowledgments
+===============
 
 We acknowledge the following contributions to the OpenAccelerator project:
 

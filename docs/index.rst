@@ -16,7 +16,7 @@ OpenAccelerator - Enterprise-Grade Systolic Array Computing Framework
 .. image:: https://img.shields.io/badge/Code%20Style-Black-black.svg
    :target: https://black.readthedocs.io
 
-**Author**: `Nik Jois <mailto:nikjois@llamasearch.ai>`_
+**Author**: `LlamaSearch AI Research <mailto:contact@llamasearch.ai>`_
 
 **Institution**: LlamaSearch AI Research
 
@@ -247,19 +247,19 @@ Documentation Structure
 Community & Support
 ===================
 
-* **GitHub Repository**: https://github.com/nikjois/OpenAccelerator
-* **Documentation**: https://nikjois.github.io/OpenAccelerator
+* **GitHub Repository**: https://github.com/llamasearchai/OpenAccelerator
+* **Documentation**: https://llamasearchai.github.io/OpenAccelerator
 * **PyPI Package**: https://pypi.org/project/open-accelerator
-* **Issues**: https://github.com/nikjois/OpenAccelerator/issues
-* **Discussions**: https://github.com/nikjois/OpenAccelerator/discussions
-* **Email**: nikjois@llamasearch.ai
+* **Issues**: https://github.com/llamasearchai/OpenAccelerator/issues
+* **Discussions**: https://github.com/llamasearchai/OpenAccelerator/discussions
+* **Email**: contact@llamasearch.ai
 
 License
 =======
 
-This project is licensed under the MIT License - see the `LICENSE <https://github.com/nikjois/OpenAccelerator/blob/main/LICENSE>`_ file for complete details.
+This project is licensed under the MIT License - see the `LICENSE <https://github.com/llamasearchai/OpenAccelerator/blob/main/LICENSE>`_ file for complete details.
 
-Copyright (c) 2024 Nik Jois
+Copyright (c) 2024 LlamaSearch AI Research
 
 Acknowledgments
 ===============

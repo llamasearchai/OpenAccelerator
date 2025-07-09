@@ -1,12 +1,16 @@
+# -*- coding: utf-8 -*-
+#
 # Configuration file for the Sphinx documentation builder.
 #
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+# This file does only contain a selection of the most common options. For a
+# full list see the documentation:
+# http://www.sphinx-doc.org/en/master/config
 
 import os
 import sys
 
 # -- Path setup --------------------------------------------------------------
+from typing import List
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -18,8 +22,8 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "OpenAccelerator"
-copyright = "2024, Nik Jois"
-author = "Nik Jois"
+copyright = "2024, LlamaSearch AI Research"
+author = "LlamaSearch AI Research"
 version = "1.0.0"
 release = "1.0.0"
 
@@ -262,7 +266,7 @@ latex_documents = [
         master_doc,
         "OpenAccelerator.tex",
         "OpenAccelerator Documentation",
-        "Nik Jois",
+        "LlamaSearch AI Research",
         "manual",
     ),
 ]
@@ -326,9 +330,21 @@ todo_include_todos = True
 # -- Options for coverage extension ------------------------------------------
 
 coverage_show_missing_items = True
-coverage_ignore_modules = []
-coverage_ignore_functions = []
-coverage_ignore_classes = []
+# -- Custom Variables --------------------------------------------------------
+
+# Define a variable to be used in the documentation
+rst_epilog = """
+.. |author| replace:: LlamaSearch AI Research
+"""
+
+# -- Coverage Settings -------------------------------------------------------
+
+# Used by the `sphinx.ext.coverage` extension
+coverage_write_headline: bool = True
+coverage_skip_undoc_in_모듈: bool = False
+coverage_ignore_modules: List[str] = []
+coverage_ignore_functions: List[str] = []
+coverage_ignore_classes: List[str] = []
 
 # -- Options for sphinx_click extension --------------------------------------
 
