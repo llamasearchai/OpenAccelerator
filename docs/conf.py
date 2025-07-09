@@ -218,7 +218,7 @@ html_theme_options = {
 
 html_context = {
     "display_github": True,
-    "github_user": "nikjois",
+    "github_user": "llamasearch",
     "github_repo": "OpenAccelerator",
     "github_version": "main",
     "conf_py_path": "/docs/",
@@ -312,7 +312,7 @@ epub_copyright = copyright
 
 # The unique identifier of the text. This can be a ISBN number
 # or the project homepage.
-epub_identifier = "https://github.com/nikjois/OpenAccelerator"
+epub_identifier = "https://github.com/llamasearch/OpenAccelerator"
 
 # A unique identification for the text.
 epub_uid = "OpenAccelerator"

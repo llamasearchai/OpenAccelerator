@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/Tests-304%20passing-green.svg)](https://github.com/nikjois/OpenAccelerator)
-[![Coverage](https://img.shields.io/badge/Coverage-55.12%25-orange.svg)](https://github.com/nikjois/OpenAccelerator)
+[![Tests](https://img.shields.io/badge/Tests-304%20passing-green.svg)](https://github.com/llamasearch/OpenAccelerator)
+[![Coverage](https://img.shields.io/badge/Coverage-55.12%25-orange.svg)](https://github.com/llamasearch/OpenAccelerator)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://black.readthedocs.io)
 
 **Author**: [LlamaSearch AI Research](mailto:contact@llamasearch.ai)
@@ -85,7 +85,7 @@ OpenAccelerator is a production-ready, enterprise-grade hardware simulation fram
 
 ```bash
 # Clone the repository
-git clone https://github.com/nikjois/OpenAccelerator.git
+git clone https://github.com/llamasearch/OpenAccelerator.git
 cd OpenAccelerator
 
 # Install dependencies
@@ -672,7 +672,7 @@ spec:
 
 ```bash
 # Clone repository
-git clone https://github.com/nikjois/OpenAccelerator.git
+git clone https://github.com/llamasearch/OpenAccelerator.git
 cd OpenAccelerator
 
 # Create virtual environment

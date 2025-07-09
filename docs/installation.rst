@@ -31,7 +31,7 @@ Development Installation
 
 For development or latest features::
 
-    git clone https://github.com/nikjois/OpenAccelerator.git
+    git clone https://github.com/llamasearch/OpenAccelerator.git
     cd OpenAccelerator
     pip install -e ".[dev]"
 
@@ -42,7 +42,7 @@ Docker Installation
 
 Using Docker Compose::
 
-    git clone https://github.com/nikjois/OpenAccelerator.git
+    git clone https://github.com/llamasearch/OpenAccelerator.git
     cd OpenAccelerator
     docker-compose up -d
 
@@ -163,7 +163,7 @@ Getting Help
 -----------
 
 * Documentation: https://openaccelerator.readthedocs.io/
-* Issues: https://github.com/nikjois/OpenAccelerator/issues
+* Issues: https://github.com/llamasearch/OpenAccelerator/issues
 * Email: nikjois@llamasearch.ai
 
 For medical applications, please review the medical guide for additional compliance requirements.

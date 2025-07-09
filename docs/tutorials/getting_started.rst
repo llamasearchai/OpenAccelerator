@@ -26,7 +26,7 @@ For development installation:
 
 .. code-block:: bash
 
-    git clone https://github.com/nikjois/OpenAccelerator.git
+    git clone https://github.com/llamasearch/OpenAccelerator.git
     cd OpenAccelerator
     pip install -e ".[dev]"
 

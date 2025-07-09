@@ -8,10 +8,10 @@ OpenAccelerator - Enterprise-Grade Systolic Array Computing Framework
    :target: https://www.python.org
 
 .. image:: https://img.shields.io/badge/Tests-304%20passing-green.svg
-   :target: https://github.com/nikjois/OpenAccelerator
+   :target: https://github.com/llamasearch/OpenAccelerator
 
 .. image:: https://img.shields.io/badge/Coverage-55.12%25-orange.svg
-   :target: https://github.com/nikjois/OpenAccelerator
+   :target: https://github.com/llamasearch/OpenAccelerator
 
 .. image:: https://img.shields.io/badge/Code%20Style-Black-black.svg
    :target: https://black.readthedocs.io
@@ -84,7 +84,7 @@ Installation
 .. code-block:: bash
 
     # Clone the repository
-    git clone https://github.com/nikjois/OpenAccelerator.git
+    git clone https://github.com/llamasearch/OpenAccelerator.git
     cd OpenAccelerator
 
     # Install dependencies

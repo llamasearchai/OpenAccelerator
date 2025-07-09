@@ -235,10 +235,10 @@ all = [
 "Documentation" = "https://llamasearchai.github.io/OpenAccelerator"
 "Repository" = "https://github.com/llamasearchai/OpenAccelerator"
 "Bug Tracker" = "https://github.com/llamasearchai/OpenAccelerator/issues"
-"Changelog" = "https://github.com/nikjois/OpenAccelerator/blob/main/CHANGELOG.md"
+"Changelog" = "https://github.com/llamasearch/OpenAccelerator/blob/main/CHANGELOG.md"
 "PyPI" = "https://pypi.org/project/open-accelerator"
-"Discussions" = "https://github.com/nikjois/OpenAccelerator/discussions"
-"Funding" = "https://github.com/sponsors/nikjois"
+"Discussions" = "https://github.com/llamasearch/OpenAccelerator/discussions"
+"Funding" = "https://github.com/sponsors/llamasearch"
 
 [project.scripts]
 openaccel = "open_accelerator.cli.commands:main"

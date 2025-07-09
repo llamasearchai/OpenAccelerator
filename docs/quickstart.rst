@@ -162,7 +162,7 @@ Run OpenAccelerator in Docker:
     docker run -p 8000:8000 nikjois/openaccelerator:latest
 
     # Or use docker-compose
-    git clone https://github.com/nikjois/OpenAccelerator.git
+    git clone https://github.com/llamasearch/OpenAccelerator.git
     cd OpenAccelerator
     docker-compose up -d
 
@@ -263,5 +263,5 @@ Support
 -------
 
 * Documentation: https://openaccelerator.readthedocs.io/
-* Issues: https://github.com/nikjois/OpenAccelerator/issues
+* Issues: https://github.com/llamasearch/OpenAccelerator/issues
 * Email: nikjois@llamasearch.ai
