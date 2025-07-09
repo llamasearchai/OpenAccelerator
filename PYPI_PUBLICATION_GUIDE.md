@@ -1,7 +1,7 @@
 # PyPI Publication Guide for OpenAccelerator
 
-**Author**: Nik Jois <nikjois@llamasearch.ai>  
-**Date**: 2024  
+**Author**: Nik Jois <nikjois@llamasearch.ai>
+**Date**: 2024
 **Project**: OpenAccelerator - Professional PyPI Publication
 
 ## Overview
@@ -268,11 +268,11 @@ A successful PyPI publication demonstrates:
 
 ## Contact Information
 
-**Author**: Nik Jois  
-**Email**: nikjois@llamasearch.ai  
-**Institution**: LlamaSearch AI Research  
-**PyPI Profile**: https://pypi.org/user/nikjois/  
+**Author**: Nik Jois
+**Email**: nikjois@llamasearch.ai
+**Institution**: LlamaSearch AI Research
+**PyPI Profile**: https://pypi.org/user/nikjois/
 
 ---
 
-**This guide ensures professional PyPI publication that demonstrates exceptional software engineering capabilities and provides maximum value to the Python community.** 
+**This guide ensures professional PyPI publication that demonstrates exceptional software engineering capabilities and provides maximum value to the Python community.**

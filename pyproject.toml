@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-accelerator"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
-    {name = "LlamaSearch AI Research", email = "contact@llamasearch.ai"},
+    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
 ]
 description = "High-performance systolic array computing framework with AI agents and medical compliance."
 readme = "README.md"

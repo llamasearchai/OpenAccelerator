@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Performance analysis utilities for OpenAccelerator.
 
 This module provides a simple, **self-contained** implementation that converts
@@ -11,6 +9,7 @@ The implementation purposefully stays lightweight so that it does **not**
 introduce new heavy runtime dependencies. It is therefore safe to import from
 any environment—including headless or minimal Docker images.
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict

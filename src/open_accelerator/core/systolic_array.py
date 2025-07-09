@@ -411,7 +411,11 @@ class SystolicArray:
 
         metrics["total_operations"] = total_ops
         metrics["total_energy"] = total_energy
-        metrics["pe_utilization"] = active_count / (self.rows * self.cols)
+
+        if self.rows * self.cols > 0:
+            metrics["pe_utilization"] = active_count / (self.rows * self.cols)
+        else:
+            metrics["pe_utilization"] = 0.0
 
         return metrics
 

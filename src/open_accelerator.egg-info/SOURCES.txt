@@ -18,11 +18,13 @@ src/open_accelerator/analysis/__init__.py
 src/open_accelerator/analysis/medical_analysis.py
 src/open_accelerator/analysis/performance_analysis.py
 src/open_accelerator/api/__init__.py
+src/open_accelerator/api/__main__.py
 src/open_accelerator/api/main.py
 src/open_accelerator/api/middleware.py
 src/open_accelerator/api/models.py
 src/open_accelerator/api/routes.py
 src/open_accelerator/cli/__init__.py
+src/open_accelerator/cli/__main__.py
 src/open_accelerator/cli/animations.py
 src/open_accelerator/cli/commands.py
 src/open_accelerator/core/__init__.py

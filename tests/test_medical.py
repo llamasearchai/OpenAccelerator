@@ -241,7 +241,7 @@ class TestMedicalImageProcessor:
         # Mock DICOM data
         mock_dicom_data = b"DICOM_MOCK_DATA"
 
-        with patch("open_accelerator.medical.imaging.pydicom") as mock_pydicom:
+        with patch("open_accelerator.medical.imaging._pydicom") as mock_pydicom:
             mock_dataset = Mock()
             mock_dataset.pixel_array = np.random.rand(512, 512)
             mock_dataset.Modality = "CT"
@@ -258,7 +258,7 @@ class TestMedicalImageProcessor:
         # Mock NIfTI data
         mock_nifti_path = "/path/to/brain.nii.gz"
 
-        with patch("open_accelerator.medical.imaging.nibabel") as mock_nibabel:
+        with patch("open_accelerator.medical.imaging._nibabel") as mock_nibabel:
             mock_img = Mock()
             mock_img.get_fdata.return_value = np.random.rand(256, 256, 128)
             mock_nibabel.load.return_value = mock_img

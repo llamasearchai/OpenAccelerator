@@ -11,9 +11,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path  # <- needed for type annotations
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from ..utils.config import AcceleratorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -403,15 +406,15 @@ class DVFSController:
             "current_voltage_v": self.get_current_voltage(),
             "current_frequency_mhz": self.get_current_frequency(),
             "transition_count": self.transition_count,
-            "avg_utilization": np.mean(self.utilization_history)
-            if self.utilization_history
-            else 0.0,
-            "avg_power_fraction": np.mean(self.power_history)
-            if self.power_history
-            else 0.0,
-            "avg_performance_fraction": np.mean(self.performance_history)
-            if self.performance_history
-            else 0.0,
+            "avg_utilization": (
+                np.mean(self.utilization_history) if self.utilization_history else 0.0
+            ),
+            "avg_power_fraction": (
+                np.mean(self.power_history) if self.power_history else 0.0
+            ),
+            "avg_performance_fraction": (
+                np.mean(self.performance_history) if self.performance_history else 0.0
+            ),
         }
 
 
@@ -542,15 +545,19 @@ class ThermalManager:
                 * 100,
             ),
             "throttle_events_count": len(self.throttle_events),
-            "recent_throttle_events": self.throttle_events[-5:]
-            if self.throttle_events
-            else [],
-            "avg_temperature_c": np.mean(self.temperature_history)
-            if self.temperature_history
-            else self.current_temperature,
-            "max_temperature_c": max(self.temperature_history)
-            if self.temperature_history
-            else self.current_temperature,
+            "recent_throttle_events": (
+                self.throttle_events[-5:] if self.throttle_events else []
+            ),
+            "avg_temperature_c": (
+                np.mean(self.temperature_history)
+                if self.temperature_history
+                else self.current_temperature
+            ),
+            "max_temperature_c": (
+                max(self.temperature_history)
+                if self.temperature_history
+                else self.current_temperature
+            ),
         }
 
 
@@ -1439,21 +1446,23 @@ class PowerAnalyzer:
                 "p99_temp_c": float(np.percentile(temperature_array, 99)),
             },
             "efficiency_stats": {
-                "power_utilization_correlation": float(
-                    np.corrcoef(power_array, utilization_array)[0, 1]
-                )
-                if len(power_array) > 1
-                else 0.0,
-                "power_temperature_correlation": float(
-                    np.corrcoef(power_array, temperature_array)[0, 1]
-                )
-                if len(power_array) > 1
-                else 0.0,
+                "power_utilization_correlation": (
+                    float(np.corrcoef(power_array, utilization_array)[0, 1])
+                    if len(power_array) > 1
+                    else 0.0
+                ),
+                "power_temperature_correlation": (
+                    float(np.corrcoef(power_array, temperature_array)[0, 1])
+                    if len(power_array) > 1
+                    else 0.0
+                ),
             },
             "sample_count": len(self.power_samples),
-            "analysis_duration_seconds": self.timestamps[-1] - self.timestamps[0]
-            if len(self.timestamps) > 1
-            else 0.0,
+            "analysis_duration_seconds": (
+                self.timestamps[-1] - self.timestamps[0]
+                if len(self.timestamps) > 1
+                else 0.0
+            ),
         }
 
     def detect_power_anomalies(
@@ -1513,10 +1522,11 @@ class PowerAnalyzer:
         return {
             "summary": {
                 "total_samples": len(self.power_samples),
-                "analysis_duration_hours": (self.timestamps[-1] - self.timestamps[0])
-                / 3600
-                if len(self.timestamps) > 1
-                else 0.0,
+                "analysis_duration_hours": (
+                    (self.timestamps[-1] - self.timestamps[0]) / 3600
+                    if len(self.timestamps) > 1
+                    else 0.0
+                ),
                 "average_power_watts": stats["power_stats"]["mean_watts"],
                 "peak_power_watts": stats["power_stats"]["max_watts"],
                 "average_utilization": stats["utilization_stats"]["mean_utilization"],
@@ -1531,9 +1541,11 @@ class PowerAnalyzer:
             "detailed_stats": stats,
             "anomalies": {
                 "count": len(anomalies),
-                "anomaly_rate_percent": (len(anomalies) / len(self.power_samples)) * 100
-                if self.power_samples
-                else 0.0,
+                "anomaly_rate_percent": (
+                    (len(anomalies) / len(self.power_samples)) * 100
+                    if self.power_samples
+                    else 0.0
+                ),
                 "recent_anomalies": anomalies[-5:] if anomalies else [],
             },
             "recommendations": self._generate_efficiency_recommendations(
@@ -1596,7 +1608,7 @@ class PowerAnalyzer:
 
 
 def integrate_power_management(
-    accelerator_config: "AcceleratorConfig",  # type: ignore forward-ref
+    accelerator_config: "AcceleratorConfig",
     power_config: Optional[PowerConfig] = None,
 ) -> "PowerManager":
     """Create and attach a :class:`PowerManager` to the given accelerator.

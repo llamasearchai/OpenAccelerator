@@ -1,7 +1,7 @@
 # GitHub Publication Guide for OpenAccelerator
 
-**Author**: Nik Jois <nikjois@llamasearch.ai>  
-**Date**: 2024  
+**Author**: Nik Jois <nikjois@llamasearch.ai>
+**Date**: 2024
 **Project**: OpenAccelerator - Enterprise-Grade Publication Setup
 
 ## Overview
@@ -234,12 +234,12 @@ This project demonstrates:
 
 ## Contact Information
 
-**Author**: Nik Jois  
-**Email**: nikjois@llamasearch.ai  
-**Institution**: LlamaSearch AI Research  
-**GitHub**: https://github.com/nikjois  
-**LinkedIn**: https://linkedin.com/in/nikjois  
+**Author**: Nik Jois
+**Email**: nikjois@llamasearch.ai
+**Institution**: LlamaSearch AI Research
+**GitHub**: https://github.com/nikjois
+**LinkedIn**: https://linkedin.com/in/nikjois
 
 ---
 
-**This guide ensures professional publication that will impress top-tier technical recruiters and demonstrate exceptional software engineering capabilities.** 
+**This guide ensures professional publication that will impress top-tier technical recruiters and demonstrate exceptional software engineering capabilities.**

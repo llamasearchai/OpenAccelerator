@@ -1066,12 +1066,18 @@ class EnhancedAgent:
 
 
 def create_compound_ai_system(
-    optimization_agent, analysis_agent, medical_agent
+    optimization_agent,
+    analysis_agent,
+    medical_agent,
+    config: Optional[Dict[str, Any]] = None,
 ) -> "CompoundAISystem":
     """
     Create a compound AI system with the given configuration.
 
     Args:
+        optimization_agent: Optimization agent configuration
+        analysis_agent: Analysis agent configuration
+        medical_agent: Medical agent configuration
         config: Configuration dictionary for the AI system
 
     Returns:
@@ -1089,7 +1095,7 @@ def create_compound_ai_system(
     }
 
     # Merge with provided config
-    merged_config = {**default_config, **config}
+    merged_config = {**default_config, **(config or {})}
 
     return CompoundAISystem(merged_config)
 

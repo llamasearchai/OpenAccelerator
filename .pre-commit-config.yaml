@@ -60,6 +60,7 @@ repos:
         pass_filenames: false
         stages: [push]
 
+exclude: ^(build/|.*\.egg-info/|openaccel$)
 default_language_version:
   python: python3.9
 

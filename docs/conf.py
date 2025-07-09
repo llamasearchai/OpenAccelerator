@@ -8,9 +8,9 @@
 
 import os
 import sys
+import typing
 
 # -- Path setup --------------------------------------------------------------
-from typing import List
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -341,10 +341,10 @@ rst_epilog = """
 
 # Used by the `sphinx.ext.coverage` extension
 coverage_write_headline: bool = True
-coverage_skip_undoc_in_모듈: bool = False
-coverage_ignore_modules: List[str] = []
-coverage_ignore_functions: List[str] = []
-coverage_ignore_classes: List[str] = []
+coverage_skip_undoc_in_module: bool = False
+coverage_ignore_modules: typing.List[str] = []
+coverage_ignore_functions: typing.List[str] = []
+coverage_ignore_classes: typing.List[str] = []
 
 # -- Options for sphinx_click extension --------------------------------------
 

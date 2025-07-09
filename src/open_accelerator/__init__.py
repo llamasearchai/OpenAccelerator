@@ -9,9 +9,9 @@ Licensed under the Apache License, Version 2.0
 """
 
 # Version information
-__version__ = "1.0.0"
-__author__ = "LlamaSearch AI Research"
-__email__ = "contact@llamasearch.ai"
+__version__ = "1.0.1"
+__author__ = "Nik Jois"
+__email__ = "nikjois@llamasearch.ai"
 __license__ = "Apache-2.0"
 
 # Core imports with error handling
@@ -31,6 +31,55 @@ except ImportError:
     pass
 
 
+def get_config(key=None):
+    """Get global configuration or specific key."""
+    global _global_config
+    if _global_config is None:
+        _global_config = {}
+
+    if key is None:
+        try:
+            from .utils.config import AcceleratorConfig
+
+            config = AcceleratorConfig()
+            # Convert to dict format for testing
+            return {
+                "name": config.name,
+                "accelerator_type": config.accelerator_type.value,
+                "data_type": config.data_type.value,
+                "array_rows": config.array.rows,
+                "array_cols": config.array.cols,
+                "max_cycles": config.max_cycles,
+                "debug_mode": config.debug_mode,
+                "enable_logging": config.enable_logging,
+                **_global_config,
+            }
+        except (ImportError, AttributeError):
+            return _global_config
+    else:
+        return _global_config.get(key)
+
+
+def set_config(key, value):
+    """Set global configuration key-value pair."""
+    global _global_config
+    if _global_config is None:
+        _global_config = {}
+    _global_config[key] = value
+    return True
+
+
+def reset_config():
+    """Reset configuration to defaults."""
+    global _global_config
+    _global_config = {}
+    return True
+
+
+# Global configuration instance
+_global_config = None
+
+
 # Export main components
 __all__ = [
     "__version__",
@@ -46,4 +95,7 @@ __all__ = [
     "BaseWorkload",
     "GEMMWorkload",
     "PerformanceAnalyzer",
+    "get_config",
+    "set_config",
+    "reset_config",
 ]

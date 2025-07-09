@@ -519,7 +519,7 @@ system:
   name: "OpenAccelerator"
   version: "1.0.0"
   debug: false
-  
+
 hardware:
   array_rows: 16
   array_cols: 16
@@ -528,7 +528,7 @@ hardware:
     l1_size: 64KB
     l2_size: 1MB
     l3_size: 16MB
-    
+
 ai_agents:
   optimization:
     enabled: true
@@ -541,19 +541,19 @@ ai_agents:
     enabled: true
     hipaa_compliance: true
     fda_compliance: true
-    
+
 medical:
   compliance_mode: true
   encryption_required: true
   audit_logging: true
   supported_modalities: ["CT", "MRI", "X_RAY"]
-  
+
 api:
   host: "0.0.0.0"
   port: 8000
   workers: 4
   authentication_required: true
-  
+
 security:
   encryption_algorithm: "AES-256-GCM"
   audit_logging: true
