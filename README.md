@@ -1,15 +1,17 @@
 # OpenAccelerator - Enterprise-Grade ML Accelerator Simulation Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/Tests-304%20passing-green.svg)](https://github.com/llamasearch/OpenAccelerator)
-[![Coverage](https://img.shields.io/badge/Coverage-54.69%25-orange.svg)](https://github.com/llamasearch/OpenAccelerator)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org)
+[![Tests](https://github.com/LlamaFarms/OpenAccelerator/actions/workflows/ci.yml/badge.svg)](https://github.com/LlamaFarms/OpenAccelerator/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/LlamaFarms/OpenAccelerator/branch/main/graph/badge.svg)](https://codecov.io/gh/LlamaFarms/OpenAccelerator)
 [![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://black.readthedocs.io)
+[![PyPI version](https://badge.fury.io/py/open-accelerator.svg)](https://badge.fury.io/py/open-accelerator)
+[![Docs](https://github.com/LlamaFarms/OpenAccelerator/actions/workflows/docs.yml/badge.svg)](https://llamafarms.github.io/OpenAccelerator/)
 
-**Author**: LlamaFarms Team <team@llamafarms.ai>  
-**Version**: 1.0.1  
-**License**: MIT  
-**Status**: [PRODUCTION READY] Complete Master Program  
+**Author**: LlamaFarms Team <team@llamafarms.ai>
+**Version**: 1.0.1
+**License**: MIT
+**Status**: [PRODUCTION READY] Complete Master Program
 
 ---
 
@@ -19,7 +21,7 @@ OpenAccelerator is a **production-ready, enterprise-grade ML accelerator simulat
 
 ### Key Achievements
 - **100% System Validation Success Rate** (9/9 validation tests passed)
-- **100% Test Suite Success Rate** (304/304 tests passed)  
+- **100% Test Suite Success Rate** (304/304 tests passed)
 - **100% Medical Compliance** (HIPAA, FDA, medical imaging all compliant)
 - **Enterprise-Grade Quality** (No placeholders, professional presentation)
 - **Production-Ready Deployment** (Docker, FastAPI, automated workflows)
@@ -293,13 +295,13 @@ for rows, cols in array_sizes:
         array=ArrayConfig(rows=rows, cols=cols),
         debug_mode=False
     )
-    
+
     controller = AcceleratorController(config)
-    
+
     # Create and run workload
     workload = GEMMWorkload(matrix_size=512)
     workload.generate_data()
-    
+
     result = controller.execute_workload(workload)
     results.append({
         "array_size": f"{rows}x{cols}",
@@ -503,7 +505,7 @@ python FINAL_SYSTEM_VALIDATION.py
 ```bash
 # Run medical compliance checks
 python scripts/medical_compliance_check.py --output-format json
-python scripts/hipaa_compliance_check.py --output-format json  
+python scripts/hipaa_compliance_check.py --output-format json
 python scripts/fda_validation_check.py --output-format json
 
 # All scripts should report 100% compliance
@@ -565,7 +567,7 @@ nohup python -m open_accelerator.api > openaccelerator.log 2>&1 &
 
 **Hardware Simulation Performance**
 - **Small Arrays (8x8)**: 64-256 MACs/cycle, 1-4 GOPS sustained
-- **Medium Arrays (16x16)**: 256-1024 MACs/cycle, 4-16 GOPS sustained  
+- **Medium Arrays (16x16)**: 256-1024 MACs/cycle, 4-16 GOPS sustained
 - **Large Arrays (32x32)**: 1024-4096 MACs/cycle, 16-64 GOPS sustained
 - **Extra Large Arrays (64x64)**: 4096-16384 MACs/cycle, 64-256 GOPS sustained
 
@@ -577,7 +579,7 @@ nohup python -m open_accelerator.api > openaccelerator.log 2>&1 &
 
 **API Performance**
 - **REST API**: 1000-5000 requests/second, <50ms response time
-- **WebSocket**: 10000+ concurrent connections, <10ms latency  
+- **WebSocket**: 10000+ concurrent connections, <10ms latency
 - **Authentication**: <10ms token validation, JWT-based
 - **Medical Endpoints**: <100ms processing time, full compliance validation
 
@@ -670,15 +672,15 @@ python -m pytest tests/ -v
 
 ### Getting Help
 
-**Documentation**: Complete documentation at [GitHub Pages](https://llamasearch.github.io/OpenAccelerator)  
-**Issues**: Report bugs and feature requests via [GitHub Issues](https://github.com/llamasearch/OpenAccelerator/issues)  
-**Discussions**: Join community discussions on [GitHub Discussions](https://github.com/llamasearch/OpenAccelerator/discussions)  
+**Documentation**: Complete documentation at [GitHub Pages](https://llamasearch.github.io/OpenAccelerator)
+**Issues**: Report bugs and feature requests via [GitHub Issues](https://github.com/llamasearch/OpenAccelerator/issues)
+**Discussions**: Join community discussions on [GitHub Discussions](https://github.com/llamasearch/OpenAccelerator/discussions)
 **Email**: Professional support at [team@llamafarms.ai](mailto:team@llamafarms.ai)
 
 ### Community Resources
 
 - **GitHub Repository**: https://github.com/llamasearch/OpenAccelerator
-- **Documentation Site**: https://llamasearch.github.io/OpenAccelerator  
+- **Documentation Site**: https://llamasearch.github.io/OpenAccelerator
 - **PyPI Package**: https://pypi.org/project/open-accelerator
 - **Docker Hub**: https://hub.docker.com/r/llamasearch/openaccelerator
 
@@ -715,7 +717,7 @@ SOFTWARE.
 We acknowledge the following contributions to the OpenAccelerator project:
 
 - **OpenAI**: For providing the AI capabilities that power our intelligent agents
-- **Medical Imaging Community**: For DICOM and NIfTI standards and libraries  
+- **Medical Imaging Community**: For DICOM and NIfTI standards and libraries
 - **Systolic Array Research Community**: For foundational algorithmic contributions
 - **Open Source Contributors**: For framework components and libraries
 - **Healthcare Industry**: For compliance requirements and validation standards

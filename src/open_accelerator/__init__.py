@@ -8,94 +8,51 @@ Copyright 2024 LlamaSearch AI Research
 Licensed under the Apache License, Version 2.0
 """
 
-# Version information
+from __future__ import annotations
+
+import logging
+from typing import Any, Dict, Optional
+
 __version__ = "1.0.1"
-__author__ = "LlamaFarms Team"
-__email__ = "team@llamafarms.ai"
-__license__ = "Apache-2.0"
 
-# Core imports with error handling
-try:
-    from .analysis.performance_analysis import PerformanceAnalyzer
-    from .core.accelerator import AcceleratorController
-    from .core.memory import MemoryHierarchy
-    from .core.pe import ProcessingElement
-    from .core.systolic_array import SystolicArray
-    from .simulation.simulator import Simulator
-    from .utils.config import AcceleratorConfig
-    from .workloads.base import BaseWorkload
-    from .workloads.gemm import GEMMWorkload
+# Global configuration dictionary
+_config: Optional[Dict[str, Any]] = None
 
-except ImportError:
-    # Don't raise - allow partial functionality
-    pass
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
-def get_config(key=None):
-    """Get global configuration or specific key."""
-    global _global_config
-    if _global_config is None:
-        _global_config = {}
+def get_config(key: Optional[str] = None, default: Any = None) -> Any:
+    """
+    Get a configuration value.
+
+    If key is None, returns the entire configuration dictionary.
+    """
+    global _config
+    if _config is None:
+        from open_accelerator.utils.config import (
+            DEFAULT_CONFIG,
+            load_config_from_file,
+        )
+
+        _config = load_config_from_file() or DEFAULT_CONFIG
 
     if key is None:
-        try:
-            from .utils.config import AcceleratorConfig
+        return _config
 
-            config = AcceleratorConfig()
-            # Convert to dict format for testing
-            return {
-                "name": config.name,
-                "accelerator_type": config.accelerator_type.value,
-                "data_type": config.data_type.value,
-                "array_rows": config.array.rows,
-                "array_cols": config.array.cols,
-                "max_cycles": config.max_cycles,
-                "debug_mode": config.debug_mode,
-                "enable_logging": config.enable_logging,
-                **_global_config,
-            }
-        except (ImportError, AttributeError):
-            return _global_config
-    else:
-        return _global_config.get(key)
+    return _config.get(key, default)
 
 
-def set_config(key, value):
-    """Set global configuration key-value pair."""
-    global _global_config
-    if _global_config is None:
-        _global_config = {}
-    _global_config[key] = value
-    return True
+def set_config(key: str, value: Any) -> None:
+    """Set a configuration value."""
+    global _config
+    if _config is None:
+        _config = {}
+    _config[key] = value
 
 
-def reset_config():
-    """Reset configuration to defaults."""
-    global _global_config
-    _global_config = {}
-    return True
-
-
-# Global configuration instance
-_global_config = None
-
-
-# Export main components
-__all__ = [
-    "__version__",
-    "__author__",
-    "__email__",
-    "__license__",
-    "AcceleratorController",
-    "MemoryHierarchy",
-    "ProcessingElement",
-    "SystolicArray",
-    "Simulator",
-    "AcceleratorConfig",
-    "BaseWorkload",
-    "GEMMWorkload",
-    "PerformanceAnalyzer",
-    "get_config",
-    "set_config",
-    "reset_config",
-]
+def reset_config() -> None:
+    """Reset the global configuration."""
+    global _config
+    _config = None
