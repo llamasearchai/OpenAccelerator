@@ -24,8 +24,8 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "OpenAccelerator"
 copyright = "2024, Nik Jois"
 author = "Nik Jois"
-version = "1.0.1"
-release = "1.0.1"
+version = "1.0.2"
+release = "1.0.2"
 
 # -- General configuration ---------------------------------------------------
 
