@@ -370,8 +370,8 @@ class TestBuildAutomation:
             assert "[build-system]" in content
             assert "[project]" in content
             assert "dependencies" in content
-            assert "Nik Jois" in content
-            assert "nikjois@llamasearch.ai" in content
+            assert "LlamaFarms Team" in content
+            assert "team@llamafarms.ai" in content
 
     def test_makefile_exists(self):
         """Test that Makefile exists."""
