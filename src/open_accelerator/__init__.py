@@ -20,7 +20,7 @@ from open_accelerator.utils.config import (
     load_config,
 )
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __author__ = "Nik Jois"
 __email__ = "nikjois@llamasearch.ai"
 __license__ = "MIT"

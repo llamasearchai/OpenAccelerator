@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-accelerator"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
 ]
@@ -18,7 +18,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Healthcare Industry",
     "Intended Audience :: Information Technology",
-    "License :: OSI Approved :: MIT License",
+
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",

@@ -533,7 +533,7 @@ class TestUtilities:
 
     def test_version_info(self):
         """Test version information."""
-        assert open_accelerator.__version__ == "1.0.1"
+        assert open_accelerator.__version__ == "1.0.2"
         assert open_accelerator.__author__ == "Nik Jois"
         assert open_accelerator.__email__ == "nikjois@llamasearch.ai"
         assert open_accelerator.__license__ == "MIT"
