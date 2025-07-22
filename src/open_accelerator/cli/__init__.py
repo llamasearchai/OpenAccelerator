@@ -10,7 +10,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="1.0.2", prog_name="OpenAccelerator")
+@click.version_option(version="1.0.3", prog_name="OpenAccelerator")
 @click.option("--debug", is_flag=True, help="Enable debug mode")
 @click.option("--config", type=click.Path(), help="Configuration file path")
 @click.pass_context
@@ -27,7 +27,7 @@ def cli(ctx, debug, config):
     # Display welcome banner
     console.print(
         Panel.fit(
-            "[bold blue]OpenAccelerator v1.0.2[/bold blue]\n"
+            "[bold blue]OpenAccelerator v1.0.3[/bold blue]\n"
             "[cyan]Advanced ML Accelerator Simulator[/cyan]\n"
             "[dim]Specialized for Medical AI Applications[/dim]",
             title="Medical AI Accelerator",

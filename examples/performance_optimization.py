@@ -563,7 +563,7 @@ class PerformanceOptimizer:
 
         # Print recommendations
         if analysis["recommendations"]:
-            print("\n💡 Optimization Recommendations")
+            print("\n Optimization Recommendations")
             print("-" * 35)
             for i, rec in enumerate(analysis["recommendations"], 1):
                 print(f"{i}. {rec}")

@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: open-accelerator
-Version: 1.0.2
+Version: 1.0.3
 Summary: High-performance systolic array computing framework with AI agents and medical compliance.
 Author-email: Nik Jois <nikjois@llamasearch.ai>
 License-Expression: MIT
