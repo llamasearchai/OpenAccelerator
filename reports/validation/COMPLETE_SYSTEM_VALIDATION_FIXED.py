@@ -331,14 +331,17 @@ def test_cli_functionality():
         if cli_script.exists():
             print("[SUCCESS] CLI script found")
 
-            # Test CLI import
-            sys.path.insert(0, str(cli_script.parent))
+            # Test CLI import - add scripts directory to path
+            scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+            if str(scripts_dir) not in sys.path:
+                sys.path.insert(0, str(scripts_dir))
 
             # Import CLI class
             try:
                 from accelerator_cli import OpenAcceleratorCLI
-            except ImportError:
-                print("[WARNING] Could not import OpenAcceleratorCLI, skipping CLI tests")
+            except ImportError as e:
+                print(f"[WARNING] Could not import OpenAcceleratorCLI: {e}")
+                print("[INFO] Skipping CLI tests")
                 return
 
             # Create CLI instance
