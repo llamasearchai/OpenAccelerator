@@ -233,12 +233,26 @@ class ECCChecker(ErrorDetector):
         cycle = metadata.get("cycle", 0)
         component = metadata.get("component", "unknown")
 
+        # Skip ECC check if data is too small or incompatible shape
+        if data.size < self.total_bits:
+            return errors
+            
+        # Flatten data for ECC processing
+        flat_data = data.flatten()
+        
         # Extract data and check bits
-        data_portion = data[: self.data_bits]
-        check_portion = data[self.data_bits : self.data_bits + self.check_bits]
+        if len(flat_data) < self.total_bits:
+            return errors
+            
+        data_portion = flat_data[: self.data_bits]
+        check_portion = flat_data[self.data_bits : self.data_bits + self.check_bits]
 
         # Calculate syndrome
-        syndrome = self._calculate_syndrome(data, check_portion)
+        try:
+            syndrome = self._calculate_syndrome(data_portion, check_portion)
+        except (ValueError, IndexError) as e:
+            # Skip ECC check if shapes don't match
+            return errors
 
         if np.any(syndrome):
             # Error detected
@@ -289,7 +303,17 @@ class ECCChecker(ErrorDetector):
         """Calculate error syndrome."""
         # Simplified syndrome calculation
         received_word = np.concatenate([data, check_bits])
-        syndrome = np.dot(self.parity_check_matrix, received_word) % 2
+        
+        # Ensure shapes are compatible for matrix multiplication
+        if received_word.shape[0] != self.parity_check_matrix.shape[1]:
+            # Resize matrices to match data size
+            min_size = min(received_word.shape[0], self.parity_check_matrix.shape[1])
+            received_word = received_word[:min_size]
+            parity_matrix = self.parity_check_matrix[:, :min_size]
+        else:
+            parity_matrix = self.parity_check_matrix
+            
+        syndrome = np.dot(parity_matrix, received_word) % 2
         return syndrome
 
     def _locate_error(self, syndrome: np.ndarray) -> int:

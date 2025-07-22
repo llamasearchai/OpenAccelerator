@@ -1075,6 +1075,9 @@ class AgentOrchestrator:
 
         # Initialize agents
         self._initialize_agents()
+        
+        # Set orchestrator as initialized
+        self.is_initialized = True
 
     def _initialize_agents(self):
         """Initialize default agents."""
@@ -1082,7 +1085,6 @@ class AgentOrchestrator:
         self.agents[AgentType.OPTIMIZATION] = OptimizationAgent(self.config)
         self.agents[AgentType.ANALYSIS] = AnalysisAgent(self.config)
         self.agents[AgentType.MEDICAL_COMPLIANCE] = MedicalComplianceAgent(self.config)
-        self.agents[AgentType.ORCHESTRATOR] = self  # Self-reference for orchestrator
 
     # ------------------------------------------------------------------
     # Compatibility helper expected by API tests
