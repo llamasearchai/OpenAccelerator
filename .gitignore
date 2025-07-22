@@ -1,15 +1,7 @@
-# OpenAccelerator - Comprehensive .gitignore
-# Author: Nik Jois <nikjois@llamasearch.ai>
-
-# ===========================================
-# PYTHON
-# ===========================================
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 
 # C extensions
 *.so
@@ -28,7 +20,6 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -56,6 +47,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -76,8 +68,10 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/.doctrees/
 
 # PyBuilder
+.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -93,7 +87,13 @@ ipython_config.py
 # pipenv
 Pipfile.lock
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
 __pypackages__/
 
 # Celery stuff
@@ -130,383 +130,75 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# ===========================================
-# AI/ML SPECIFIC
-# ===========================================
+# pytype static type analyzer
+.pytype/
 
-# Model files
-*.pkl
-*.pickle
-*.pt
-*.pth
-*.h5
-*.hdf5
-*.ckpt
-*.model
-*.weights
-*.bin
+# Cython debug symbols
+cython_debug/
 
-# TensorFlow
-*.pb
-*.tflite
-saved_model/
-checkpoint
-*.meta
-*.data-*
-*.index
+# PyCharm
+.idea/
 
-# PyTorch
-lightning_logs/
+# VSCode
+.vscode/
 
-# Jupyter Lab
-.jupyter/
-*.ipynb
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Data files
-*.csv
-*.tsv
-*.parquet
-*.feather
-*.h5
-*.hdf5
-*.npy
-*.npz
-*.json.gz
-*.pkl.gz
-
-# MLflow
-mlruns/
-mlartifacts/
-
-# Weights & Biases
-wandb/
-
-# ===========================================
-# MEDICAL & COMPLIANCE
-# ===========================================
-
-# PHI and sensitive data
-**/phi/**
-**/pii/**
-**/sensitive/**
-*.phi
-*.pii
-patient_data/
-medical_records/
-dicom_files/
+# Medical AI specific
+*.dicom
 *.dcm
 *.nii
 *.nii.gz
-
-# Compliance reports (keep templates, ignore generated)
-compliance_reports/
+medical_data/
+patient_data/
+phi_data/
 audit_logs/
-validation_reports/
-fda_submissions/
-hipaa_reports/
+temp_medical/
 
-# Encryption keys (should never be in repo)
-*.key
-*.pem
-*.crt
-*.p12
-*.pfx
-private_keys/
-certificates/
-
-# ===========================================
-# DEVELOPMENT TOOLS
-# ===========================================
-
-# IDEs
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon?
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.tmp
-*.temp
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# ===========================================
-# DOCUMENTATION & BUILD
-# ===========================================
-
-# Documentation builds
-docs/_build/
-docs/source/_build/
-docs/build/
-_build/
-.readthedocs/
-
-# Static site generators
-.jekyll-cache/
-.jekyll-metadata
-_site/
-
-# ===========================================
-# TESTING & CI/CD
-# ===========================================
-
-# Test artifacts
-test-results/
-test-reports/
-.benchmarks/
-benchmark_results/
-performance_results/
-stress_test_results/
-
-# Coverage
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
-.pytest_cache/
-
-# Linting
-.ruff_cache/
-.pylint.d/
-.flake8
-
-# Security scanning
-bandit.json
-safety.json
-security_reports/
-
-# ===========================================
-# CONTAINERIZATION
-# ===========================================
-
-# Docker
-.dockerignore
-docker-compose.override.yml
-.docker/
-
-# Kubernetes
-k8s-secrets/
-*.kubeconfig
-
-# ===========================================
-# CLOUD & DEPLOYMENT
-# ===========================================
-
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-
-# AWS
-.aws/
-*.pem
-
-# Azure
-.azure/
-
-# GCP
-*.json
-gcp-key.json
-service-account.json
-
-# ===========================================
-# LOGS & TEMPORARY FILES
-# ===========================================
-
-# Logs
-*.log
-logs/
-*.log.*
-error.log
-debug.log
-app.log
-openaccelerator.log
+# Simulation outputs
+simulation_results/
+performance_logs/
+benchmark_outputs/
+temp_simulations/
 
 # Temporary files
-tmp/
-temp/
 *.tmp
 *.temp
-*.bak
-*.backup
-
-# Cache files
-.cache/
-cache/
-
-# ===========================================
-# PROJECT SPECIFIC
-# ===========================================
-
-# OpenAccelerator specific
-simulation_results/
-benchmark_data/
-performance_data/
-validation_data/
-test_data/
-output/
-results/
-artifacts/
-
-# Configuration overrides
-config.local.yaml
-config.local.yml
-.env.local
-settings.local.py
-
-# Generated files
-*.generated.*
-auto_generated/
-generated/
-
-# Reports and summaries (keep in separate reports directory)
-*_SUMMARY.md
-*_REPORT.md
-*_VALIDATION.py
-*COMPLETE_*.md
-*COMPREHENSIVE_*.md
-*FINAL_*.md
-*SYSTEM_*.md
-WORKING_*.py
-SIMPLE_*.py
-system_health_report.*
-validation_report.*
-final_validation_report.*
-build_report.json
-
-# Simulation and demo files in root
-example_usage.py
-openaccel
-start.sh
-
-# Lock files (keep requirements.txt but ignore lock files)
-requirements.lock
-poetry.lock
-Pipfile.lock
-
-# ===========================================
-# EDITOR & DEVELOPMENT
-# ===========================================
-
-# Vim
 *.swp
 *.swo
-.vimrc.local
-
-# Emacs
-\#*\#
 *~
-.\#*
 
-# Sublime Text
-*.sublime-workspace
-*.sublime-project
+# Log files
+*.log
+logs/
 
-# Atom
-.atom/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
-# JetBrains
-*.iml
-*.ipr
-*.iws
+# Configuration files with sensitive data
+config_local.yaml
+secrets.yaml
+api_keys.txt
 
-# ===========================================
-# SECURITY
-# ===========================================
+# Build artifacts
+artifacts/
+releases/
 
-# API Keys and secrets
-.env
-.env.*
-secrets/
-*.secret
-api_keys/
-tokens/
+# Documentation build
+docs/_build/
+docs/_static/
+docs/_templates/
 
-# SSH keys
-id_rsa
-id_dsa
-id_ecdsa
-id_ed25519
-*.pub
-
-# GPG keys
-*.gpg
-*.asc
-
-# ===========================================
-# MISCELLANEOUS
-# ===========================================
-
-# Archives
-*.zip
-*.tar.gz
-*.tar.bz2
-*.rar
-*.7z
-
-# Images (except documentation assets)
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.ico
-*.svg
-
-# Keep specific documentation images
-!docs/**/*.png
-!docs/**/*.jpg
-!docs/**/*.svg
-!comprehensive_analysis.png
-
-# Office documents
-*.doc
-*.docx
-*.ppt
-*.pptx
-*.xls
-*.xlsx
-*.pdf
-
-# Media files
-*.mp4
-*.avi
-*.mov
-*.wmv
-*.mp3
-*.wav
-*.ogg
+# Validation reports
+validation_report.json
+system_health_report.json
+compliance_report.json

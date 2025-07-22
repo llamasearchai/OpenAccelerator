@@ -315,11 +315,11 @@ class SystemHealthMonitor:
 
                 if result["status"] == "HEALTHY":
                     healthy_count += 1
-                    logger.info(f"✅ {component}: HEALTHY")
+                    logger.info(f" {component}: HEALTHY")
                 else:
                     error_count += 1
                     logger.error(
-                        f"❌ {component}: ERROR - {result.get('error', 'Unknown error')}"
+                        f" {component}: ERROR - {result.get('error', 'Unknown error')}"
                     )
 
             except Exception as e:
@@ -329,7 +329,7 @@ class SystemHealthMonitor:
                     "error": str(e),
                     "details": f"Health check failed for {component}",
                 }
-                logger.error(f"❌ {component}: CRITICAL ERROR - {str(e)}")
+                logger.error(f" {component}: CRITICAL ERROR - {str(e)}")
 
         # Calculate overall health
         total_checks = len(component_checks)
@@ -391,7 +391,7 @@ Component Status:
 """
 
         for component, result in status["components"].items():
-            status_indicator = "✅" if result["status"] == "HEALTHY" else "❌"
+            status_indicator = "" if result["status"] == "HEALTHY" else ""
             report += f"{status_indicator} {component.upper()}: {result['status']}\n"
             if result["status"] != "HEALTHY":
                 report += f"   Error: {result.get('error', 'Unknown error')}\n"

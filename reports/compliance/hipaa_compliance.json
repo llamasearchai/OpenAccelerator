@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-07-21T19:47:40.294815",
+  "overall_status": "COMPLIANT",
+  "compliance_rate": 100.0,
+  "total_checks": 5,
+  "compliant_checks": 5,
+  "checks": {
+    "phi_protection": {
+      "status": "COMPLIANT",
+      "phi_detection_working": true,
+      "anonymization_working": true,
+      "details": "PHI protection measures operational"
+    },
+    "encryption_requirements": {
+      "status": "COMPLIANT",
+      "encryption_enabled": true,
+      "encryption_algorithm": "AES-256",
+      "encryption_working": true,
+      "details": "HIPAA encryption requirements met"
+    },
+    "audit_trail": {
+      "status": "COMPLIANT",
+      "audit_logging_enabled": true,
+      "audit_trail_working": true,
+      "details": "HIPAA audit trail requirements met"
+    },
+    "access_controls": {
+      "status": "COMPLIANT",
+      "authentication_required": true,
+      "access_control_enabled": true,
+      "minimum_necessary_rule": true,
+      "details": "HIPAA access control requirements met"
+    },
+    "data_integrity": {
+      "status": "COMPLIANT",
+      "integrity_controls": true,
+      "transmission_security": true,
+      "details": "HIPAA data integrity requirements met"
+    }
+  },
+  "summary": "HIPAA compliance: 100.0% (5/5)",
+  "compliance_standard": "HIPAA",
+  "version": "1.0.1"
+}

@@ -15,7 +15,7 @@
 [![Type Checking: mypy](https://img.shields.io/badge/type%20checking-mypy-informational.svg)](https://mypy.readthedocs.io/)
 [![Medical Compliance: HIPAA+FDA](https://img.shields.io/badge/medical%20compliance-HIPAA%2BFDA-green.svg)](https://llamasearchai.github.io/OpenAccelerator/medical_guide.html)
 [![Documentation](https://img.shields.io/badge/docs-sphinx-blue.svg)](https://llamasearchai.github.io/OpenAccelerator/)
-[![PyPI version](https://img.shields.io/badge/PyPI-1.0.2-blue.svg)](https://pypi.org/project/open-accelerator/)
+[![PyPI version](https://img.shields.io/badge/PyPI-1.0.3-blue.svg)](https://pypi.org/project/open-accelerator/)
 
 </div>
 
@@ -407,7 +407,7 @@ metadata:
   name: openaccelerator
   labels:
     app: openaccelerator
-    version: v1.0.2
+    version: v1.0.3
 spec:
   replicas: 3
   selector:
@@ -420,7 +420,7 @@ spec:
     spec:
       containers:
       - name: openaccelerator
-        image: ghcr.io/llamasearchai/openaccelerator:1.0.2
+        image: ghcr.io/llamasearchai/openaccelerator:1.0.3
         ports:
         - containerPort: 8000
           name: http
@@ -719,7 +719,7 @@ If you use OpenAccelerator in your research or publications, please cite:
   author = {Jois, Nik},
   title = {OpenAccelerator: Enterprise-Grade Systolic Array Computing Framework for Medical AI Applications},
   url = {https://github.com/llamasearchai/OpenAccelerator},
-  version = {1.0.2},
+  version = {1.0.3},
   year = {2024},
   publisher = {GitHub},
   note = {Open-source framework for systolic array simulation with medical AI compliance}

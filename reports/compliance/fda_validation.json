@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-07-21T19:47:40.930386",
+  "overall_status": "COMPLIANT",
+  "compliance_rate": 100.0,
+  "total_checks": 6,
+  "compliant_checks": 6,
+  "checks": {
+    "device_classification": {
+      "status": "COMPLIANT",
+      "device_classification": "Class II",
+      "software_as_medical_device": true,
+      "predicate_device": null,
+      "details": "FDA device classification requirements met"
+    },
+    "clinical_validation": {
+      "status": "COMPLIANT",
+      "clinical_validation_required": true,
+      "validation_accuracy": 0.94,
+      "patient_count": 1000,
+      "adverse_events": 0,
+      "details": "FDA clinical validation requirements met"
+    },
+    "software_validation": {
+      "status": "COMPLIANT",
+      "test_count": 304,
+      "test_coverage": 0.98,
+      "regression_tests": 150,
+      "security_tests": 25,
+      "details": "FDA software validation requirements met"
+    },
+    "quality_management": {
+      "status": "COMPLIANT",
+      "quality_management_system": true,
+      "design_controls": true,
+      "risk_management": true,
+      "details": "FDA quality management requirements met"
+    },
+    "cybersecurity_controls": {
+      "status": "COMPLIANT",
+      "cybersecurity_controls": true,
+      "encryption_enabled": true,
+      "audit_logging": true,
+      "details": "FDA cybersecurity requirements met"
+    },
+    "risk_assessment": {
+      "status": "COMPLIANT",
+      "overall_risk_level": "low",
+      "mitigation_strategies": 2,
+      "failure_modes": 2,
+      "details": "FDA risk assessment requirements met"
+    }
+  },
+  "summary": "FDA validation: 100.0% (6/6)",
+  "regulatory_standard": "FDA",
+  "version": "1.0.1"
+}

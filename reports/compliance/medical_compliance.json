@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-07-21T19:47:39.999742",
+  "overall_status": "COMPLIANT",
+  "compliance_rate": 100.0,
+  "total_checks": 4,
+  "compliant_checks": 4,
+  "checks": {
+    "hipaa_compliance": {
+      "status": "COMPLIANT",
+      "compliance_level": "hipaa",
+      "encryption_enabled": true,
+      "audit_logging": true,
+      "details": "HIPAA compliance system operational"
+    },
+    "fda_compliance": {
+      "status": "COMPLIANT",
+      "compliance_level": "fda",
+      "device_classification": "Class II",
+      "clinical_validation": true,
+      "details": "FDA compliance system operational"
+    },
+    "medical_imaging": {
+      "status": "COMPLIANT",
+      "supported_modalities": [
+        "CT",
+        "MRI",
+        "X-Ray",
+        "Ultrasound",
+        "Mammography",
+        "PET",
+        "SPECT",
+        "OCT",
+        "Pathology",
+        "Histology",
+        "Endoscopy",
+        "Dermoscopy",
+        "Fundus",
+        "Fluoroscopy"
+      ],
+      "phi_protection": true,
+      "details": "Medical imaging system compliant"
+    },
+    "data_protection": {
+      "status": "COMPLIANT",
+      "encryption_algorithm": "aes_256_gcm",
+      "encryption_working": true,
+      "audit_logging": true,
+      "details": "Data protection measures operational"
+    }
+  },
+  "summary": "Medical compliance: 100.0% (4/4)"
+}

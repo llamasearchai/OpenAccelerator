@@ -326,6 +326,10 @@ def test_cli_functionality():
     print("\n[CLI] Testing CLI functionality...")
 
     try:
+        from pathlib import Path
+        import sys
+        import traceback
+
         # Test CLI script exists
         cli_script = Path("scripts/accelerator_cli.py")
         if cli_script.exists():
@@ -342,7 +346,7 @@ def test_cli_functionality():
             except ImportError as e:
                 print(f"[WARNING] Could not import OpenAcceleratorCLI: {e}")
                 print("[INFO] Skipping CLI tests")
-                return
+                return False
 
             # Create CLI instance
             cli = OpenAcceleratorCLI()

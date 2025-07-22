@@ -1,0 +1,77 @@
+{
+  "total_tests": 9,
+  "passed_tests": 9,
+  "failed_tests": 0,
+  "test_details": {
+    "package_installation": {
+      "description": "Validate package installation and basic imports",
+      "status": "PASSED",
+      "start_time": 1753189012.7077901,
+      "end_time": 1753189012.707793,
+      "error": null
+    },
+    "core_simulation": {
+      "description": "Validate basic system components",
+      "status": "PASSED",
+      "start_time": 1753189012.707794,
+      "end_time": 1753189012.767981,
+      "error": null
+    },
+    "ai_agents": {
+      "description": "Validate AI agent creation and basic functionality",
+      "status": "PASSED",
+      "start_time": 1753189012.7679832,
+      "end_time": 1753189012.955509,
+      "error": null
+    },
+    "medical_compliance": {
+      "description": "Validate HIPAA and FDA compliance systems",
+      "status": "PASSED",
+      "start_time": 1753189012.955511,
+      "end_time": 1753189013.056301,
+      "error": null
+    },
+    "medical_imaging": {
+      "description": "Validate medical image processing systems",
+      "status": "PASSED",
+      "start_time": 1753189013.0563042,
+      "end_time": 1753189013.05632,
+      "error": null
+    },
+    "api_components": {
+      "description": "Validate FastAPI application and routes",
+      "status": "PASSED",
+      "start_time": 1753189013.056322,
+      "end_time": 1753189013.1362822,
+      "error": null
+    },
+    "security_systems": {
+      "description": "Validate security manager and encryption systems",
+      "status": "PASSED",
+      "start_time": 1753189013.136283,
+      "end_time": 1753189014.449409,
+      "error": null
+    },
+    "docker_integration": {
+      "description": "Validate Docker configuration files",
+      "status": "PASSED",
+      "start_time": 1753189014.449441,
+      "end_time": 1753189014.4494889,
+      "error": null
+    },
+    "testing_framework": {
+      "description": "Validate pytest testing framework",
+      "status": "PASSED",
+      "start_time": 1753189014.449491,
+      "end_time": 1753189014.4495318,
+      "error": null
+    }
+  },
+  "start_time": 1753189012.707788,
+  "end_time": 1753189014.449533,
+  "validation_summary": {
+    "total_time_seconds": 1.7417449951171875,
+    "success_rate_percent": 100.0,
+    "status": "PASSED"
+  }
+}
