@@ -104,5 +104,5 @@ __all__ = [
 ]
 
 __version__ = "1.0.0"
-__author__ = "LlamaFarms Team"
-__email__ = "team@llamafarms.ai"
+__author__ = "Nik Jois"
+__email__ = "nikjois@llamasearch.ai"

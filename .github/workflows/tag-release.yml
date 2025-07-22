@@ -271,8 +271,8 @@ jobs:
 
     - name: Configure Git
       run: |
-        git config user.name "LlamaFarms Team"
-        git config user.email "team@llamafarms.ai"
+        git config user.name "Nik Jois"
+        git config user.email "nikjois@llamasearch.ai"
 
     - name: Update version in files
       run: |

@@ -22,10 +22,10 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "OpenAccelerator"
-copyright = "2024, LlamaSearch AI Research"
-author = "LlamaSearch AI Research"
-version = "1.0.0"
-release = "1.0.0"
+copyright = "2024, Nik Jois"
+author = "Nik Jois"
+version = "1.0.1"
+release = "1.0.1"
 
 # -- General configuration ---------------------------------------------------
 
@@ -218,7 +218,7 @@ html_theme_options = {
 
 html_context = {
     "display_github": True,
-    "github_user": "llamasearch",
+    "github_user": "nikjois",
     "github_repo": "OpenAccelerator",
     "github_version": "main",
     "conf_py_path": "/docs/",
@@ -266,7 +266,7 @@ latex_documents = [
         master_doc,
         "OpenAccelerator.tex",
         "OpenAccelerator Documentation",
-        "LlamaSearch AI Research",
+        "Nik Jois",
         "manual",
     ),
 ]

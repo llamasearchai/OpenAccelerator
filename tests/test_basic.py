@@ -39,9 +39,9 @@ class TestBasicFunctionality:
     def test_package_import(self):
         """Test that the package can be imported."""
         assert open_accelerator.__version__ is not None
-        assert open_accelerator.__author__ == "LlamaFarms Team"
-        assert open_accelerator.__email__ == "team@llamafarms.ai"
-        assert open_accelerator.__license__ == "Apache-2.0"
+        assert open_accelerator.__author__ == "Nik Jois"
+        assert open_accelerator.__email__ == "nikjois@llamasearch.ai"
+        assert open_accelerator.__license__ == "MIT"
 
     def test_basic_math_operations(self):
         """Test basic mathematical operations."""
@@ -534,9 +534,9 @@ class TestUtilities:
     def test_version_info(self):
         """Test version information."""
         assert open_accelerator.__version__ == "1.0.1"
-        assert open_accelerator.__author__ == "LlamaFarms Team"
-        assert open_accelerator.__email__ == "team@llamafarms.ai"
-        assert open_accelerator.__license__ == "Apache-2.0"
+        assert open_accelerator.__author__ == "Nik Jois"
+        assert open_accelerator.__email__ == "nikjois@llamasearch.ai"
+        assert open_accelerator.__license__ == "MIT"
 
     def test_exported_components(self):
         """Test that all expected components are exported."""

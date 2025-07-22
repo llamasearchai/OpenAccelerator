@@ -1,334 +1,328 @@
-# OpenAccelerator Build Automation
+.PHONY: help install install-dev install-all clean clean-all test test-fast test-coverage test-security test-performance lint format type-check build docs docs-build docs-serve docker docker-build docker-run benchmark validate security deploy
+
+# OpenAccelerator - Comprehensive Makefile
 # Author: Nik Jois <nikjois@llamasearch.ai>
-# Complete automated build, test, and deployment pipeline
-
-.PHONY: help install install-dev test test-fast test-security test-benchmark test-integration \
-        clean clean-build clean-test clean-pyc clean-docs \
-        build build-dev build-docs build-docker \
-        lint format type-check security-check \
-        docker-build docker-run docker-stop docker-clean docker-test \
-        deploy deploy-dev deploy-prod \
-        docs docs-build docs-serve docs-clean \
-        benchmark profile coverage \
-        requirements freeze-deps check-deps \
-        pre-commit setup-dev validate-all
-
-# Configuration
-PYTHON := python3
-PIP := pip3
-PYTEST := pytest
-DOCKER_IMAGE := openaccelerator
-DOCKER_TAG := latest
-DOCKER_REGISTRY := localhost:5000
-PORT := 8000
-DOCS_PORT := 8080
-
-# Paths
-SRC_DIR := src
-TEST_DIR := tests
-DOCS_DIR := docs
-BUILD_DIR := build
-DIST_DIR := dist
-HTMLCOV_DIR := htmlcov
 
 # Default target
 help: ## Show this help message
-	@echo "OpenAccelerator Build System"
+	@echo "OpenAccelerator - Enterprise-Grade Systolic Array Computing Framework"
 	@echo "Author: Nik Jois <nikjois@llamasearch.ai>"
 	@echo ""
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Installation targets
-install: ## Install package in production mode
-	$(PIP) install -e .
+install: ## Install package in development mode
+	pip install -e .
 
-install-dev: ## Install package in development mode with all dependencies
-	$(PIP) install -e .[dev,docs,benchmark,security]
-	pre-commit install
+install-dev: ## Install development dependencies
+	pip install -e ".[dev]"
 
-setup-dev: install-dev ## Complete development environment setup
-	@echo "Setting up development environment..."
-	@echo "Installing pre-commit hooks..."
-	pre-commit install --hook-type pre-commit
-	pre-commit install --hook-type pre-push
-	@echo "Development environment setup complete!"
+install-test: ## Install testing dependencies
+	pip install -e ".[test]"
+
+install-docs: ## Install documentation dependencies
+	pip install -e ".[docs]"
+
+install-all: ## Install all dependencies
+	pip install -e ".[dev,test,docs,benchmark]"
+
+# Cleaning targets
+clean: ## Clean build artifacts
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info/
+	rm -rf .pytest_cache/
+	rm -rf .coverage
+	rm -rf htmlcov/
+	rm -rf .tox/
+	rm -rf .ruff_cache/
+	rm -rf .mypy_cache/
+	find . -type d -name __pycache__ -delete
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.pyo" -delete
+
+clean-all: clean ## Clean all artifacts including docs
+	rm -rf docs/_build/
+	rm -rf .benchmarks/
 
 # Testing targets
 test: ## Run all tests
-	$(PYTEST) -v --tb=short --cov=$(SRC_DIR) --cov-report=html --cov-report=term-missing --cov-report=xml
+	python -m pytest tests/ -v --tb=short
 
-test-fast: ## Run fast tests only (excluding slow integration tests)
-	$(PYTEST) -v -m "not slow" --tb=short
+test-fast: ## Run tests excluding slow ones
+	python -m pytest tests/ -v --tb=short -m "not slow"
+
+test-coverage: ## Run tests with coverage report
+	python -m pytest tests/ --cov=open_accelerator --cov-report=html --cov-report=term-missing --cov-report=xml
 
 test-security: ## Run security tests
-	$(PYTEST) tests/security/ -v --tb=short
+	python -m pytest tests/security/ -v
+	bandit -r src/open_accelerator/
+	safety check
 
-test-benchmark: ## Run benchmark tests
-	$(PYTEST) tests/benchmark/ -v --tb=short --benchmark-only
-
-test-integration: ## Run integration tests
-	$(PYTEST) tests/test_integration.py -v --tb=short
+test-performance: ## Run performance benchmarks
+	python -m pytest tests/benchmark/ --benchmark-only --benchmark-sort=mean
 
 test-medical: ## Run medical compliance tests
-	$(PYTEST) tests/ -v -k "medical" --tb=short
+	python -m pytest tests/test_medical.py -v
+	python scripts/hipaa_compliance_check.py --output-format json
+	python scripts/fda_validation_check.py --output-format json
 
-test-agents: ## Run AI agents tests
-	$(PYTEST) tests/ -v -k "agent" --tb=short
+test-integration: ## Run integration tests
+	python -m pytest tests/test_integration.py -v
 
 test-api: ## Run API tests
-	$(PYTEST) tests/ -v -k "api" --tb=short
+	python -m pytest tests/test_api.py -v
 
-test-all: test test-security test-benchmark test-integration ## Run all test suites
+test-all: test-coverage test-security test-performance ## Run comprehensive test suite
 
 # Code quality targets
-lint: ## Run all linting checks
-	ruff check $(SRC_DIR) $(TEST_DIR)
-	pylint $(SRC_DIR)
-	mypy $(SRC_DIR)
+lint: ## Run linting
+	ruff check src/ tests/
+	flake8 src/ tests/
 
 format: ## Format code
-	black $(SRC_DIR) $(TEST_DIR)
-	isort $(SRC_DIR) $(TEST_DIR)
-	ruff format $(SRC_DIR) $(TEST_DIR)
+	black src/ tests/
+	isort src/ tests/
+	ruff format src/ tests/
+
+format-check: ## Check code formatting
+	black --check src/ tests/
+	isort --check-only src/ tests/
+	ruff format --check src/ tests/
 
 type-check: ## Run type checking
-	mypy $(SRC_DIR) --strict
+	mypy src/open_accelerator/
 
-security-check: ## Run security analysis
-	bandit -r $(SRC_DIR) -f json -o security-report.json
-	safety check --json --output safety-report.json
-
-# Coverage targets
-coverage: ## Generate coverage report
-	$(PYTEST) --cov=$(SRC_DIR) --cov-report=html --cov-report=term-missing --cov-report=xml
-	@echo "Coverage report generated in $(HTMLCOV_DIR)/index.html"
-
-coverage-upload: coverage ## Upload coverage to codecov
-	codecov -f coverage.xml
+quality: lint type-check ## Run all code quality checks
 
 # Build targets
 build: clean ## Build package
-	$(PYTHON) -m build
+	python -m build
 
-build-dev: ## Build package for development
-	$(PYTHON) -m build --wheel
+build-wheel: ## Build wheel package
+	python -m build --wheel
 
-build-docs: ## Build documentation
-	cd $(DOCS_DIR) && make html
-
-build-docker: ## Build Docker image
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-
-build-docker-dev: ## Build Docker image for development
-	docker build -t $(DOCKER_IMAGE):dev -f Dockerfile.dev .
-
-build-all: build build-docs build-docker ## Build everything
-
-# Docker targets
-docker-build: ## Build Docker image
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_IMAGE):latest
-
-docker-run: ## Run Docker container
-	docker run -d --name openaccelerator -p $(PORT):$(PORT) $(DOCKER_IMAGE):$(DOCKER_TAG)
-
-docker-run-dev: ## Run Docker container in development mode
-	docker run -it --rm -p $(PORT):$(PORT) -v $(PWD):/app $(DOCKER_IMAGE):dev
-
-docker-stop: ## Stop Docker container
-	docker stop openaccelerator || true
-	docker rm openaccelerator || true
-
-docker-clean: ## Clean Docker images and containers
-	docker stop openaccelerator || true
-	docker rm openaccelerator || true
-	docker rmi $(DOCKER_IMAGE):$(DOCKER_TAG) || true
-	docker rmi $(DOCKER_IMAGE):latest || true
-	docker system prune -f
-
-docker-test: ## Run tests in Docker container
-	docker run --rm -v $(PWD):/app $(DOCKER_IMAGE):$(DOCKER_TAG) pytest -v
-
-docker-compose-up: ## Start services with docker-compose
-	docker-compose up -d
-
-docker-compose-down: ## Stop services with docker-compose
-	docker-compose down
-
-docker-compose-test: ## Run tests with docker-compose
-	docker-compose run --rm app pytest -v
+build-sdist: ## Build source distribution
+	python -m build --sdist
 
 # Documentation targets
-docs: ## Build and serve documentation
-	cd $(DOCS_DIR) && make html
+docs: docs-build ## Build documentation
 
-docs-build: ## Build documentation
-	cd $(DOCS_DIR) && make html
+docs-build: ## Build Sphinx documentation
+	cd docs && make html
 
-docs-serve: docs-build ## Serve documentation locally
-	cd $(DOCS_DIR)/_build/html && $(PYTHON) -m http.server $(DOCS_PORT)
+docs-serve: ## Serve documentation locally
+	cd docs/_build/html && python -m http.server 8080
 
 docs-clean: ## Clean documentation build
-	cd $(DOCS_DIR) && make clean
+	cd docs && make clean
 
-docs-auto: ## Build docs with auto-reload
-	sphinx-autobuild $(DOCS_DIR) $(DOCS_DIR)/_build/html --host 0.0.0.0 --port $(DOCS_PORT)
+docs-linkcheck: ## Check documentation links
+	cd docs && make linkcheck
 
-# Performance targets
-benchmark: ## Run performance benchmarks
-	$(PYTEST) tests/benchmark/ --benchmark-only --benchmark-json=benchmark-results.json
+# Docker targets
+docker: docker-build ## Build Docker image
 
-profile: ## Run profiling
-	$(PYTHON) -m cProfile -o profile.prof examples/comprehensive_simulation.py
-	$(PYTHON) -c "import pstats; p = pstats.Stats('profile.prof'); p.sort_stats('cumulative').print_stats(20)"
+docker-build: ## Build Docker image
+	docker build -t openaccelerator:latest .
 
-performance-test: ## Run performance tests
-	$(PYTEST) tests/benchmark/ -v --benchmark-autosave
+docker-build-dev: ## Build development Docker image
+	docker build -f Dockerfile.dev -t openaccelerator:dev .
 
-# Dependency management
-requirements: ## Generate requirements files
-	pip-compile pyproject.toml --output-file requirements.txt
-	pip-compile pyproject.toml --extra dev --output-file requirements-dev.txt
+docker-run: ## Run Docker container
+	docker run -p 8000:8000 openaccelerator:latest
 
-freeze-deps: ## Freeze current dependencies
-	$(PIP) freeze > requirements.lock
+docker-run-dev: ## Run development Docker container
+	docker run -p 8000:8000 -v $(PWD):/app openaccelerator:dev
 
-check-deps: ## Check for dependency updates
-	pip-check
-	safety check
+docker-compose-up: ## Start services with Docker Compose
+	docker-compose up --build -d
 
-update-deps: ## Update dependencies
-	$(PIP) install --upgrade pip setuptools wheel
-	$(PIP) install --upgrade -e .[dev,docs,benchmark,security]
+docker-compose-down: ## Stop Docker Compose services
+	docker-compose down
 
-# Clean targets
-clean: clean-build clean-test clean-pyc clean-docs ## Clean all build artifacts
+docker-compose-logs: ## View Docker Compose logs
+	docker-compose logs -f
 
-clean-build: ## Clean build artifacts
-	rm -rf $(BUILD_DIR)/
-	rm -rf $(DIST_DIR)/
-	rm -rf *.egg-info/
-	find . -name '*.egg' -delete
+# Benchmarking and performance
+benchmark: ## Run comprehensive benchmarks
+	python tools/benchmark_generator.py
+	python tools/simulation_runner.py --benchmark-suite benchmarks/generated_suite.json
 
-clean-test: ## Clean test artifacts
-	rm -rf .pytest_cache/
-	rm -rf $(HTMLCOV_DIR)/
-	rm -rf .coverage
-	rm -rf coverage.xml
-	rm -rf *.junit.xml
-	rm -rf .tox/
+benchmark-analysis: ## Run performance analysis
+	python tools/performance_analyzer.py --results benchmark_results.json
 
-clean-pyc: ## Clean Python cache files
-	find . -name '*.pyc' -delete
-	find . -name '*.pyo' -delete
-	find . -name '__pycache__' -type d -exec rm -rf {} +
-	find . -name '.pytest_cache' -type d -exec rm -rf {} +
+benchmark-generate: ## Generate benchmark configurations
+	python tools/benchmark_generator.py --output benchmarks/
 
-clean-docs: ## Clean documentation artifacts
-	cd $(DOCS_DIR) && make clean
+# Validation and compliance
+validate: ## Run system validation
+	python FINAL_SYSTEM_VALIDATION.py
 
-clean-docker: ## Clean Docker artifacts
-	docker system prune -f
-	docker volume prune -f
+validate-medical: ## Run medical compliance validation
+	python scripts/medical_compliance_check.py --output-format json
+	python scripts/hipaa_compliance_check.py --output-format json
+	python scripts/fda_validation_check.py --output-format json
 
-clean-all: clean clean-docker ## Clean everything including Docker
+validate-security: ## Run security validation
+	python scripts/generate_security_report.py --output-dir security-report/
 
-# Deployment targets
-deploy-dev: ## Deploy to development environment
-	@echo "Deploying to development environment..."
-	docker-compose -f docker-compose.dev.yml up -d
+health-check: ## Run system health check
+	python COMPREHENSIVE_SYSTEM_HEALTH_MONITOR.py
 
-deploy-prod: ## Deploy to production environment
-	@echo "Deploying to production environment..."
-	docker-compose -f docker-compose.prod.yml up -d
+# Security and compliance
+security: ## Run security analysis
+	bandit -r src/open_accelerator/ -f json -o security_report.json
+	safety check --json --output safety_report.json
+	semgrep --config=auto src/ --json --output=semgrep_report.json
 
-deploy-docker: build-docker ## Deploy Docker image to registry
-	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
-	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+security-report: ## Generate comprehensive security report
+	python scripts/generate_security_report.py
 
-# Pre-commit and validation
-pre-commit: ## Run pre-commit hooks
-	pre-commit run --all-files
+# API and server targets
+serve: ## Start FastAPI development server
+	uvicorn src.open_accelerator.api.main:app --reload --host 0.0.0.0 --port 8000
 
-validate-all: lint type-check security-check test ## Run all validation checks
+serve-prod: ## Start FastAPI production server
+	uvicorn src.open_accelerator.api.main:app --host 0.0.0.0 --port 8000 --workers 4
 
-pre-push: validate-all ## Run pre-push validation
-
-# CI/CD targets
-ci-install: ## Install dependencies for CI
-	$(PIP) install -e .[dev,docs,benchmark,security]
-
-ci-test: ## Run tests in CI environment
-	$(PYTEST) -v --tb=short --cov=$(SRC_DIR) --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml
-
-ci-lint: ## Run linting in CI environment
-	ruff check $(SRC_DIR) $(TEST_DIR) --output-format=github
-	mypy $(SRC_DIR) --junit-xml=mypy-results.xml
-
-ci-security: ## Run security checks in CI environment
-	bandit -r $(SRC_DIR) -f json -o security-report.json
-	safety check --json --output safety-report.json
-
-ci-build: ## Build in CI environment
-	$(PYTHON) -m build
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-
-ci-deploy: ## Deploy in CI environment
-	@echo "Deploying in CI environment..."
-	# Add deployment commands here
-
-# Development helpers
-dev-server: ## Start development server
-	uvicorn src.open_accelerator.api.main:app --reload --host 0.0.0.0 --port $(PORT)
-
-dev-jupyter: ## Start Jupyter notebook server
-	jupyter lab --ip=0.0.0.0 --port=8888 --allow-root --no-browser
-
-dev-docs: ## Start documentation development server
-	sphinx-autobuild $(DOCS_DIR) $(DOCS_DIR)/_build/html --host 0.0.0.0 --port $(DOCS_PORT)
-
-# Monitoring and debugging
-logs: ## View application logs
-	tail -f openaccelerator.log
-
-health-check: ## Check application health
-	curl -f http://localhost:$(PORT)/api/v1/health || echo "Health check failed"
-
-monitor: ## Monitor system resources
-	htop
-
-# Quick development workflow
-quick-test: format lint test-fast ## Quick development test cycle
-
-quick-build: clean build ## Quick build cycle
-
-quick-deploy: build docker-build docker-run ## Quick deployment cycle
+# CLI targets
+cli: ## Launch interactive CLI
+	python -m open_accelerator.cli
 
 # Release targets
-release-patch: ## Release patch version
-	bumpver update --patch
+release-check: test-all quality docs ## Pre-release validation
+	python -m build
+	twine check dist/*
 
-release-minor: ## Release minor version
-	bumpver update --minor
+release-test: ## Test release to TestPyPI
+	twine upload --repository testpypi dist/*
 
-release-major: ## Release major version
-	bumpver update --major
+release: ## Release to PyPI
+	twine upload dist/*
 
-# Initialize project
-init: install-dev ## Initialize project for development
-	@echo "Initializing OpenAccelerator project..."
-	@echo "Created by: Nik Jois <nikjois@llamasearch.ai>"
-	@echo "Project initialized successfully!"
+# Development workflow targets
+dev-setup: install-all ## Complete development setup
+	pre-commit install
+	@echo "Development environment setup complete!"
 
-# Show system information
-info: ## Show system information
-	@echo "OpenAccelerator Build System Information"
-	@echo "========================================"
-	@echo "Python: $(shell $(PYTHON) --version)"
-	@echo "Pip: $(shell $(PIP) --version)"
-	@echo "Docker: $(shell docker --version 2>/dev/null || echo 'Not installed')"
-	@echo "Git: $(shell git --version 2>/dev/null || echo 'Not installed')"
+dev-test: format lint type-check test-fast ## Quick development test cycle
+
+dev-full: format lint type-check test-all ## Full development validation
+
+# CI/CD simulation
+ci-test: ## Simulate CI/CD pipeline locally
+	make clean
+	make install-all
+	make quality
+	make test-all
+	make build
+	make docs-build
+
+# Monitoring and metrics
+monitor: ## Start monitoring services
+	docker-compose -f docker-compose.monitoring.yml up -d
+
+metrics: ## Generate performance metrics
+	python tools/performance_analyzer.py --generate-metrics
+
+# Database and data management
+db-setup: ## Setup database for testing
+	docker run -d --name openaccelerator-db -p 5432:5432 -e POSTGRES_DB=openaccelerator -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test postgres:13
+
+db-reset: ## Reset test database
+	docker exec openaccelerator-db psql -U test -d openaccelerator -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# Configuration management
+config-validate: ## Validate configuration files
+	python -c "from open_accelerator.utils.config import validate_config; validate_config('config.yaml')"
+
+config-generate: ## Generate configuration templates
+	python tools/config_generator.py --output-dir config_templates/
+
+# Environment management
+env-check: ## Check environment requirements
+	python -c "import sys; print(f'Python: {sys.version}'); import platform; print(f'Platform: {platform.platform()}')"
+	python -c "import open_accelerator; print(f'OpenAccelerator: {open_accelerator.__version__}')"
+
+env-info: ## Display environment information
+	@echo "OpenAccelerator Environment Information"
+	@echo "======================================"
+	python -c "import sys; print(f'Python Version: {sys.version.split()[0]}')"
+	python -c "import platform; print(f'Platform: {platform.platform()}')"
+	python -c "import open_accelerator; print(f'OpenAccelerator Version: {open_accelerator.__version__}')"
+	@echo "Dependencies:"
+	pip list | grep -E "(numpy|fastapi|pytest|docker|sphinx)"
+
+# Production deployment helpers
+deploy-check: ## Check deployment readiness
+	make ci-test
+	make security
+	make validate
+
+deploy-docker: ## Deploy with Docker
+	docker-compose -f docker-compose.prod.yml up --build -d
+
+deploy-k8s: ## Deploy to Kubernetes
+	kubectl apply -f k8s/
+
+# Utility targets
+version: ## Show version information
+	@python -c "import open_accelerator; print(f'OpenAccelerator v{open_accelerator.__version__}')"
+
+info: ## Show project information
+	@echo "OpenAccelerator - Enterprise-Grade Systolic Array Computing Framework"
 	@echo "Author: Nik Jois <nikjois@llamasearch.ai>"
-	@echo "Project: OpenAccelerator"
-	@echo "Version: $(shell $(PYTHON) -c 'import open_accelerator; print(open_accelerator.__version__)' 2>/dev/null || echo 'Not installed')"
+	@echo "Version: $(shell python -c 'import open_accelerator; print(open_accelerator.__version__)')"
+	@echo "Python: $(shell python --version)"
+	@echo "Repository: https://github.com/nikjois/OpenAccelerator"
+	@echo "Documentation: https://nikjois.github.io/OpenAccelerator/"
+
+# Workspace management
+workspace-setup: ## Setup complete workspace
+	make dev-setup
+	make db-setup
+	make config-generate
+	@echo "Workspace setup complete!"
+
+workspace-reset: clean-all ## Reset workspace to clean state
+	docker-compose down -v
+	docker system prune -f
+	@echo "Workspace reset complete!"
+
+# Advanced targets
+profile: ## Run performance profiling
+	python -m cProfile -o profile.stats -m open_accelerator.cli benchmark
+	python -c "import pstats; p = pstats.Stats('profile.stats'); p.sort_stats('cumulative').print_stats(20)"
+
+memory-profile: ## Run memory profiling
+	python -m memory_profiler examples/performance_optimization.py
+
+stress-test: ## Run stress tests
+	python tests/stress/test_long_running_simulation.py --duration 1800
+
+load-test: ## Run API load tests
+	locust -f tests/load/api_load_test.py --host=http://localhost:8000
+
+# Research and development
+research-setup: ## Setup research environment
+	jupyter notebook --notebook-dir=notebooks &
+	make serve &
+	@echo "Research environment started!"
+
+experiment: ## Run experimental features
+	python experiments/run_experiment.py
+
+# Final validation
+production-ready: ## Validate production readiness
+	@echo "Running production readiness validation..."
+	make clean
+	make install-all
+	make test-all
+	make security
+	make validate
+	make build
+	make docs-build
+	@echo "Production readiness validation complete!"

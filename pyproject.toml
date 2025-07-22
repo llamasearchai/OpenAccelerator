@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "open-accelerator"
 version = "1.0.1"
 authors = [
-    {name = "LlamaFarms Team", email = "team@llamafarms.ai"},
+    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
 ]
 description = "High-performance systolic array computing framework with AI agents and medical compliance."
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.12"
+license = "MIT"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -21,6 +21,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -231,14 +232,14 @@ all = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/llamasearchai/OpenAccelerator"
-"Documentation" = "https://llamasearchai.github.io/OpenAccelerator"
-"Repository" = "https://github.com/llamasearchai/OpenAccelerator"
-"Bug Tracker" = "https://github.com/llamasearchai/OpenAccelerator/issues"
-"Changelog" = "https://github.com/llamasearch/OpenAccelerator/blob/main/CHANGELOG.md"
+"Homepage" = "https://github.com/nikjois/OpenAccelerator"
+"Documentation" = "https://nikjois.github.io/OpenAccelerator"
+"Repository" = "https://github.com/nikjois/OpenAccelerator"
+"Bug Tracker" = "https://github.com/nikjois/OpenAccelerator/issues"
+"Changelog" = "https://github.com/nikjois/OpenAccelerator/blob/main/CHANGELOG.md"
 "PyPI" = "https://pypi.org/project/open-accelerator"
-"Discussions" = "https://github.com/llamasearch/OpenAccelerator/discussions"
-"Funding" = "https://github.com/sponsors/llamasearch"
+"Discussions" = "https://github.com/nikjois/OpenAccelerator/discussions"
+"Funding" = "https://github.com/sponsors/nikjois"
 
 [project.scripts]
 openaccel = "open_accelerator.cli.commands:main"

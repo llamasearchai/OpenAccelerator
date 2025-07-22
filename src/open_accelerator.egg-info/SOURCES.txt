@@ -59,8 +59,10 @@ tests/test_accelerator.py
 tests/test_ai.py
 tests/test_api.py
 tests/test_basic.py
+tests/test_complete_system.py
 tests/test_config.py
 tests/test_core.py
 tests/test_integration.py
 tests/test_medical.py
+tests/test_publication_ready.py
 tests/test_workloads.py
